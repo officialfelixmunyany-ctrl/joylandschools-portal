@@ -3,6 +3,7 @@ const bcrypt  = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const { getDB } = require('../database');
+const { todayInSchoolTime } = require('../lib/dates');
 const router  = express.Router();
 
 // Same template directory used by routes/admin.js â€” read-only access from here.
@@ -157,11 +158,7 @@ function todayAttendanceMap(db, classIds, today) {
 }
 
 function todayStr() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return todayInSchoolTime();
 }
 
 function validDateStr(value) {
@@ -255,7 +252,7 @@ router.get('/dashboard', (req, res) => {
   const terms  = active ? db.prepare("SELECT * FROM terms WHERE session_id=? ORDER BY term_number").all(active.id) : [];
   const totalLearners = db.prepare("SELECT COUNT(*) c FROM users WHERE role='learner' AND status='active'").get().c;
   const classes = teacherClassLists(db, req.session.user.id);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
   const classIds = classes.homeroom.map((row) => row.id);
   const todayAttendance = todayAttendanceMap(db, classIds, today);
   const pendingCount = classIds.filter((classId) => !todayAttendance[classId]).length;

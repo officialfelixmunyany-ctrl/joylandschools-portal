@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { getDB, calculateSchoolDays } = require('../database');
+const { todayInSchoolTime } = require('../lib/dates');
 const router  = express.Router();
 
 function requireAdmin(req, res, next) {
@@ -428,7 +429,7 @@ function detectAssessmentPeriod(term, todayStr) {
 
 router.get('/current-period', (req, res) => {
   const db = getDB();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInSchoolTime();
 
   // Term containing today
   const term = db.prepare(`

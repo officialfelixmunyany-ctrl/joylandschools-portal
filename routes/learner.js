@@ -3,6 +3,7 @@ const bcrypt  = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const { getDB, calculateSchoolDays } = require('../database');
+const { todayInSchoolTime } = require('../lib/dates');
 const router  = express.Router();
 
 function requireLearner(req, res, next) {
@@ -36,8 +37,7 @@ function publicSubjectCode(value) {
   return code && !/^SYSAUTO/i.test(code) ? code : null;
 }
 function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return todayInSchoolTime();
 }
 function detectAssessmentPeriod(term, todayStr) {
   if (!term) return null;
