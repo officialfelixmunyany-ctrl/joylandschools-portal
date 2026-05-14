@@ -69,7 +69,7 @@ if errorlevel 1 (
 
 echo.
 echo [3/4] Updating the Google Cloud VM...
-ssh -i "%VM_KEY%" -o IdentitiesOnly=yes %VM_USER%@%VM_HOST% "cd %VM_DIR% && git pull && npm install && node --check server.js && node --check database.js && for f in routes/*.js; do node --check \"$f\"; done && pm2 restart joyland-portal"
+ssh -i "%VM_KEY%" -o IdentitiesOnly=yes %VM_USER%@%VM_HOST% "cd %VM_DIR% && git pull && npm install && node --check server.js && node --check database.js && for f in routes/*.js; do node --check $f; done && pm2 restart joyland-portal"
 if errorlevel 1 (
   echo [ERROR] VM deploy failed.
   pause
