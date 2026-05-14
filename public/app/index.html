@@ -799,6 +799,22 @@ html.ios body, html.md body { -webkit-overflow-scrolling:touch; }
 .rep-status.partial{background:rgba(247,103,7,.13);color:#a04404;}
 .rep-chev{color:var(--d-muted-2);font-size:12px;flex-shrink:0;}
 
+/* Picker multi-select */
+.rep-selectall{border:1px solid var(--d-border);background:#fff;color:var(--d-green2);font-family:inherit;font-size:10.5px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;padding:5px 10px;border-radius:99px;cursor:pointer;}
+.rep-selectall:active{transform:scale(.96);}
+.rep-check{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--d-border-strong);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s cubic-bezier(.4,0,.2,1);}
+.rep-check i{font-size:11px;color:#fff;opacity:0;transform:scale(.5);transition:all .15s cubic-bezier(.34,1.56,.64,1);}
+.rep-learner-row.selected{border-color:var(--d-green3);background:rgba(67,160,71,.05);}
+.rep-learner-row.selected .rep-check{background:linear-gradient(135deg,var(--d-green2),var(--d-green3));border-color:var(--d-green2);}
+.rep-learner-row.selected .rep-check i{opacity:1;transform:scale(1);}
+.rep-build-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + var(--f7-safe-area-bottom));width:100%;max-width:480px;z-index:50;background:rgba(255,255,255,.97);backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);border-top:1px solid var(--d-border);box-shadow:0 -6px 20px rgba(15,23,42,.08);padding:10px 14px;display:flex;align-items:center;gap:12px;}
+.rep-build-info{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--d-text-2);}
+.rep-build-info span{color:var(--d-green2);font-weight:800;}
+.rep-build-btn{flex:1;border:none;border-radius:12px;padding:13px 16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--d-green2),var(--d-green3));color:#fff;box-shadow:0 6px 16px rgba(46,125,50,.3);}
+.rep-build-btn:disabled{opacity:.45;box-shadow:none;}
+.rep-build-btn:not(:disabled):active{transform:scale(.98);}
+.page-content:has(.rep-build-bar){padding-bottom:calc(150px + var(--f7-safe-area-bottom));}
+
 /* Preview actions */
 .rep-actions{display:flex;gap:9px;margin-bottom:12px;}
 .rep-action-btn{flex:1;border:none;border-radius:12px;padding:12px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;}
@@ -806,13 +822,16 @@ html.ios body, html.md body { -webkit-overflow-scrolling:touch; }
 .rep-action-btn.ghost{background:#fff;border:1px solid var(--d-border);color:var(--d-text-2);box-shadow:var(--d-card-shadow);}
 .rep-action-btn:active{transform:scale(.98);}
 .rep-sheet-wrap{margin:0 -2px;}
+.rep-batch-count{font-size:11px;font-weight:700;color:var(--d-muted);text-align:center;margin-bottom:10px;letter-spacing:.02em;}
 
-/* Print: isolate the report sheet only */
+/* Print: isolate the report sheet / broadsheet only */
 @media print{
   body > *{display:none!important;}
-  .rep-sheet-wrap,.rep-sheet-wrap *{display:revert!important;}
-  .rep-sheet-wrap{position:absolute;left:0;top:0;width:100%;margin:0;padding:0;}
-  .app-tabbar,.navbar,.rep-filter-bar,.rep-actions{display:none!important;}
+  .rep-sheet-wrap,.rep-sheet-wrap *,.bs-fit-shell,.bs-fit-shell *{display:revert!important;}
+  .rep-sheet-wrap,.bs-fit-shell{position:absolute;left:0;top:0;width:100%;margin:0;padding:0;}
+  .bs-fit-shell{height:auto!important;overflow:visible!important;}
+  .bs-fit-scale{transform:none!important;width:auto!important;}
+  .app-tabbar,.navbar,.rep-filter-bar,.rep-actions,.rep-batch-count,.rep-build-bar{display:none!important;}
 }
 </style>
 </head>
@@ -967,6 +986,7 @@ html.ios body, html.md body { -webkit-overflow-scrolling:touch; }
      ═══════════════════════════════════════════════════════════════════ -->
 <script src="/vendor/framework7/framework7-bundle.min.js"></script>
 <script src="/app/report-template-renderer.js"></script>
+<script src="/app/broadsheet-renderer.js"></script>
 
 <script>
 'use strict';
@@ -1219,7 +1239,9 @@ function buildRoutes(){
     { path: '/attendance/:classId/history/', async: routeAttendanceHistory },
     { path: '/attendance/:classId/', async: routeAttendanceClass },
     { path: '/marks/:classId/:subjectId/', async: routeMarksEntry },
+    { path: '/reports/broadsheet/', async: routeBroadsheet },
     { path: '/reports/class/:classId/', async: routeReportLearners },
+    { path: '/reports/class/:classId/cards/', async: routeReportBatch },
     { path: '/reports/class/:classId/learner/:learnerId/', async: routeReportPreview },
     { path: '/skills/', async: routeSkills },
     { path: '/skills/class/:classId/', async: routeSkillsEntry },
@@ -2275,49 +2297,30 @@ async function routeReports({ resolve }){
                 <div class="s">Reports below reflect this assessment window</div>
               </div>
             </div>
-            <div class="d-list-label" style="margin-top:16px;">Report Types</div>
+            <div class="d-list-label" style="margin-top:16px;">Documents</div>
 
             <button class="rep-type-card${classes.length ? '' : ' soon'}" onclick="reportsOpenCards()">
               <div class="rep-type-icon t1"><i class="fas fa-id-card"></i></div>
               <div class="rep-type-info">
                 <div class="rep-type-name">Learner Report Cards</div>
-                <div class="rep-type-desc">Full per-student CBC report card &mdash; marks, attendance, qualities, remarks</div>
+                <div class="rep-type-desc">Per-student CBC report cards &mdash; select learners or the whole class, then build, print &amp; share</div>
                 <div class="rep-type-meta">${classes.length ? esc(classMeta) : 'No class-teacher class assigned'}</div>
               </div>
               <i class="fas fa-chevron-right rep-type-chev"></i>
             </button>
 
-            <button class="rep-type-card soon" onclick="toast('Class Broadsheet is coming in the next update')">
+            <button class="rep-type-card${classes.length ? '' : ' soon'}" onclick="reportsOpenBroadsheet()">
               <div class="rep-type-icon t2"><i class="fas fa-table-list"></i></div>
               <div class="rep-type-info">
-                <div class="rep-type-name">Class Broadsheet <span class="rep-type-soon">Soon</span></div>
-                <div class="rep-type-desc">Whole-class spreadsheet &mdash; every subject, totals, mean &amp; position</div>
-              </div>
-              <i class="fas fa-chevron-right rep-type-chev"></i>
-            </button>
-
-            <button class="rep-type-card soon" onclick="toast('Subject Champions is coming in the next update')">
-              <div class="rep-type-icon t3"><i class="fas fa-trophy"></i></div>
-              <div class="rep-type-info">
-                <div class="rep-type-name">Subject Champions <span class="rep-type-soon">Soon</span></div>
-                <div class="rep-type-desc">Top 3 performers in every subject you teach</div>
-                ${subjects.length ? `<div class="rep-type-meta">${subjects.length} subject${subjects.length === 1 ? '' : 's'}</div>` : ''}
-              </div>
-              <i class="fas fa-chevron-right rep-type-chev"></i>
-            </button>
-
-            <button class="rep-type-card" onclick="app.tab.show('#view-home')">
-              <div class="rep-type-icon t4"><i class="fas fa-chart-column"></i></div>
-              <div class="rep-type-info">
-                <div class="rep-type-name">Subject Analysis</div>
-                <div class="rep-type-desc">Grade distribution &amp; mean per subject &mdash; on your Home dashboard</div>
-                <div class="rep-type-meta">Open Home &rsaquo; Performance</div>
+                <div class="rep-type-name">Class Broadsheet</div>
+                <div class="rep-type-desc">Whole-class spreadsheet &mdash; every subject, totals, average &amp; position</div>
+                <div class="rep-type-meta">${classes.length ? esc(classMeta) : 'No class-teacher class assigned'}</div>
               </div>
               <i class="fas fa-chevron-right rep-type-chev"></i>
             </button>
 
             <div class="h-empty" style="background:none;border:none;padding-top:14px;">
-              Report cards &amp; broadsheets cover classes you're class teacher of. Subject reports cover subjects you teach.
+              Reports are printable documents for classes you're class teacher of. For live analytics &mdash; subject distribution, champions, trends &mdash; see your <b>Home</b> dashboard.
             </div>
           </div>
         </div>
@@ -2326,21 +2329,22 @@ async function routeReports({ resolve }){
   });
 }
 
-function reportsOpenCards(){
+function reportsPickClass(label, urlFor){
   const classes = state.classes || [];
   if(!classes.length){ toast('No class-teacher class assigned'); return; }
-  if(classes.length === 1){
-    navTab('#view-reports', `/reports/class/${classes[0].id}/`);
-    return;
-  }
+  if(classes.length === 1){ navTab('#view-reports', urlFor(classes[0])); return; }
   const buttons = classes.map(c => ({
     text: c.name || ('Grade ' + c.grade_level),
-    onClick: () => navTab('#view-reports', `/reports/class/${c.id}/`)
+    onClick: () => navTab('#view-reports', urlFor(c))
   }));
   buttons.push({ text: 'Cancel', color: 'red' });
-  app.actions.create({
-    buttons: [[{ label: true, text: 'Choose a class' }], buttons]
-  }).open();
+  app.actions.create({ buttons: [[{ label: true, text: label }], buttons] }).open();
+}
+function reportsOpenCards(){
+  reportsPickClass('Choose a class', (c) => `/reports/class/${c.id}/`);
+}
+function reportsOpenBroadsheet(){
+  reportsPickClass('Choose a class', (c) => `/reports/broadsheet/?class_id=${c.id}`);
 }
 
 function reportTermList(){
@@ -2475,14 +2479,18 @@ async function loadReportLearners(classId, assessment='opener', termId=''){
     const learners = data.learners || [];
     const ready = learners.filter(l => l.status === 'ready').length;
     const initials = (name) => String(name || '?').split(/\s+/).map(s=>s[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
+    // fresh selection state for this picker
+    window._repSel = new Set();
+    window._repCtx = { classId, assessment, termId };
     root.innerHTML = reportFilterBar(classId, null, assessment, termId) + `
       <div class="rep-list-head">
-        <span>${learners.length} learner${learners.length===1?'':'s'}</span>
-        ${learners.length ? `<span class="rep-ready-count">${ready} ready</span>` : ''}
+        <span>${learners.length} learner${learners.length===1?'':'s'}${learners.length ? ` &middot; ${ready} ready` : ''}</span>
+        ${learners.length ? `<button class="rep-selectall" id="rep-selectall" onclick="repToggleAll()">Select all</button>` : ''}
       </div>
       <div class="rep-learner-list">
         ${learners.map(l => `
-          <button class="rep-learner-row" onclick="navTab('#view-reports','/reports/class/${classId}/learner/${l.learner_id}/?assessment=${assessment}${termId ? `&term_id=${encodeURIComponent(termId)}` : ''}')">
+          <button class="rep-learner-row" data-id="${l.learner_id}" onclick="repToggleLearner(this)">
+            <span class="rep-check"><i class="fas fa-check"></i></span>
             <div class="rep-avatar">${esc(initials(l.name))}</div>
             <div class="rep-who">
               <div class="rep-who-name">${esc(l.name || 'Learner')}</div>
@@ -2491,16 +2499,66 @@ async function loadReportLearners(classId, assessment='opener', termId=''){
             ${l.status === 'ready'
               ? `<span class="rep-status ready">Ready</span>`
               : `<span class="rep-status partial">${Math.max(0, (l.subjects_total||0) - (l.subjects_done||0))} missing</span>`}
-            <i class="fas fa-chevron-right rep-chev"></i>
           </button>
         `).join('') || '<div class="empty-card"><i class="fas fa-users"></i><p>No learners enrolled.</p></div>'}
       </div>
+      ${learners.length ? `
+      <div class="rep-build-bar">
+        <div class="rep-build-info"><span id="rep-sel-count">0</span> selected</div>
+        <button class="rep-build-btn" id="rep-build-btn" disabled onclick="repBuildReports()"><i class="fas fa-file-lines"></i> Build reports</button>
+      </div>` : ''}
     `;
   }catch(err){
     root.dataset.loaded = '';
     root.innerHTML = reportFilterBar(classId, null, assessment, termId) +
       `<div class="empty-card"><i class="fas fa-triangle-exclamation"></i><p>${esc(err.message || 'Could not load learners')}</p></div>`;
   }
+}
+
+function repUpdateBuildBar(){
+  const sel = window._repSel || new Set();
+  const n = sel.size;
+  const countEl = document.getElementById('rep-sel-count');
+  const btnEl = document.getElementById('rep-build-btn');
+  const saEl = document.getElementById('rep-selectall');
+  if(countEl) countEl.textContent = n;
+  if(btnEl){
+    btnEl.disabled = n === 0;
+    btnEl.innerHTML = `<i class="fas fa-file-lines"></i> Build ${n ? n + ' ' : ''}report${n===1?'':'s'}`;
+  }
+  if(saEl){
+    const total = document.querySelectorAll('.rep-learner-row').length;
+    saEl.textContent = (total > 0 && n >= total) ? 'Clear all' : 'Select all';
+  }
+}
+function repToggleLearner(el){
+  const id = String(el.dataset.id);
+  const sel = window._repSel || (window._repSel = new Set());
+  if(sel.has(id)){ sel.delete(id); el.classList.remove('selected'); }
+  else { sel.add(id); el.classList.add('selected'); }
+  repUpdateBuildBar();
+}
+function repToggleAll(){
+  const sel = window._repSel || (window._repSel = new Set());
+  const rows = Array.from(document.querySelectorAll('.rep-learner-row'));
+  const allSelected = rows.length > 0 && rows.every(r => sel.has(String(r.dataset.id)));
+  rows.forEach(r => {
+    const id = String(r.dataset.id);
+    if(allSelected){ sel.delete(id); r.classList.remove('selected'); }
+    else { sel.add(id); r.classList.add('selected'); }
+  });
+  repUpdateBuildBar();
+}
+function repBuildReports(){
+  const sel = window._repSel || new Set();
+  const ctx = window._repCtx || {};
+  const n = sel.size;
+  if(!n || !ctx.classId) return;
+  app.dialog.confirm(`Build ${n} report card${n===1?'':'s'}?`, 'Reports', () => {
+    const q = new URLSearchParams({ ids: Array.from(sel).join(','), assessment: ctx.assessment || 'opener' });
+    if(ctx.termId) q.set('term_id', ctx.termId);
+    navTab('#view-reports', `/reports/class/${ctx.classId}/cards/?${q.toString()}`);
+  });
 }
 
 async function loadReportPreview(classId, learnerId, assessment='opener', termId=''){
@@ -2541,6 +2599,139 @@ async function shareReportSheet(){
   const text = `${meta.learner || 'Learner'} - ${[meta.term, meta.assessment].filter(Boolean).join(' ')} report card (Daraja)`;
   if(navigator.share){
     try{ await navigator.share({ title:'Report Card', text }); }
+    catch(_){ /* user cancelled */ }
+  }else{
+    toast('Use "Print A4" to save or share as PDF');
+  }
+}
+
+/* ─── Batch report cards (a stack of selected learners' report cards) ─── */
+async function routeReportBatch({ resolve, to }){
+  if(!state.dashboard){
+    try{ setTeacherDashboardState(await api.get('/api/teacher/dashboard')); }catch(_){}
+  }
+  const classId = to.params.classId;
+  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'opener';
+  const termId = reportTermIdFromRoute(to);
+  const ids = String(to.query?.ids || '');
+  const rootId = `report-batch-${reportDomKey(classId, ids, assessment, termId)}`;
+  resolve({
+    content: `
+      <div class="page" data-name="report-batch">
+        <div class="navbar"><div class="navbar-bg"></div><div class="navbar-inner">
+          <div class="left"><a href="#" class="link back"><i class="icon icon-back"></i></a></div>
+          <div class="title">Report Cards</div>
+        </div></div>
+        <div class="page-content"><div class="d-content" id="${esc(rootId)}">
+          <div class="empty-card"><i class="fas fa-spinner fa-spin"></i><p>Building reports...</p></div>
+        </div></div>
+      </div>
+    `,
+    on:{ pageInit: () => loadReportBatch(classId, ids, assessment, termId) }
+  });
+  setTimeout(() => loadReportBatch(classId, ids, assessment, termId), 0);
+}
+
+async function loadReportBatch(classId, ids, assessment='opener', termId=''){
+  const root = document.getElementById(`report-batch-${reportDomKey(classId, ids, assessment, termId)}`);
+  if(!root || root.dataset.loaded) return;
+  root.dataset.loaded = '1';
+  try{
+    const qs = new URLSearchParams({ class_id:classId, learner_ids:ids || 'all', assessment_type:assessment });
+    if(termId) qs.set('term_id', termId);
+    const report = await api.get(`/api/teacher/report-cards?${qs.toString()}`);
+    const count = (report.learners || []).length;
+    window._reportPreviewMeta = {
+      learner: count === 1 ? (report.learners[0]?.name || 'Learner') : `${count} learners`,
+      term: report.term?.name || '',
+      assessment: ASSESSMENT_LABELS[assessment] || assessment
+    };
+    root.innerHTML =
+      `<div class="rep-actions">
+        <button class="rep-action-btn primary" onclick="printReportSheet()"><i class="fas fa-print"></i> Print A4</button>
+        <button class="rep-action-btn ghost" onclick="shareReportSheet()"><i class="fas fa-share-nodes"></i> Share</button>
+      </div>
+      <div class="rep-batch-count">${count} report card${count===1?'':'s'} &middot; ${esc(report.term?.name || '')} ${esc(ASSESSMENT_LABELS[assessment] || assessment)}</div>
+      <div class="rep-sheet-wrap">${await renderAdminReportPreviewSheet(report)}</div>`;
+    requestAnimationFrame(() => window.DarajaReportPreview?.fitSheets?.(root));
+  }catch(err){
+    root.dataset.loaded = '';
+    root.innerHTML = `<div class="empty-card"><i class="fas fa-triangle-exclamation"></i><p>${esc(err.message || 'Could not build reports')}</p></div>`;
+  }
+}
+
+/* ─── Class Broadsheet (admin's exact A4 sheet, mobile-fitted) ─── */
+function broadsheetTermPicker(classId, termId){
+  const terms = reportTermList();
+  if(!terms.length) return '';
+  return `<div class="rep-filter-bar"><div class="rep-filter-dd">
+    <select onchange="navTab('#view-reports','/reports/broadsheet/?class_id=${classId}&term_id='+encodeURIComponent(this.value))">
+      ${terms.map(t => `<option value="${esc(t.id)}" ${String(t.id)===String(termId)?'selected':''}>${esc(t.label)}</option>`).join('')}
+    </select>
+  </div></div>`;
+}
+
+async function routeBroadsheet({ resolve, to }){
+  if(!state.dashboard){
+    try{ setTeacherDashboardState(await api.get('/api/teacher/dashboard')); }catch(_){}
+  }
+  const classId = to.query?.class_id || (state.classes || [])[0]?.id || '';
+  const termId = reportTermIdFromRoute(to);
+  const rootId = `broadsheet-${reportDomKey(classId, termId)}`;
+  const cls = (state.classes || []).find(c => String(c.id) === String(classId));
+  const title = cls ? (cls.name || ('Grade ' + cls.grade_level)) : 'Broadsheet';
+  resolve({
+    content: `
+      <div class="page" data-name="broadsheet">
+        <div class="navbar"><div class="navbar-bg"></div><div class="navbar-inner">
+          <div class="left"><a href="#" class="link back"><i class="icon icon-back"></i></a></div>
+          <div class="title">${esc(title)}</div>
+          <div class="subtitle">Class Broadsheet</div>
+        </div></div>
+        <div class="page-content"><div class="d-content" id="${esc(rootId)}">
+          <div class="empty-card"><i class="fas fa-spinner fa-spin"></i><p>Building broadsheet...</p></div>
+        </div></div>
+      </div>
+    `,
+    on:{ pageInit: () => loadBroadsheet(classId, termId) }
+  });
+  setTimeout(() => loadBroadsheet(classId, termId), 0);
+}
+
+async function loadBroadsheet(classId, termId=''){
+  const root = document.getElementById(`broadsheet-${reportDomKey(classId, termId)}`);
+  if(!root) return;
+  const loadKey = `${termId || ''}`;
+  if(root.dataset.loaded === loadKey) return;
+  root.dataset.loaded = loadKey;
+  try{
+    if(!classId) throw new Error('No class-teacher class assigned');
+    const qs = new URLSearchParams({ class_id:classId });
+    if(termId) qs.set('term_id', termId);
+    const data = await api.get(`/api/teacher/broadsheet?${qs.toString()}`);
+    window.DarajaBroadsheet?.ensureStyles?.();
+    window._broadsheetMeta = { term:data.term?.term_name || '', cls:data.class?.name || '' };
+    const sheetHtml = window.DarajaBroadsheet
+      ? window.DarajaBroadsheet.buildHtml(data, 'term')
+      : '<div class="empty-card"><p>Broadsheet renderer failed to load. Fully close and reopen the app.</p></div>';
+    root.innerHTML =
+      broadsheetTermPicker(classId, termId || data.term?.id || '') +
+      `<div class="rep-actions">
+        <button class="rep-action-btn primary" onclick="printBroadsheet()"><i class="fas fa-print"></i> Print A4</button>
+        <button class="rep-action-btn ghost" onclick="shareBroadsheet()"><i class="fas fa-share-nodes"></i> Share</button>
+      </div>
+      <div class="bs-fit-shell"><div class="bs-fit-scale">${sheetHtml}</div></div>`;
+    requestAnimationFrame(() => window.DarajaBroadsheet?.fit?.(root));
+  }catch(err){
+    root.dataset.loaded = '';
+    root.innerHTML = `<div class="empty-card"><i class="fas fa-triangle-exclamation"></i><p>${esc(err.message || 'Could not build broadsheet')}</p></div>`;
+  }
+}
+function printBroadsheet(){ window.print(); }
+async function shareBroadsheet(){
+  const m = window._broadsheetMeta || {};
+  if(navigator.share){
+    try{ await navigator.share({ title:'Class Broadsheet', text:`${m.cls || 'Class'} broadsheet - ${m.term || ''} (Daraja)` }); }
     catch(_){ /* user cancelled */ }
   }else{
     toast('Use "Print A4" to save or share as PDF');
@@ -2602,19 +2793,23 @@ async function renderAdminReportPreviewSheet(report){
   });
   const stateTemplate = renderer.normalizeState(report.template?.state || null, schoolSettings, report.template?.name || 'Default Template');
   const componentDefs = previewComponentDefs(report);
+  // Single report-card endpoint returns `learner`; the batch endpoint returns `learners` (array).
+  const renderLearners = (Array.isArray(report.learners) && report.learners.length)
+    ? report.learners
+    : [report.learner].filter(Boolean);
   const html = renderer.renderPages({
     state:stateTemplate,
     classId,
     termId,
     assessment:report.assessment_type || 'opener',
-    learners:[report.learner],
+    learners:renderLearners,
     subjects:report.subjects || [],
     grouped:groupPreviewMarks(report.all_marks || []),
     componentKeys:componentDefs.map(c => c.key),
     componentDefs,
     componentNames:componentDefs.map(c => c.name),
     strict:true,
-    classLearners:report.class_learners || [report.learner],
+    classLearners:report.class_learners || renderLearners,
     attendanceSummary:report.attendance_summary || { opened:report.attendance?.opened || null, learners:{} },
     skillRatings:report.skill_ratings || {}
   });

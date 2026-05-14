@@ -1632,8 +1632,8 @@ router.get('/report-card', (req, res) => {
       SUM(CASE WHEN ae.status='present' THEN 1 ELSE 0 END) AS present,
       SUM(CASE WHEN ae.status='absent' THEN 1 ELSE 0 END) AS absent
     FROM users u
-    LEFT JOIN attendance_entries ae ON ae.learner_id=u.id
-    LEFT JOIN attendance_records ar ON ar.id=ae.record_id AND ar.class_id=? AND ar.term_id=?
+    LEFT JOIN attendance_records ar ON ar.class_id=? AND ar.term_id=?
+    LEFT JOIN attendance_entries ae ON ae.record_id=ar.id AND ae.learner_id=u.id
     WHERE u.role='learner' AND u.status='active' AND u.class_name=?
     GROUP BY u.id
   `).all(cls.id, term.id, cls.name);
@@ -1709,6 +1709,259 @@ router.get('/report-card', (req, res) => {
     }
   });
 });
+// Batch report cards - same class-level data as /report-card, for many learners at once.
+// learner_ids: comma-separated ids, or "all"/empty for the whole class.
+router.get('/report-cards', (req, res) => {
+  const db = getDB();
+  const cls = requireOwnedClass(req, res, db, req.query.class_id);
+  if (!cls) return;
+
+  let term;
+  if (req.query.term_id) {
+    term = db.prepare('SELECT id, term_name AS name, term_name, start_date, end_date FROM terms WHERE id=?').get(req.query.term_id);
+    if (!term) return res.status(400).json({ success:false, message:'Term not found' });
+  } else {
+    term = defaultSummaryTerm(db, todayStr());
+    if (!term) return res.status(400).json({ success:false, message:'No term available' });
+  }
+  const detected = detectAssessmentPeriod(term, todayStr());
+  const fallbackAssessment = ['opener','midterm','endterm'].includes(detected.period) ? detected.period : 'opener';
+  const assessment = validAssessmentType(req.query.assessment_type) || fallbackAssessment;
+
+  const classLearners = db.prepare(`
+    SELECT id, user_id, name, admission_no, class_name, sex, date_of_birth, portrait_path
+    FROM users
+    WHERE role='learner' AND status='active' AND class_name=?
+    ORDER BY name
+  `).all(cls.name);
+
+  const idsParam = String(req.query.learner_ids || '').trim();
+  let selected;
+  if (!idsParam || idsParam.toLowerCase() === 'all') {
+    selected = classLearners;
+  } else {
+    const wanted = new Set(idsParam.split(',').map((s) => Number(s.trim())).filter((n) => Number.isInteger(n) && n > 0));
+    selected = classLearners.filter((l) => wanted.has(l.id));
+  }
+  if (!selected.length) return res.status(400).json({ success:false, message:'No valid learners selected' });
+
+  const subjects = db.prepare(`
+    SELECT s.id AS subject_id, s.name AS subject_name, s.code AS subject_code
+    FROM class_subjects cs JOIN subjects s ON s.id=cs.subject_id
+    WHERE cs.class_id=? ORDER BY s.name
+  `).all(cls.id).map((sub) => {
+    const components = db.prepare(`
+      SELECT component_key AS key, component_name AS name, max_score AS max
+      FROM assessment_components
+      WHERE class_id=? AND subject_id=? AND assessment_type=?
+      ORDER BY sort_order, component_name
+    `).all(cls.id, sub.subject_id, assessment).map((c) => ({ key:c.key, name:c.name, max:Number(c.max) }));
+    const maxTotal = components.reduce((sum, c) => sum + (Number(c.max) || 0), 0);
+    return {
+      subject_id: sub.subject_id,
+      subject_name: sub.subject_name,
+      subject_code: publicSubjectCode(sub.subject_code),
+      components,
+      max_total: maxTotal || null,
+      total: null,
+      percent: null
+    };
+  });
+
+  const allMarks = db.prepare(`
+    SELECT m.*, u.name AS learner_name, u.admission_no, u.user_id AS learner_user_id,
+           s.name AS subject_name, s.code AS subject_code
+    FROM marks m
+    JOIN users u ON u.id=m.learner_id
+    JOIN subjects s ON s.id=m.subject_id
+    WHERE m.class_id=? AND m.term_id=? AND m.assessment_type=?
+    ORDER BY u.name, s.name, m.component_key
+  `).all(cls.id, term.id, assessment).map((row) => ({ ...row, subject_code:publicSubjectCode(row.subject_code) }));
+
+  const componentRows = db.prepare(`
+    SELECT DISTINCT component_key AS key, component_key, component_name AS name, component_name, max_score
+    FROM assessment_components
+    WHERE class_id=? AND assessment_type=?
+    ORDER BY sort_order, component_name
+  `).all(cls.id, assessment);
+
+  const att0 = db.prepare('SELECT COUNT(DISTINCT id) AS opened FROM attendance_records WHERE class_id=? AND term_id=?').get(cls.id, term.id);
+  const opened = Number(att0?.opened || 0);
+  const attendanceRows = db.prepare(`
+    SELECT u.id,
+      SUM(CASE WHEN ae.status='present' THEN 1 ELSE 0 END) AS present,
+      SUM(CASE WHEN ae.status='absent' THEN 1 ELSE 0 END) AS absent
+    FROM users u
+    LEFT JOIN attendance_records ar ON ar.class_id=? AND ar.term_id=?
+    LEFT JOIN attendance_entries ae ON ae.record_id=ar.id AND ae.learner_id=u.id
+    WHERE u.role='learner' AND u.status='active' AND u.class_name=?
+    GROUP BY u.id
+  `).all(cls.id, term.id, cls.name);
+  const attendanceSummary = { opened: opened || null, learners:{} };
+  attendanceRows.forEach((row) => {
+    attendanceSummary.learners[String(row.id)] = opened
+      ? { opened, present:Number(row.present || 0), absent:Number(row.absent || 0) }
+      : { opened:null, present:null, absent:null };
+  });
+
+  const allSkillRows = db.prepare(`
+    SELECT learner_id, category_key, item_key, rating FROM learner_skills
+    WHERE term_id=? AND assessment_type=?
+  `).all(term.id, assessment);
+  const skillRatings = {};
+  allSkillRows.forEach((row) => {
+    const lid = String(row.learner_id || '');
+    if (!lid) return;
+    if (!skillRatings[lid]) skillRatings[lid] = {};
+    if (!skillRatings[lid][row.category_key]) skillRatings[lid][row.category_key] = {};
+    skillRatings[lid][row.category_key][row.item_key] = row.rating == null ? null : String(row.rating);
+  });
+
+  const classRow = db.prepare('SELECT template_name FROM classes WHERE id=?').get(cls.id);
+  const state = readTemplateState(classRow?.template_name);
+
+  const school = {};
+  db.prepare("SELECT key, value FROM school_settings WHERE key IN ('school_name','school_motto','school_logo','school_address','school_phone','school_email')").all().forEach((row) => { school[row.key] = row.value; });
+
+  res.json({
+    success:true,
+    data:{
+      school,
+      class:{ id:cls.id, name:cls.name, template_name:classRow?.template_name || null },
+      term:{ id:term.id, name:term.name, start_date:term.start_date, end_date:term.end_date },
+      assessment_type:assessment,
+      template:{ name:classRow?.template_name || 'Default Template', state:state || null },
+      class_learners:classLearners,
+      all_marks:allMarks,
+      component_defs:componentRows,
+      attendance_summary:attendanceSummary,
+      skill_ratings:skillRatings,
+      subjects,
+      learners:selected
+    }
+  });
+});
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CLASS BROADSHEET â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Mirrors routes/admin.js GET /marks/broadsheet exactly so the teacher app's
+// broadsheet renders identically to the admin one - same aggregation, same CBC scale.
+const BROADSHEET_CBC_LEVELS = [
+  { code:'EE1', descriptor:'Exceeding Expectations', points:8, min:90, label:'Exceptional' },
+  { code:'EE2', descriptor:'Exceeding Expectations', points:7, min:75, label:'Very Good' },
+  { code:'ME1', descriptor:'Meeting Expectations', points:6, min:58, label:'Good' },
+  { code:'ME2', descriptor:'Meeting Expectations', points:5, min:41, label:'Fair' },
+  { code:'AE1', descriptor:'Approaching Expectations', points:4, min:31, label:'Needs Improvement' },
+  { code:'AE2', descriptor:'Approaching Expectations', points:3, min:21, label:'Below Average' },
+  { code:'BE1', descriptor:'Below Expectations', points:2, min:11, label:'Poor' },
+  { code:'BE2', descriptor:'Below Expectations', points:1, min:0, label:'Very Poor' }
+];
+function broadsheetCbcLevel(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return null;
+  const score = Math.max(0, Math.min(100, Number(value)));
+  return BROADSHEET_CBC_LEVELS.find((lvl) => score >= lvl.min) || BROADSHEET_CBC_LEVELS[BROADSHEET_CBC_LEVELS.length - 1];
+}
+function broadsheetAverageNumbers(values) {
+  const nums = values.filter((v) => v !== null && v !== undefined && !Number.isNaN(Number(v))).map(Number);
+  if (!nums.length) return null;
+  return Math.round((nums.reduce((sum, v) => sum + v, 0) / nums.length) * 100) / 100;
+}
+function broadsheetSubjectAverage(scores = {}) {
+  return broadsheetAverageNumbers(ASSESSMENT_SEQUENCE.map((t) => scores[t]));
+}
+function broadsheetAggregate(rows) {
+  const map = {}; // learner -> subject -> assessment -> total raw score
+  rows.forEach((m) => {
+    if (m.score === null || m.score === undefined) return;
+    const lid = m.learner_id, sid = m.subject_id, at = m.assessment_type;
+    map[lid] = map[lid] || {};
+    map[lid][sid] = map[lid][sid] || {};
+    map[lid][sid][at] = (map[lid][sid][at] || 0) + Number(m.score);
+  });
+  return map;
+}
+
+router.get('/broadsheet', (req, res) => {
+  const db = getDB();
+  const cls = requireOwnedClass(req, res, db, req.query.class_id);
+  if (!cls) return;
+  let term;
+  if (req.query.term_id) {
+    term = db.prepare('SELECT t.*, s.name AS session_name FROM terms t JOIN academic_sessions s ON s.id=t.session_id WHERE t.id=?').get(req.query.term_id);
+    if (!term) return res.status(400).json({ success:false, message:'Term not found' });
+  } else {
+    const t = defaultSummaryTerm(db, todayStr());
+    if (!t) return res.status(400).json({ success:false, message:'No term available' });
+    term = db.prepare('SELECT t.*, s.name AS session_name FROM terms t JOIN academic_sessions s ON s.id=t.session_id WHERE t.id=?').get(t.id);
+  }
+
+  const subjects = db.prepare(`
+    SELECT s.id, s.name, s.code FROM class_subjects cs
+    JOIN subjects s ON s.id=cs.subject_id
+    WHERE cs.class_id=? ORDER BY s.name
+  `).all(cls.id).map((row) => ({ ...row, code:publicSubjectCode(row.code) }));
+
+  const learners = db.prepare(`
+    SELECT id, name, admission_no, user_id, sex FROM users
+    WHERE role='learner' AND status='active' AND class_name=?
+    ORDER BY name
+  `).all(cls.name);
+
+  const allMarks = db.prepare('SELECT * FROM marks WHERE class_id=? AND term_id=?').all(cls.id, term.id);
+  const aggregate = broadsheetAggregate(allMarks);
+
+  const rows = learners.map((l) => {
+    const subjectScores = subjects.map((s) => {
+      const scores = (aggregate[l.id] && aggregate[l.id][s.id]) || {};
+      const opener = scores.opener ?? null;
+      const midterm = scores.midterm ?? null;
+      const endterm = scores.endterm ?? null;
+      const average = broadsheetSubjectAverage(scores);
+      return { subject_id:s.id, opener, midterm, endterm, average, cbc:broadsheetCbcLevel(average) };
+    });
+    const entered = subjectScores.filter((sub) => sub.average !== null);
+    const overallAverage = broadsheetAverageNumbers(entered.map((sub) => sub.average));
+    const totalScore = Math.round(entered.reduce((sum, sub) => sum + sub.average, 0) * 100) / 100;
+    return {
+      ...l,
+      subjects:subjectScores,
+      total:entered.length ? totalScore : null,
+      average:overallAverage,
+      cbc:broadsheetCbcLevel(overallAverage),
+      subject_count:entered.length
+    };
+  });
+  rows.sort((a, b) => (b.average ?? -1) - (a.average ?? -1));
+  let rank = 0;
+  let lastAverage = null;
+  rows.forEach((r, i) => {
+    if (r.average === null || r.average === undefined) {
+      r.position = null;
+      return;
+    }
+    const value = Number(r.average);
+    if (value !== lastAverage) {
+      rank = i + 1;
+      lastAverage = value;
+    }
+    r.position = rank;
+  });
+
+  const school = {};
+  db.prepare("SELECT key, value FROM school_settings WHERE key IN ('school_name','school_motto','school_logo','school_address','school_phone','school_email')").all().forEach((row) => { school[row.key] = row.value; });
+
+  res.json({
+    success:true,
+    data:{
+      class:{ id:cls.id, name:cls.name },
+      term:{ id:term.id, term_name:term.term_name, session_name:term.session_name },
+      school,
+      subjects,
+      learners:rows,
+      cbc_levels:BROADSHEET_CBC_LEVELS
+    }
+  });
+});
+
 router.put('/profile', (req, res) => {
   const { name, email, phone } = req.body;
   getDB().prepare("UPDATE users SET name=?,email=?,phone=?,updated_at=datetime('now') WHERE id=?").run(name, email||null, phone||null, req.session.user.id);
