@@ -2468,7 +2468,8 @@ async function routeReportPreview({ resolve, to }){
 }
 
 async function loadReportLearners(classId, assessment='opener', termId=''){
-  const root = document.getElementById(`report-learners-${reportDomKey(classId, assessment, termId)}`);
+  const rootId = `report-learners-${reportDomKey(classId, assessment, termId)}`;
+  const root = document.querySelector(`.page-current #${rootId}`) || document.getElementById(rootId);
   const loadKey = `${assessment}:${termId || ''}`;
   if(!root || root.dataset.loaded === loadKey) return;
   root.dataset.loaded = loadKey;
@@ -2481,7 +2482,7 @@ async function loadReportLearners(classId, assessment='opener', termId=''){
     const initials = (name) => String(name || '?').split(/\s+/).map(s=>s[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
     // fresh selection state for this picker
     window._repSel = new Set();
-    window._repCtx = { classId, assessment, termId };
+    window._repCtx = { classId, assessment, termId, rootId };
     root.innerHTML = reportFilterBar(classId, null, assessment, termId) + `
       <div class="rep-list-head">
         <span>${learners.length} learner${learners.length===1?'':'s'}${learners.length ? ` &middot; ${ready} ready` : ''}</span>
@@ -2508,6 +2509,7 @@ async function loadReportLearners(classId, assessment='opener', termId=''){
         <button class="rep-build-btn" id="rep-build-btn" disabled onclick="repBuildReports()"><i class="fas fa-file-lines"></i> Build reports</button>
       </div>` : ''}
     `;
+    repUpdateBuildBar(root);
   }catch(err){
     root.dataset.loaded = '';
     root.innerHTML = reportFilterBar(classId, null, assessment, termId) +
@@ -2515,42 +2517,56 @@ async function loadReportLearners(classId, assessment='opener', termId=''){
   }
 }
 
-function repUpdateBuildBar(){
-  const sel = window._repSel || new Set();
+function repCurrentRoot(){
+  const ctx = window._repCtx || {};
+  if(ctx.rootId){
+    const scoped = document.querySelector(`.page-current #${ctx.rootId}`) || document.getElementById(ctx.rootId);
+    if(scoped) return scoped;
+  }
+  return document.querySelector('.view-main .page-current .d-content') ||
+         document.querySelector('.page-current .d-content');
+}
+function repSelectionFromRows(root = repCurrentRoot()){
+  const sel = new Set();
+  if(root){
+    root.querySelectorAll('.rep-learner-row.selected').forEach(row => {
+      const id = String(row.dataset.id || '');
+      if(id) sel.add(id);
+    });
+  }
+  window._repSel = sel;
+  return sel;
+}
+function repUpdateBuildBar(root = repCurrentRoot()){
+  const sel = repSelectionFromRows(root);
   const n = sel.size;
-  const countEl = document.getElementById('rep-sel-count');
-  const btnEl = document.getElementById('rep-build-btn');
-  const saEl = document.getElementById('rep-selectall');
+  const countEl = root ? root.querySelector('#rep-sel-count') : document.getElementById('rep-sel-count');
+  const btnEl = root ? root.querySelector('#rep-build-btn') : document.getElementById('rep-build-btn');
+  const saEl = root ? root.querySelector('#rep-selectall') : document.getElementById('rep-selectall');
   if(countEl) countEl.textContent = n;
   if(btnEl){
     btnEl.disabled = n === 0;
     btnEl.innerHTML = `<i class="fas fa-file-lines"></i> Build ${n ? n + ' ' : ''}report${n===1?'':'s'}`;
   }
   if(saEl){
-    const total = document.querySelectorAll('.rep-learner-row').length;
+    const total = root ? root.querySelectorAll('.rep-learner-row').length : 0;
     saEl.textContent = (total > 0 && n >= total) ? 'Clear all' : 'Select all';
   }
 }
 function repToggleLearner(el){
-  const id = String(el.dataset.id);
-  const sel = window._repSel || (window._repSel = new Set());
-  if(sel.has(id)){ sel.delete(id); el.classList.remove('selected'); }
-  else { sel.add(id); el.classList.add('selected'); }
-  repUpdateBuildBar();
+  const root = el.closest('.d-content') || repCurrentRoot();
+  el.classList.toggle('selected');
+  repUpdateBuildBar(root);
 }
 function repToggleAll(){
-  const sel = window._repSel || (window._repSel = new Set());
-  const rows = Array.from(document.querySelectorAll('.rep-learner-row'));
-  const allSelected = rows.length > 0 && rows.every(r => sel.has(String(r.dataset.id)));
-  rows.forEach(r => {
-    const id = String(r.dataset.id);
-    if(allSelected){ sel.delete(id); r.classList.remove('selected'); }
-    else { sel.add(id); r.classList.add('selected'); }
-  });
-  repUpdateBuildBar();
+  const root = repCurrentRoot();
+  const rows = Array.from(root ? root.querySelectorAll('.rep-learner-row') : []);
+  const allSelected = rows.length > 0 && rows.every(r => r.classList.contains('selected'));
+  rows.forEach(r => r.classList.toggle('selected', !allSelected));
+  repUpdateBuildBar(root);
 }
 function repBuildReports(){
-  const sel = window._repSel || new Set();
+  const sel = repSelectionFromRows();
   const ctx = window._repCtx || {};
   const n = sel.size;
   if(!n || !ctx.classId) return;
