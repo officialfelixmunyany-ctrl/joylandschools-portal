@@ -1,0 +1,14 @@
+{
+  "id": "/app/",
+  "name": "Daraja - School Portal",
+  "short_name": "Daraja",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "background_color": "#0f2419",
+  "theme_color": "#1B5E20",
+  "icons": [
+    { "src": "/uploads/school/logo.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any maskable" },
+    { "src": "/uploads/school/logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,2768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Template Editor — JOYLAND SCHOOLS</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --sidebar:#0d2818;--gold:#FFC107;--gold2:#F9A825;
+  --green:#1B5E20;--green2:#2E7D32;--green3:#43A047;
+  --white:#fff;--gray:#f4f6f9;--text:#2d3748;--muted:#718096;
+  --border:#e2e8f0;--danger:#e53e3e;--success:#38a169;--info:#3182ce;
+  --shadow:0 4px 20px rgba(0,0,0,0.08);
+  --tc:#d4147a;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Poppins',sans-serif;background:#1a1a2e;color:var(--text);}
+
+/* ═══ SHELL ═══ */
+.te-shell{display:flex;height:100vh;overflow:hidden;}
+
+/* ═══ LEFT PANEL ═══ */
+.te-left{width:400px;min-width:400px;background:var(--white);display:flex;flex-direction:column;border-right:1px solid var(--border);z-index:10;box-shadow:2px 0 20px rgba(0,0,0,0.08);}
+.te-header{padding:14px 20px;background:linear-gradient(135deg,var(--green),var(--green2));color:var(--white);display:flex;align-items:center;justify-content:space-between;}
+.te-header h1{font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px;}
+.te-header h1 i{font-size:18px;color:var(--gold);}
+.te-back{background:rgba(255,255,255,0.15);border:none;color:var(--white);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;display:flex;align-items:center;gap:6px;transition:.2s;}
+.te-back:hover{background:rgba(255,255,255,0.25);}
+
+.te-topline{padding:12px 18px;border-bottom:1px solid var(--border);background:#f8fafc;}
+.te-topline label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;display:block;}
+.te-topline-row{display:flex;gap:6px;}
+.te-topline select{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);outline:none;}
+.te-topline select:focus{border-color:var(--green3);}
+
+.te-tabs{display:flex;border-bottom:1px solid var(--border);background:#fafbfc;}
+.te-tab{flex:1;padding:11px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.te-tab:hover{color:var(--text);}
+.te-tab.active{color:var(--green2);border-bottom-color:var(--green2);}
+
+.te-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;}
+.te-tab-pane{display:none;padding:14px 18px;}
+.te-tab-pane.active{display:block;}
+
+/* Section rows */
+.te-section-row{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.te-section-label{font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:7px;}
+.sec-num{background:var(--green2);color:var(--white);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.te-section-controls{display:flex;gap:6px;align-items:center;}
+.te-model-select{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);outline:none;background:var(--white);}
+.te-model-select:focus{border-color:var(--green3);}
+.te-customize-btn{padding:7px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#6b46c1,#805ad5);color:var(--white);transition:.2s;white-space:nowrap;}
+.te-customize-btn:hover{opacity:.9;transform:translateY(-1px);}
+.te-customize-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* Other settings */
+.te-setting-group{margin-bottom:18px;}
+.te-setting-group h4{font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;}
+.te-setting-group h4 i{color:var(--green3);font-size:13px;}
+.te-field{margin-bottom:12px;}
+.te-field label{display:block;font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+.te-field input[type=text],.te-field input[type=number],.te-field select,.te-field textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--text);outline:none;}
+.te-field input:focus,.te-field select:focus,.te-field textarea:focus{border-color:var(--green3);box-shadow:0 0 0 3px rgba(67,160,71,0.08);}
+.te-field textarea{resize:vertical;min-height:50px;}
+
+.te-color-row{display:flex;align-items:center;gap:8px;}
+.te-color-preview{width:32px;height:32px;border-radius:7px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;}
+.te-color-input{width:0;height:0;opacity:0;position:absolute;}
+.te-color-hex{flex:1;}
+.te-color-swatches{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.te-swatch{width:26px;height:26px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:.15s;}
+.te-swatch:hover{transform:scale(1.15);}
+.te-swatch.active{border-color:var(--text);box-shadow:0 0 0 2px var(--white),0 0 0 4px var(--text);}
+
+.te-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;cursor:pointer;transition:.15s;font-size:12px;}
+.te-toggle:hover{border-color:var(--green3);}
+.te-toggle span{font-weight:500;}
+.te-switch{width:36px;height:20px;background:#cbd5e0;border-radius:10px;position:relative;transition:.2s;flex-shrink:0;}
+.te-switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--white);border-radius:50%;transition:.2s;}
+.te-toggle.on .te-switch{background:var(--green3);}
+.te-toggle.on .te-switch::after{left:18px;}
+
+.te-image-upload{border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:.2s;position:relative;overflow:hidden;}
+.te-image-upload:hover{border-color:var(--green3);background:#f0fff4;}
+.te-image-upload img{max-width:100%;max-height:100px;border-radius:4px;}
+.te-image-upload input[type=file]{display:none;}
+.te-image-upload .placeholder{color:var(--muted);font-size:11px;}
+.te-image-upload .placeholder i{font-size:24px;display:block;margin-bottom:4px;}
+
+/* Save bar */
+.te-save-bar{padding:12px 18px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:8px;}
+.te-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'Poppins',sans-serif;transition:.2s;}
+.te-btn:hover{transform:translateY(-1px);}
+.te-btn-primary{background:linear-gradient(135deg,var(--green2),var(--green3));color:var(--white);flex:1;justify-content:center;}
+.te-btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--muted);}
+.te-btn-gold{background:linear-gradient(135deg,var(--gold2),var(--gold));color:var(--green);}
+.te-btn-danger{background:linear-gradient(135deg,#c53030,#e53e3e);color:var(--white);}
+.te-btn-sm{padding:6px 10px;font-size:11px;}
+.te-btn-purple{background:linear-gradient(135deg,#6b46c1,#805ad5);color:var(--white);}
+
+/* ═══ RIGHT PANEL ═══ */
+.te-right{flex:1;display:flex;align-items:flex-start;justify-content:center;background:#1a1a2e;overflow:auto;padding:74px 30px 30px;position:relative;}
+.te-preview-tools{position:absolute;top:18px;right:24px;z-index:20;display:flex;align-items:center;gap:6px;background:rgba(15,23,42,.86);border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 24px rgba(0,0,0,.24);border-radius:9px;padding:6px;backdrop-filter:blur(8px);}
+.te-preview-fit-btn{border:none;border-radius:6px;background:transparent;color:#d8e1ee;font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;padding:6px 9px;cursor:pointer;white-space:nowrap;}
+.te-preview-fit-btn.active{background:#fff;color:#122034;}
+.te-preview-scale-note{font-size:10px;font-weight:700;color:#aebbd0;min-width:42px;text-align:right;}
+.te-preview-shell{
+  --template-preview-a4-width:1500px;
+  --template-preview-a4-height:2121px;
+  --template-theme-color:var(--tc);
+  --template-theme-soft:rgba(212,20,122,0.11);
+  --template-theme-soft-strong:rgba(212,20,122,0.2);
+  box-sizing:border-box;
+  width:var(--template-preview-a4-width);
+  min-width:var(--template-preview-a4-width);
+  height:var(--template-preview-a4-height);
+  min-height:var(--template-preview-a4-height);
+  background:var(--white);border-radius:0;box-shadow:0 10px 60px rgba(0,0,0,0.4);
+  position:relative;overflow:hidden;background-size:cover;background-position:center;
+  padding:43px 43px 32px;transform-origin:top center;
+}
+
+/* ═══ PREVIEW STYLES ═══ */
+.tp-page,.template-preview-report{position:relative;height:100%;min-height:0;display:flex;flex-direction:column;transform-origin:top left;font-family:Calibri,Arial,sans-serif;}
+.template-preview-report>*:not(.template-preview-background){position:relative;z-index:1;}
+.template-preview-background{position:absolute;inset:0;z-index:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.template-preview-background[hidden]{display:none;}
+.template-preview-background img{max-width:100%;max-height:100%;object-fit:contain;opacity:.16;}
+.template-preview-section{min-width:0;flex:0 0 auto;}
+.template-preview-model{display:block;}
+.template-preview-combined{min-width:0;flex:0 0 auto;}
+.template-preview-combined-s2 .template-preview-model--model_1{grid-template-columns:var(--s2-personal-col,minmax(0,1.18fr)) var(--s2-avatar-col,92px) var(--s2-attendance-col,minmax(0,1.06fr)) var(--s2-score-col,minmax(0,.72fr));gap:var(--s2-grid-gap,6px);align-items:start;display:grid;}
+.template-preview-combined-s2 .template-preview-model--model_3{grid-template-columns:var(--s2-personal-col,minmax(0,1.15fr)) var(--s2-attendance-col,minmax(0,.98fr)) var(--s2-score-col,minmax(0,.82fr)) var(--s2m3-avatar-col,106px);gap:var(--s2-grid-gap,5px);align-items:start;display:grid;}
+.template-preview-title{margin:var(--result-title-margin,16px 0 14px);text-align:center;font-size:var(--result-title-size,1.34rem);line-height:var(--result-title-line-height,1.15);font-weight:800;text-transform:uppercase;color:#111827;}
+.template-preview-box{border:2px solid var(--template-theme-color);background:#fff;}
+.template-preview-header{display:grid;align-items:center;background:var(--template-theme-soft);position:relative;}
+.template-preview-logo{width:var(--s1-logo-size,124px);height:var(--s1-logo-size,124px);border:1px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;grid-column:1;grid-row:1;z-index:2;}
+.template-preview-logo img{width:100%;height:100%;object-fit:contain;}
+.template-preview-logo-fallback{font-size:.78rem;font-weight:800;color:#0f172a;text-align:center;letter-spacing:.06em;}
+.template-preview-school{text-align:center;color:#111827;grid-column:1/-1;grid-row:1;width:100%;box-sizing:border-box;padding:var(--s1-text-top-pad,20px) var(--s1-school-text-pad,210px) var(--s1-text-bottom-pad,30px);justify-self:center;align-self:start;position:absolute;inset:var(--s1-text-inset,0);}
+.template-preview-school-name{font-size:var(--s1-school-name-size,1.86rem);line-height:var(--s1-school-name-line-height,1.04);font-weight:800;text-transform:uppercase;letter-spacing:.01em;}
+.template-preview-school-meta{margin-top:var(--s1-name-meta-gap,14px);font-size:var(--s1-school-meta-size,.98rem);line-height:var(--s1-school-meta-line-height,1.22);font-weight:700;display:flex;flex-direction:column;gap:var(--s1-meta-row-gap,14px);}
+.template-preview-section--section_1 .template-preview-header{height:var(--s1-section-height,214px);min-height:var(--s1-section-height,214px);}
+.template-preview-s1m3-header{height:var(--s1-section-height,214px);min-height:var(--s1-section-height,214px);}
+.template-preview-section--section_1 .template-preview-model--model_1 .template-preview-header{grid-template-columns:var(--s1-grid-logo-col,144px) minmax(0,1fr);padding:var(--s1-pad-y,12px) var(--s1-pad-x,16px);}
+.template-preview-section--section_1 .template-preview-model--model_2 .template-preview-header{grid-template-columns:var(--s1-grid-logo-col,144px) minmax(0,1fr);padding:var(--s1-pad-y-model2,14px) var(--s1-pad-x-model2,18px);border-width:0;background:var(--template-theme-soft-strong);}
+.template-preview-section--section_1 .template-preview-model--model_2 .template-preview-logo{width:var(--s1-logo-size-model2,var(--s1-logo-size,124px));height:var(--s1-logo-size-model2,var(--s1-logo-size,124px));}
+.template-preview-section--section_1 .template-preview-model--model_2 .template-preview-school{inset:0;}
+.template-preview-s1m3-header{display:grid;grid-template-columns:minmax(0,1fr) var(--s1m3-logo-size,172px) minmax(0,1fr);align-items:stretch;gap:var(--s1m3-gap,10px);padding:0;background:var(--template-theme-soft-strong);overflow:hidden;}
+.template-preview-s1m3-side{padding:var(--s1-text-top-pad,12px) var(--s1m3-side-pad-x,14px) var(--s1-text-bottom-pad,30px);text-align:center;color:#111827;}
+.template-preview-s1m3-logo{width:var(--s1m3-logo-size,172px);height:var(--s1m3-logo-size,172px);align-self:center;justify-self:center;display:grid;place-items:center;background:#fff;}
+.template-preview-s1m3-logo img{width:100%;height:100%;object-fit:cover;}
+.template-preview-s1m3-school-name{font-size:var(--s1m3-name-size,1.04rem);line-height:var(--s1-school-name-line-height,1.12);font-weight:800;text-transform:uppercase;}
+.template-preview-s1m3-meta{margin-top:var(--s1-name-meta-gap,14px);font-size:var(--s1m3-meta-size,.84rem);line-height:var(--s1-school-meta-line-height,1.22);font-weight:700;display:flex;flex-direction:column;gap:var(--s1-meta-row-gap,14px);}
+.template-preview-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--table-font-size,.9rem);line-height:var(--table-line-height,1.08);color:#111827;}
+.template-preview-table th,.template-preview-table td{box-sizing:border-box;border:var(--table-border-width,2px) solid var(--template-theme-color);height:var(--table-row-height,auto);padding:var(--table-cell-pad-y,3px) var(--table-cell-pad-x,4px);vertical-align:middle;word-break:normal;overflow-wrap:break-word;hyphens:auto;}
+.template-preview-table th{font-weight:800;background:var(--template-theme-soft);text-transform:uppercase;}
+.template-preview-table .template-preview-subhead{background:#fff;font-size:var(--table-small-font-size,.76rem);font-weight:800;line-height:var(--table-line-height,1.08);}
+.template-preview-section--section_2{font-size:var(--s2-font-size,.92rem);}
+.template-preview-section--section_2 .template-preview-model--model_1{grid-template-columns:var(--s2-personal-col,minmax(0,1.18fr)) var(--s2-avatar-col,92px) var(--s2-attendance-col,minmax(0,1.06fr)) var(--s2-score-col,minmax(0,.72fr));gap:var(--s2-grid-gap,6px);align-items:start;display:grid;}
+.template-preview-section--section_2 .template-preview-model--model_3{grid-template-columns:minmax(0,1.15fr) minmax(0,.98fr) minmax(0,.82fr) var(--s2m3-avatar-col,106px);gap:var(--s2-grid-gap,5px);align-items:start;display:grid;}
+.template-preview-section--section_2 .template-preview-model--model_4{grid-template-columns:var(--s2-personal-col,minmax(0,1.18fr)) var(--s2-attendance-col,minmax(0,1.06fr)) var(--s2-score-col,minmax(0,.72fr));gap:var(--s2-grid-gap,6px);align-items:start;display:grid;}
+.template-preview-personal td:first-child{width:var(--s2-personal-label-width,28%);font-weight:800;}
+.template-preview-personal td:last-child{font-weight:600;}
+.template-preview-personal th,.template-preview-personal td,.template-preview-attendance th,.template-preview-attendance td,.template-preview-scorecard th,.template-preview-scorecard td,.template-preview-scorecard-bottom th,.template-preview-scorecard-bottom td{padding:var(--s2-cell-pad-y,var(--table-cell-pad-y,3px)) var(--s2-cell-pad-x,var(--table-cell-pad-x,4px));}
+.template-preview-personal td,.template-preview-attendance td,.template-preview-scorecard td,.template-preview-scorecard-bottom td{line-height:var(--table-line-height,1.08);}
+.template-preview-attendance th,.template-preview-attendance td,.template-preview-scorecard th,.template-preview-scorecard td{text-align:center;}
+.template-preview-attendance:not(.template-preview-s2m1-duration) tr:nth-child(2)>th,.template-preview-scorecard tr{height:var(--table-wrap-row-height,var(--table-row-height,auto));}
+.template-preview-attendance .template-preview-subhead{text-transform:none;}
+.template-preview-table .template-preview-subhead{font-size:var(--s2-subhead-font-size,var(--table-small-font-size,.76rem));}
+.template-preview-scorecard td:first-child{text-transform:uppercase;width:var(--s2-score-label-width,74%);font-size:var(--s2-score-label-size,.8rem);font-weight:800;color:#2a2a2a;}
+.template-preview-scorecard td:last-child,.template-preview-scorecard-bottom td{font-size:var(--s2-score-value-size,.86rem);font-weight:600;}
+.template-preview-scorecard-bottom{margin-top:var(--s2-mini-gap,3px);}
+.template-preview-scorecard-bottom tr,.template-preview-scorecard-bottom td{text-align:center;font-weight:600;height:var(--table-row-height,auto);}
+.template-preview-avatar{width:var(--s2-avatar-w,92px);height:var(--s2-avatar-h,138px);display:flex;align-items:center;justify-content:center;background:#fff;align-self:center;justify-self:center;}
+.template-preview-avatar--placeholder{visibility:hidden;}
+.template-preview-avatar img{width:100%;height:100%;object-fit:contain;display:block;}
+.template-preview-avatar i{font-size:2rem;color:#cbd5e1;}
+.template-preview-s2m2-grid,.template-preview-s2m5-grid,.template-preview-s2m10-grid{display:grid;grid-template-columns:minmax(0,.98fr) minmax(0,.98fr) minmax(0,.92fr);gap:var(--s2-inline-grid-gap,8px);align-items:start;margin:var(--s2-inline-margin,2px 0 4px);}
+.template-preview-s2m5-grid{grid-template-columns:minmax(0,.98fr) minmax(0,.98fr) minmax(0,.92fr) var(--s2m5-avatar-col,116px);}
+.template-preview-s2m10-grid{grid-template-columns:minmax(0,.92fr) minmax(0,1fr) var(--s2m10-avatar-col,136px);}
+.template-preview-s2m6-grid,.template-preview-s2m8-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,.84fr);gap:var(--s2-inline-wide-gap,18px);margin:var(--s2-wide-margin,8px 10px 10px);}
+.template-preview-s2m7-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,.8fr) var(--s2m7-avatar-col,126px);gap:var(--s2-inline-wide-gap,14px);margin:var(--s2-wide-margin,6px 8px 10px);align-items:start;}
+.template-preview-s2m9-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) var(--s2m9-avatar-col,136px);gap:var(--s2-inline-wide-gap,14px);margin:var(--s2-wide-margin,12px 14px 16px);align-items:start;}
+.template-preview-combined-s2 .template-preview-s2m2-grid,.template-preview-combined-s2 .template-preview-s2m5-grid,.template-preview-combined-s2 .template-preview-s2m6-grid,.template-preview-combined-s2 .template-preview-s2m7-grid,.template-preview-combined-s2 .template-preview-s2m8-grid,.template-preview-combined-s2 .template-preview-s2m9-grid,.template-preview-combined-s2 .template-preview-s2m10-grid{margin-top:0;}
+.template-preview-s2m2-column,.template-preview-s2m5-column,.template-preview-s2m6-column,.template-preview-s2m7-column,.template-preview-s2m8-column,.template-preview-s2m9-column,.template-preview-s2m10-column{min-width:0;display:flex;flex-direction:column;gap:var(--s2-row-gap,6px);}
+.template-preview-s2m2-row,.template-preview-s2m5-row,.template-preview-s2m6-row,.template-preview-s2m7-row,.template-preview-s2m8-row,.template-preview-s2m9-row,.template-preview-s2m10-row{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:var(--s2-row-label-gap,8px);align-items:center;min-height:var(--table-row-height,auto);line-height:var(--table-line-height,1.08);}
+.template-preview-s2m2-label,.template-preview-s2m5-label,.template-preview-s2m6-label,.template-preview-s2m7-label,.template-preview-s2m8-label,.template-preview-s2m9-label,.template-preview-s2m10-label{font-size:var(--s2-inline-label-size,.82rem);font-weight:800;text-transform:uppercase;color:#111827;white-space:nowrap;}
+.template-preview-s2m2-label::after,.template-preview-s2m5-label::after,.template-preview-s2m6-label::after,.template-preview-s2m7-label::after,.template-preview-s2m8-label::after,.template-preview-s2m9-label::after,.template-preview-s2m10-label::after{content:":";}
+.template-preview-s2m2-value,.template-preview-s2m5-value,.template-preview-s2m6-value,.template-preview-s2m7-value,.template-preview-s2m8-value,.template-preview-s2m9-value,.template-preview-s2m10-value{font-size:var(--s2-inline-value-size,.82rem);font-weight:700;color:#111827;min-width:0;}
+.template-preview-s2m2-column--score .template-preview-s2m2-row,.template-preview-s2m5-column--score .template-preview-s2m5-row{grid-template-columns:max-content 46px;gap:12px;}
+.template-preview-s2m2-column--score .template-preview-s2m2-value,.template-preview-s2m5-column--score .template-preview-s2m5-value{text-align:right;}
+.template-preview-s2m5-avatar{width:var(--s2m5-avatar-w,116px);height:var(--s2m5-avatar-h,146px);}
+.template-preview-s2m7-avatar{width:var(--s2m7-avatar-w,126px);height:var(--s2m7-avatar-h,150px);}
+.template-preview-s2m9-avatar,.template-preview-s2m10-avatar{width:var(--s2m9-avatar-w,136px);height:var(--s2m9-avatar-h,158px);}
+.template-preview-academic,.template-preview-grade{margin-top:var(--section-gap,12px);}
+.template-preview-academic .template-preview-table{font-size:var(--academic-font-size,var(--table-font-size,.74rem));table-layout:fixed;width:100%;}
+.template-preview-academic .template-preview-table th,.template-preview-academic .template-preview-table td{text-align:center;vertical-align:middle;padding:var(--academic-cell-pad-y,2px) 2px;overflow:hidden;text-overflow:clip;line-height:var(--academic-line-height,1.12);}
+.template-preview-academic .template-preview-table td:first-child{text-align:left;font-weight:700;white-space:normal;overflow:hidden;line-height:1.1;}
+.template-preview-academic .template-preview-table th.template-preview-academic-title{text-align:center;background:var(--template-theme-soft-strong);font-size:var(--academic-title-font-size,.84rem);letter-spacing:.015em;height:var(--academic-title-row-height,auto);font-weight:900;}
+.template-preview-academic .template-preview-table th.template-preview-academic-subject{text-align:center;font-size:var(--academic-subject-header-font-size,var(--academic-font-size,var(--table-font-size,.74rem)));line-height:1.04;background:var(--template-theme-soft);font-weight:900;}
+.template-preview-academic .template-preview-table th.template-preview-academic-main{font-size:var(--academic-main-font-size,.58rem);line-height:1.07;background:var(--template-theme-soft);text-align:center;padding:calc(var(--academic-header-pad-y,1px) + 1px) 1px;white-space:normal;word-break:normal;overflow-wrap:break-word;font-weight:900;}
+.template-preview-academic .template-preview-table th.template-preview-academic-mark{background:#fff;font-size:var(--academic-mark-font-size,.72rem);line-height:1;text-align:center;padding:calc(var(--academic-header-pad-y,1px) + 1px) 1px;font-weight:900;}
+.template-preview-academic .template-preview-table tr:nth-child(2)>th{height:var(--academic-header-main-row-height,auto);}
+.template-preview-academic .template-preview-table tr:nth-child(3)>th{height:var(--academic-mark-row-height,auto);}
+.template-preview-academic .template-preview-table tr.template-preview-academic-subject-row td{height:var(--academic-body-row-height,auto);}
+.template-preview-academic .template-preview-table tr.template-preview-total-row td{height:var(--academic-total-row-height,auto);}
+.template-preview-academic .template-preview-table td[data-s3-col="remarks"],.template-preview-academic .template-preview-table td[data-s3-col="descriptor"]{font-size:var(--academic-remarks-font-size,.56rem);line-height:1.08;font-weight:700;white-space:normal;}
+.template-preview-academic .template-preview-table tr.template-preview-total-row td{font-weight:800;background:var(--template-theme-soft);}
+.template-preview-academic-col-score{width:5.2%;}
+.template-preview-academic-col-meta{width:6.8%;}
+.template-preview-academic-model2 .template-preview-academic-summary-row td{background:#fff;font-size:var(--academic-font-size,var(--table-font-size,.74rem));font-weight:800;text-align:left;}
+.template-preview-grade .template-preview-table{font-size:var(--table-font-size,.78rem);}
+.template-preview-grade .template-preview-table th,.template-preview-grade .template-preview-table td{text-align:center;font-weight:700;}
+.template-preview-skills{margin-top:var(--skills-margin-top,12px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--skills-grid-gap,10px);}
+.template-preview-skills-side{min-width:0;display:grid;align-content:start;gap:var(--skills-table-gap,6px);}
+.template-preview-skills .template-preview-table{font-size:var(--skills-font-size,.72rem);table-layout:fixed;width:100%;}
+.template-preview-skills-table th,.template-preview-skills-table td{box-sizing:border-box;height:var(--skills-row-height,var(--table-row-height,auto));line-height:var(--skills-line-height,1.16);padding:var(--skills-cell-pad-y,3px) var(--skills-cell-pad-x,4px);overflow:hidden;}
+.template-preview-skills-table td:first-child,.template-preview-skills-table th:first-child{text-align:left;width:auto;overflow:hidden;text-overflow:ellipsis;}
+.template-preview-skills-text{display:-webkit-box;-webkit-line-clamp:var(--skills-line-clamp,2);-webkit-box-orient:vertical;overflow:hidden;line-height:var(--skills-line-height,1.16);max-height:calc(var(--skills-row-height,var(--table-row-height,30px)) - (var(--skills-cell-pad-y,3px) * 2));}
+.template-preview-skills-table th:first-child{font-size:var(--skills-category-font-size,.72rem);font-weight:900;}
+.template-preview-skills-table th:not(:first-child),.template-preview-skills-table td:not(:first-child){width:var(--skills-rating-col-width,26px);min-width:0;text-align:center;padding:var(--skills-cell-pad-y,3px) 1px;font-size:var(--skills-rating-font-size,.72rem);font-weight:800;}
+.template-preview-skills-table th.template-preview-skills-category{text-align:center;text-transform:uppercase;background:var(--template-theme-soft);}
+.template-preview-skills-table td:first-child{font-weight:650;}
+.template-preview-rating-key{width:340px;margin-top:var(--skills-rating-key-margin,10px);margin-left:0;border:2px solid var(--template-theme-color);}
+.template-preview-rating-key--blank{width:100%;margin-top:var(--skills-rating-key-margin,10px);align-self:start;table-layout:fixed;}
+.template-preview-rating-key th,.template-preview-rating-key td{padding:var(--skills-key-pad-y,5px) 10px;}
+.template-preview-rating-key th{text-align:center;font-size:var(--skills-key-head-size,.82rem);font-weight:900;background:var(--template-theme-soft-strong);letter-spacing:.02em;}
+.template-preview-rating-key td{text-align:center;font-size:var(--skills-key-font-size,.78rem);font-weight:800;line-height:1.16;background:rgba(255,255,255,.86);}
+.template-preview-rating-key .rating-key-score{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:20px;border-radius:999px;background:var(--template-theme-soft);font-weight:900;margin-right:4px;}
+.template-preview-comments{margin-top:var(--comment-margin-top,14px);display:grid;grid-template-columns:minmax(0,1fr) 185px;gap:0;align-items:stretch;border:2px solid var(--template-theme-color);overflow:hidden;}
+.template-preview-comments--no-stamp{grid-template-columns:minmax(0,1fr);}
+.template-preview-comments-box{padding:8px 10px;min-width:0;overflow:hidden;}
+.template-preview-comment-row{box-sizing:border-box;display:grid;grid-template-columns:var(--comment-grid,285px minmax(0,1fr) 46px 150px 42px 90px);gap:var(--comment-gap,9px);align-items:center;min-height:var(--comment-row-height,42px);padding:var(--comment-row-pad-y,0) 0;font-size:var(--comment-font-size,.75rem);color:#111827;overflow:hidden;}
+.template-preview-comment-row+.template-preview-comment-row{border-top:1px solid #d1d5db;}
+.template-preview-comment-label{min-width:0;font-weight:800;line-height:1.08;overflow:hidden;}
+.template-preview-comment-text{min-width:0;font-weight:650;line-height:1.22;display:-webkit-box;-webkit-line-clamp:var(--comment-line-clamp,2);-webkit-box-orient:vertical;overflow:hidden;}
+.template-preview-sign-line{border-bottom:2px solid #9ca3af;height:16px;}
+.template-preview-comment-date,.template-preview-comment-sign,.template-preview-comment-date-value{min-width:0;white-space:nowrap;font-weight:800;overflow:hidden;}
+.template-preview-stamp-panel{border-left:2px solid var(--template-theme-color);padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:100%;background:#fff;}
+.template-preview-stamp-title{font-size:.66rem;font-weight:900;text-transform:uppercase;text-align:center;margin-bottom:6px;color:#111827;}
+.template-preview-promotion-status{margin:6px 0 0;font-size:.76rem;font-weight:900;text-align:center;color:#111827;text-transform:uppercase;}
+.template-preview-stamp{margin:0 auto;width:100%;min-height:78px;display:flex;align-items:center;justify-content:center;}
+.template-preview-stamp[hidden]{display:none;}
+.template-preview-stamp img{max-width:165px;max-height:112px;object-fit:contain;}
+.template-preview-stamp-oval{width:146px;height:84px;border:3px solid #1a3a6b;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px 13px;position:relative;opacity:.78;background:rgba(26,58,107,.035);}
+.template-preview-stamp-oval::before{content:'';position:absolute;inset:3px;border:1.5px solid #1a3a6b;border-radius:50%;}
+.template-preview-stamp-oval .stamp-name{font-size:.52rem;font-weight:900;text-transform:uppercase;color:#1a3a6b;letter-spacing:.03em;line-height:1.1;}
+.template-preview-stamp-oval .stamp-sub{font-size:.38rem;font-weight:700;text-transform:uppercase;color:#1a3a6b;letter-spacing:.02em;margin-top:1px;}
+.template-preview-stamp-oval .stamp-line{width:60%;height:0;border-top:1.5px solid #1a3a6b;margin:2px auto;}
+.template-preview-footer-note{margin-top:10px;font-size:.68rem;text-align:center;color:#6b7280;letter-spacing:.04em;text-transform:uppercase;}
+
+/* S1: Header */
+.tp-header{text-align:center;padding:14px 0 10px;border-bottom:3px solid var(--tc);}
+.tp-header-inner{display:flex;align-items:center;justify-content:center;gap:14px;}
+.tp-logo{width:65px;height:65px;border-radius:50%;background:#f0f0f0;border:3px solid var(--tc);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.tp-logo img{width:100%;height:100%;object-fit:cover;}
+.tp-logo i{font-size:26px;color:var(--tc);}
+.tp-school-name{font-size:20px;font-weight:800;color:var(--tc);text-transform:uppercase;letter-spacing:.5px;}
+.tp-school-meta{font-size:10px;color:var(--muted);margin-top:2px;}
+.tp-school-motto{font-size:10px;color:var(--tc);font-style:italic;margin-top:1px;}
+.tp-report-title{font-size:13px;font-weight:700;color:var(--text);margin-top:6px;text-transform:uppercase;letter-spacing:.4px;}
+
+/* S2: Student */
+.tp-student{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;padding:10px 0;border-bottom:2px solid var(--tc);font-size:11px;}
+.tp-student-row{display:flex;justify-content:space-between;padding:3px 6px;background:#fafafa;border-radius:3px;}
+.tp-student-row span{color:var(--muted);}
+.tp-student-row strong{color:var(--text);}
+.tp-student-photo{width:65px;height:80px;background:#f0f0f0;border:2px solid var(--tc);border-radius:4px;display:flex;align-items:center;justify-content:center;grid-row:span 4;}
+.tp-student-photo i{font-size:24px;color:#ccc;}
+.tp-attendance-box{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px;font-size:10px;text-align:center;}
+.tp-att-item{background:#f8f8f8;border-radius:3px;padding:4px;}
+.tp-att-item .val{font-weight:700;font-size:13px;color:var(--text);}
+.tp-att-item .lbl{color:var(--muted);font-size:9px;}
+
+/* S3: Academic */
+.tp-academic{padding:10px 0;}
+.tp-academic h3{font-size:12px;font-weight:700;color:var(--tc);margin-bottom:6px;text-transform:uppercase;}
+.tp-table{width:100%;border-collapse:collapse;font-size:10px;}
+.tp-table th{background:var(--tc);color:var(--white);padding:5px 6px;text-align:center;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.2px;}
+.tp-table th:first-child{text-align:left;}
+.tp-table td{padding:4px 6px;border-bottom:1px solid #eee;text-align:center;font-size:10px;}
+.tp-table td:first-child{text-align:left;font-weight:500;}
+.tp-table tr:nth-child(even){background:#fafafa;}
+.tp-table .total-row{background:#f0f0f0;font-weight:700;}
+
+/* S4: Grade */
+.tp-grade{padding:8px 0;border-top:2px solid var(--tc);}
+.tp-grade h3{font-size:11px;font-weight:700;color:var(--tc);margin-bottom:4px;text-transform:uppercase;}
+.tp-grade-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;font-size:9px;}
+.tp-grade-item{display:flex;justify-content:space-between;padding:3px 6px;background:#f8f8f8;border-radius:2px;border-left:3px solid var(--tc);}
+.tp-grade-item span{font-weight:700;color:var(--tc);}
+.tp-grade-horiz{display:flex;gap:5px;flex-wrap:wrap;font-size:9px;}
+.tp-grade-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;background:#f8f8f8;border-radius:3px;border:1px solid #eee;}
+.tp-grade-chip strong{color:var(--tc);}
+
+/* S5: Skills */
+.tp-skills{padding:8px 0;border-top:2px solid var(--tc);}
+.tp-skills h3{font-size:11px;font-weight:700;color:var(--tc);margin-bottom:4px;text-transform:uppercase;}
+.tp-skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.tp-skills-table{width:100%;border-collapse:collapse;font-size:9px;}
+.tp-skills-table caption{text-align:left;font-weight:700;font-size:10px;color:var(--text);padding-bottom:3px;}
+.tp-skills-table th{background:var(--tc);color:var(--white);padding:4px 5px;font-size:8px;text-transform:uppercase;}
+.tp-skills-table td{padding:3px 5px;border-bottom:1px solid #eee;text-align:center;font-size:9px;}
+.tp-skills-table td:first-child{text-align:left;}
+.tp-rating{width:12px;height:12px;border-radius:50%;border:2px solid var(--tc);display:inline-block;vertical-align:middle;}
+.tp-rating.filled{background:var(--tc);}
+
+/* S6: Comments */
+.tp-comments{padding:10px 0;border-top:2px solid var(--tc);}
+.tp-comment-row{margin-bottom:8px;}
+.tp-comment-label{font-size:10px;font-weight:700;color:var(--tc);text-transform:uppercase;margin-bottom:3px;}
+.tp-comment-text{font-size:11px;color:var(--text);min-height:16px;border-bottom:1px dotted #ccc;padding:3px 0;font-style:italic;}
+.tp-comment-sign{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--muted);}
+.tp-comment-sign span{border-top:1px solid #999;padding-top:2px;min-width:100px;text-align:center;}
+
+.tp-promotion{text-align:center;padding:10px 0;border-top:2px solid var(--tc);margin-top:6px;}
+.tp-promotion-text{font-size:13px;font-weight:700;color:var(--tc);}
+.tp-stamp{text-align:center;margin-top:6px;}
+.tp-stamp-box{width:55px;height:55px;border:2px solid var(--tc);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;overflow:hidden;}
+.tp-stamp-box i{font-size:22px;color:var(--tc);}
+.tp-stamp-box img{width:100%;height:100%;object-fit:cover;}
+.tp-footer{text-align:center;padding:6px 0;font-size:8px;color:var(--muted);border-top:1px solid #eee;margin-top:10px;}
+
+/* ═══ MODAL ═══ */
+.te-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.te-modal-overlay.show{display:flex;}
+.te-modal{background:var(--white);border-radius:16px;max-width:600px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:teSlideUp .2s ease;}
+.te-modal.wide{max-width:800px;}
+@keyframes teSlideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.te-modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1;border-radius:16px 16px 0 0;}
+.te-modal-header h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.te-modal-header h3 i{color:var(--green3);}
+.te-modal-close{background:var(--gray);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+.te-modal-close:hover{background:var(--border);}
+.te-modal-body{padding:18px 22px;}
+.te-modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+/* Toast */
+.te-toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--white);padding:12px 18px;border-radius:10px;font-size:12px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:.3s;display:flex;align-items:center;gap:8px;max-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.2);}
+.te-toast.show{transform:translateY(0);opacity:1;}
+.te-toast.success{background:#276749;}
+.te-toast.error{background:#c53030;}
+
+/* ═══ PRINT / PDF STYLES ═══ */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;}
+  html,body{width:210mm!important;height:297mm!important;margin:0!important;padding:0!important;background:#fff!important;overflow:hidden!important;}
+  .te-shell{display:block!important;width:210mm!important;height:297mm!important;overflow:hidden!important;}
+  .te-left,.te-topbar,.te-toast,.te-preview-tools,header,nav,.te-btn,.te-bottom-bar{display:none!important;}
+  .te-right{display:block!important;width:210mm!important;height:297mm!important;padding:0!important;overflow:hidden!important;background:#fff!important;}
+  .te-preview-shell{
+    transform:scale(.529)!important;transform-origin:top left!important;
+    width:1500px!important;min-width:1500px!important;height:2121px!important;min-height:2121px!important;
+    margin:0!important;box-shadow:none!important;border-radius:0!important;background:#fff!important;overflow:hidden!important;
+    break-inside:avoid!important;page-break-inside:avoid!important;break-after:avoid!important;page-break-after:avoid!important;
+  }
+  .tp-page,.template-preview-report{break-inside:avoid!important;page-break-inside:avoid!important;}
+  .template-preview-background img{opacity:.12!important;}
+  @page{size:A4 portrait;margin:0;}
+}
+
+@media(max-width:1100px){.te-left{width:340px;min-width:340px;}}
+@media(max-width:900px){.te-shell{flex-direction:column;}.te-left{width:100%;min-width:auto;max-height:50vh;}.te-right{padding:74px 16px 16px;}.te-preview-tools{left:16px;right:auto;}.te-preview-shell{transform:scale(0.55);transform-origin:top center;}}
+</style>
+</head>
+<body>
+
+<div class="te-shell">
+<div class="te-left">
+  <div class="te-header">
+    <h1><i class="fas fa-paint-brush"></i> Template Editor</h1>
+    <button class="te-back" onclick="location.href='/admin'"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+
+  <div class="te-topline">
+    <label>Report Card Template</label>
+    <div class="te-topline-row">
+      <select id="te-template-select" onchange="loadTemplate()"></select>
+      <button class="te-btn te-btn-sm te-btn-gold" onclick="createNewTemplate()" title="New Template"><i class="fas fa-plus"></i></button>
+      <button class="te-btn te-btn-sm te-btn-danger" onclick="deleteTemplate()" title="Delete"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>
+
+  <div class="te-tabs">
+    <div class="te-tab active" onclick="switchTab('layout')"><i class="fas fa-th-large"></i> Layout Settings</div>
+    <div class="te-tab" onclick="switchTab('settings')"><i class="fas fa-cog"></i> Other Settings</div>
+  </div>
+
+  <div class="te-panel-body">
+    <!-- ═══ LAYOUT TAB ═══ -->
+    <div class="te-tab-pane active" id="pane-layout">
+
+      <div class="te-section-row">
+        <div class="te-section-label"><span class="sec-num">1</span> School Details</div>
+        <div class="te-section-controls">
+          <select class="te-model-select" id="model-section_1" onchange="onModelChange()">
+            <option value="model_1">Model 1</option>
+            <option value="model_2" selected>Model 2</option>
+            <option value="model_3">Model 3</option>
+          </select>
+          <button class="te-customize-btn" data-customize-section="section_1" onclick="openSectionCustomize('section_1')"><i class="fas fa-edit"></i> Customize</button>
+        </div>
+      </div>
+
+      <div class="te-section-row">
+        <div class="te-section-label"><span class="sec-num">2</span> Student Details</div>
+        <div class="te-section-controls">
+          <select class="te-model-select" id="model-section_2" onchange="onModelChange()">
+            <option value="model_1" selected>Model 1</option>
+            <option value="model_2">Model 2</option>
+            <option value="model_3">Model 3</option>
+            <option value="model_4">Model 4</option>
+            <option value="model_5">Model 5</option>
+            <option value="model_6">Model 6</option>
+            <option value="model_7">Model 7</option>
+            <option value="model_8">Model 8</option>
+            <option value="model_9">Model 9</option>
+            <option value="model_10">Model 10</option>
+          </select>
+          <button class="te-customize-btn" data-customize-section="section_2" onclick="openSectionCustomize('section_2')"><i class="fas fa-edit"></i> Customize</button>
+        </div>
+      </div>
+
+      <div class="te-section-row">
+        <div class="te-section-label"><span class="sec-num">3</span> Academic Performance</div>
+        <div class="te-section-controls">
+          <select class="te-model-select" id="model-section_3" onchange="onModelChange()">
+            <option value="model_1" selected>Model 1</option>
+            <option value="model_2">Model 2</option>
+            <option value="model_3">Model 3</option>
+            <option value="model_4">Model 4</option>
+            <option value="model_5">Model 5</option>
+            <option value="model_6">Model 6</option>
+            <option value="model_7">Model 7</option>
+            <option value="model_8">Model 8</option>
+          </select>
+          <button class="te-customize-btn" data-customize-section="section_3" onclick="openSectionCustomize('section_3')"><i class="fas fa-edit"></i> Customize</button>
+        </div>
+      </div>
+
+      <div class="te-section-row">
+        <div class="te-section-label"><span class="sec-num">4</span> Grade</div>
+        <div class="te-section-controls">
+          <select class="te-model-select" id="model-section_4" onchange="onModelChange()">
+            <option value="model_1" selected>Model 1</option>
+            <option value="model_2">Model 2</option>
+            <option value="model_3">Model 3</option>
+            <option value="model_4">Model 4</option>
+            <option value="none">None (Hide)</option>
+          </select>
+          <button class="te-customize-btn" data-customize-section="section_4" onclick="openSectionCustomize('section_4')"><i class="fas fa-edit"></i> Customize</button>
+        </div>
+      </div>
+
+      <div class="te-section-row">
+        <div class="te-section-label"><span class="sec-num">5</span> Attributes / Skills</div>
+        <div class="te-section-controls">
+          <select class="te-model-select" id="model-section_5" onchange="onModelChange()">
+            <option value="model_1">Model 1</option>
+            <option value="model_2">Model 2</option>
+            <option value="model_3" selected>Model 3</option>
+            <option value="none">None (Hide)</option>
+          </select>
+          <button class="te-customize-btn" data-customize-section="section_5" onclick="openSectionCustomize('section_5')"><i class="fas fa-edit"></i> Customize</button>
+        </div>
+      </div>
+
+      <div class="te-section-row">
+        <div class="te-section-label"><span class="sec-num">6</span> Comment</div>
+        <div class="te-section-controls">
+          <select class="te-model-select" id="model-section_6" onchange="onModelChange()">
+            <option value="model_1" selected>Model 1</option>
+            <option value="model_2">Model 2</option>
+            <option value="none">None (Hide)</option>
+          </select>
+          <button class="te-customize-btn" data-customize-section="section_6" onclick="openSectionCustomize('section_6')"><i class="fas fa-edit"></i> Customize</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ OTHER SETTINGS TAB ═══ -->
+    <div class="te-tab-pane" id="pane-settings">
+
+      <!-- Theme Color -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-palette"></i> Theme Color</h4>
+        <div class="te-field">
+          <div class="te-color-row">
+            <div class="te-color-preview" id="color-preview" style="background:#d4147a;" onclick="document.getElementById('color-input').click()"></div>
+            <input type="color" class="te-color-input" id="color-input" value="#d4147a" onchange="onThemeColorChange(this.value)"/>
+            <input type="text" class="te-color-hex" id="color-hex" value="#d4147a" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Poppins',sans-serif;" onchange="onThemeColorChange(this.value)"/>
+          </div>
+          <div class="te-color-swatches" id="color-swatches"></div>
+        </div>
+      </div>
+
+      <!-- School Details -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-school"></i> School Details</h4>
+        <div class="te-field"><label>School Name</label><input type="text" id="set-school-name" value="JOYLAND SCHOOLS" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Motto</label><input type="text" id="set-school-motto" value="Education Is Treasure" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Address</label><input type="text" id="set-school-address" value="P.O. Box 123" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Phone</label><input type="text" id="set-school-phone" value="0700 000 000" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Email</label><input type="text" id="set-school-email" value="info@joylandschools.ac.ke" oninput="onSettingChange()"/></div>
+        <div class="te-field">
+          <label>School Logo</label>
+          <div class="te-image-upload" id="logo-upload" onclick="document.getElementById('logo-file').click()">
+            <img id="logo-preview" src="/uploads/school/logo.jpg" style="max-height:60px;"/>
+            <input type="file" id="logo-file" accept="image/*" onchange="handleLogoUpload(event)"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Title -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-heading"></i> Report Title</h4>
+        <div class="te-field"><input type="text" id="set-result-title" value="END OF TERM REPORT CARD" oninput="onSettingChange()"/></div>
+      </div>
+
+      <!-- Report Text -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-i-cursor"></i> Report Text & Labels</h4>
+        <div class="te-field"><label>Grade Label</label><input type="text" id="set-grade-label" value="Grade" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Remarks Label</label><input type="text" id="set-remarks-label" value="Remarks" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Promotion Status</label><input type="text" id="set-promotion-status" value="PROMOTED TO: ________________" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Student Position Text</label><input type="text" id="set-student-position" value="10th" oninput="onSettingChange()"/></div>
+        <div class="te-field"><label>Score Color</label><input type="text" id="set-score-color" value="#d4147a" oninput="onSettingChange()"/></div>
+      </div>
+
+      <!-- Comment Text -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-comments"></i> Comment Text <span style="font-size:9px;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0;">(fallback only)</span></h4>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5;padding:8px 11px;background:#fffbeb;border-left:3px solid var(--gold);border-radius:6px;margin-bottom:10px;">
+          <i class="fas fa-info-circle" style="color:var(--gold2);"></i>
+          These static comments are shown <strong>only when no score-banded comment matches</strong>. Manage banded comments and signatures in <strong>Admin → Reports → Comments &amp; Signatures</strong>.
+        </div>
+        <div class="te-field"><label>Class Teacher's Comments</label><textarea id="set-teacher-comment" oninput="onSettingChange()">A dedicated and hardworking student who shows great potential.</textarea></div>
+        <div class="te-field"><label>Headteacher's Comments</label><textarea id="set-head-comment" oninput="onSettingChange()">Keep up the excellent work. We are proud of your progress.</textarea></div>
+        <div class="te-field"><label>Director's Comments</label><textarea id="set-director-comment" oninput="onSettingChange()"></textarea></div>
+      </div>
+
+      <!-- Grade Scale -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-star"></i> Grade Scale</h4>
+        <div class="te-field">
+          <select id="set-grade-system" onchange="onSettingChange()">
+            <option value="cbc" selected>Kenya CBC (EE, ME, AE, BE)</option>
+            <option value="custom">Custom Scale</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Display Options -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-toggle-on"></i> Display Options</h4>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_remarks"><span>Remarks Column</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_position"><span>Student Position</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_attendance"><span>Attendance Summary</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_promotion"><span>Promotion Status</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_class_average"><span>Class Average</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_grade_keys"><span>Grade Keys Section</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_score_colors"><span>Color-coded Scores</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="jumbotron_header_bg"><span>Jumbotron Header Background</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="autofill_skills"><span>Autofill Attributes / Skills</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_cum_total"><span>Cumulative Total Score</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_percentage"><span>Percentage Column</span><div class="te-switch"></div></div>
+        <div class="te-toggle" onclick="toggleSwitch(this)" data-key="show_sign_column"><span>Signature Column</span><div class="te-switch"></div></div>
+      </div>
+
+      <!-- Student Data Prefs -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-user"></i> Student Data Preferences</h4>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_dob"><span>Date of Birth</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_sex"><span>Sex / Gender</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_admission_no"><span>Admission Number</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_class"><span>Class Name</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_photo"><span>Student Photo</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_term_duration"><span>Term Duration Info</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_score_summary"><span>Score Summary Box</span><div class="te-switch"></div></div>
+      </div>
+
+      <!-- Comments Config -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-comment-dots"></i> Comments</h4>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_teacher_comment"><span>Class Teacher's Comments</span><div class="te-switch"></div></div>
+        <div class="te-toggle on" onclick="toggleSwitch(this)" data-key="show_head_comment"><span>Headteacher's Comments</span><div class="te-switch"></div></div>
+        <div class="te-toggle" onclick="toggleSwitch(this)" data-key="show_director_comment"><span>Director's Comments</span><div class="te-switch"></div></div>
+      </div>
+
+      <!-- Stamp -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-stamp"></i> Stamp</h4>
+        <div class="te-toggle" onclick="toggleSwitch(this)" data-key="show_stamp"><span>Show School Stamp</span><div class="te-switch"></div></div>
+        <div class="te-field">
+          <label>Stamp Image</label>
+          <div class="te-image-upload" onclick="document.getElementById('stamp-file').click()">
+            <img id="stamp-preview" style="max-height:50px;display:none;"/>
+            <div class="placeholder" id="stamp-placeholder"><i class="fas fa-stamp"></i>Click to upload stamp</div>
+            <input type="file" id="stamp-file" accept="image/*" onchange="handleStampUpload(event)"/>
+          </div>
+          <button class="te-btn te-btn-danger" id="stamp-remove-btn" style="margin-top:6px;display:none;width:100%;justify-content:center;" onclick="removeStampImage()"><i class="fas fa-trash"></i> Remove Stamp Image</button>
+        </div>
+      </div>
+
+      <!-- Background Image -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-image"></i> Background Image</h4>
+        <div class="te-field">
+          <div class="te-image-upload" onclick="document.getElementById('bg-file').click()">
+            <img id="bg-preview" style="max-height:60px;display:none;"/>
+            <div class="placeholder" id="bg-placeholder"><i class="fas fa-image"></i>Click to upload background</div>
+            <input type="file" id="bg-file" accept="image/*" onchange="handleBgUpload(event)"/>
+          </div>
+          <button class="te-btn te-btn-sm te-btn-outline" style="margin-top:6px;" onclick="removeBgImage()"><i class="fas fa-trash"></i> Remove Background</button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="te-setting-group">
+        <h4><i class="fas fa-shoe-prints"></i> Footer</h4>
+        <div class="te-field"><input type="text" id="set-footer-text" value="" placeholder="e.g. Printed by Joyland Schools Portal" oninput="onSettingChange()"/></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="te-save-bar">
+    <button class="te-btn te-btn-primary" onclick="saveTemplate()"><i class="fas fa-save"></i> Save Template</button>
+    <button class="te-btn te-btn-outline" onclick="resetToDefaults()"><i class="fas fa-undo"></i></button>
+  </div>
+</div>
+
+<!-- ═══ PREVIEW ═══ -->
+<div class="te-right" id="te-preview-area">
+  <div class="te-preview-tools" aria-label="Preview sizing controls">
+    <button class="te-preview-fit-btn active" type="button" data-fit-mode="width" onclick="setPreviewFitMode('width')">Fit Width</button>
+    <button class="te-preview-fit-btn" type="button" data-fit-mode="page" onclick="setPreviewFitMode('page')">Fit Page</button>
+    <button class="te-preview-fit-btn" type="button" data-fit-mode="actual" onclick="setPreviewFitMode('actual')">100%</button>
+    <span class="te-preview-scale-note" id="te-preview-scale-note">100%</span>
+  </div>
+  <div class="te-preview-shell" id="te-preview-shell">
+    <div class="tp-page template-preview-report" id="tp-page"></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="te-modal-overlay" id="te-modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="te-modal" id="te-modal">
+    <div class="te-modal-header">
+      <h3 id="te-modal-title"><i class="fas fa-edit"></i> <span></span></h3>
+      <button class="te-modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="te-modal-body" id="te-modal-body"></div>
+    <div class="te-modal-footer" id="te-modal-footer"></div>
+  </div>
+</div>
+
+<div class="te-toast" id="te-toast"><i class="fas fa-check-circle"></i><span id="te-toast-msg"></span></div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const CBC_GRADES = [
+  {code:'EE1',label:'Exceeding Expectations',min:90,max:100},
+  {code:'EE2',label:'Exceeding Expectations',min:75,max:89},
+  {code:'ME1',label:'Meeting Expectations',min:58,max:74},
+  {code:'ME2',label:'Meeting Expectations',min:41,max:57},
+  {code:'AE1',label:'Approaching Expectations',min:31,max:40},
+  {code:'AE2',label:'Approaching Expectations',min:21,max:30},
+  {code:'BE1',label:'Below Expectations',min:11,max:20},
+  {code:'BE2',label:'Below Expectations',min:0,max:10}
+];
+
+const SUBJECTS = ['Mathematics','English','Kiswahili','Science & Technology','Social Studies','Religious Education','Creative Arts','Agriculture','Home Science'];
+const SKILLS_AFFECTIVE = ['Punctuality','Attentiveness','Neatness','Honesty','Politeness'];
+const SKILLS_PSYCHOMOTOR = ['Handwriting','Drawing','Sports','Crafts','Verbal Fluency'];
+
+// Section 5 per-model defaults from MATOKEO (views_template_editor.py lines 27-271)
+const SECTION_5_DEFAULTS = {
+  model_1: {
+    rating_title:'Keys To Rating',
+    ratings:[5,4,3,2,1],
+    rating_labels:['Excellent','Very Good','Good','Fair','Very Poor'],
+    categories:[
+      {key:'affective_traits',title:'AFFECTIVE TRAITS',side:'left',
+       items:['Attentiveness','Attitude of School work','Cooperation with others','Emotion Stability','Health','Leadership','Attendance','Neatness','Perseverance','Politeness','Punctuality','Speaking / Writing']},
+      {key:'psychomotor_skills',title:'PSYCHOMOTOR SKILLS',side:'right',
+       items:['Drawing & Painting','Handling of Tools','Games','Handwriting','Music','Verbal Fluency']}
+    ]
+  },
+  model_2: {
+    rating_title:'Keys to Rating on Skills Development and Behavioural Attributes',
+    ratings:[5,4,3,2,1],
+    rating_labels:['Excellent','High Level','Acceptable Level','Minimal Level','No Trial'],
+    categories:[
+      {key:'personal_development',title:'PERSONAL DEV.',items:['Obedience','Honesty','Self Control','Self-Reliance','Initiative']},
+      {key:'responsibility',title:'SENSE OF RESPONSIBILITY',items:['Punctuality','Neatness','Perseverance','Attendance','Attentiveness']},
+      {key:'social_development',title:'SOCIAL DEV.',items:['Politeness','Consideration for others','Sociability','Promptness','Sense of Value']},
+      {key:'psychomotor_development',title:'PSYCHOMOTOR DEV.',items:['Reading & Writing','Verbal Communication','Sports & Games','Inquisitiveness','Dexterity']}
+    ]
+  },
+  model_3: {
+    rating_title:'Keys To Rating',
+    ratings:[4,3,2,1],
+    rating_labels:['All of the Time','Most of the Time','Some of the Time','Not Yet'],
+    categories:[
+      {key:'academic_skills',title:'ACADEMIC SKILLS',side:'left',
+       items:['Can sound letter A to Z','Able to rote count from 1 to 10','Able to identify numbers from 1 to 10','Can colour given objects','Can sound letter A to J','Able to put blocks in and out of a box']},
+      {key:'social_courtesy',title:'SOCIAL SKILLS & COURTESY',side:'left',
+       items:['Greeting people','Use of magic words','Conduct with a visitor','Speaking to a group','Behaviour on outing','Helping out','Table manners']},
+      {key:'emotional_development',title:'EMOTIONAL DEVELOPMENT',side:'left',
+       items:['Independent of parent','Independent of teacher','Can cope with class activities']},
+      {key:'music_art_story',title:'MUSIC / ART / STORY',side:'left',
+       items:['Can look at pictures in books','Participates in group activities','Able to repeat rhymes, alphabets, numbers']},
+      {key:'motor_skills',title:'MOTOR SKILLS',side:'right',
+       items:['Picks up toys dropped','Can hold crayon with good grip','Can turn pages of a book','Can group objects','Able to roll a ball','Can pick up object without dropping']},
+      {key:'care_of_self',title:'CARE OF SELF',side:'right',
+       items:['Dries hands','Coughs with hand over mouth','Sneezes with hand over mouth','Yawns with hand over mouth','Washes hands']},
+      {key:'self_help',title:'SELF-HELP SKILLS',side:'right',
+       items:['Can hold cup with two hands','Can indicate toilet needs','Can hold out arms for dressing','Able to use spoon without spilling']},
+      {key:'social_play',title:'SOCIAL & PLAY SKILLS',side:'right',
+       items:['Responds to name','Can imitate simple actions','Able to play alone','Helps put things away','Can refer to self by name']},
+      {key:'understanding_language',title:'UNDERSTANDING LANGUAGE',side:'right',
+       items:['Can imitate sounds','Responds to different sounds','Responds to simple directions','Responds to specific words','Can look at pictures naming objects','Listens to and follows directions']}
+    ]
+  }
+};
+const THEME_COLORS = ['#d4147a','#1B5E20','#1565C0','#B71C1C','#4A148C','#E65100','#263238','#00695C','#AD1457','#0D47A1','#E91E63','#FF6F00','#1A237E','#004D40','#BF360C','#311B92'];
+let SCHOOL_SETTINGS = null;
+const PREVIEW_PAGE_WIDTH = 1500;
+const PREVIEW_PAGE_HEIGHT = 2121;
+const CANVAS_PX_PER_CM = PREVIEW_PAGE_WIDTH / 21;
+const SECTION_1_PRINT = {
+  sectionHeight: CANVAS_PX_PER_CM * 3,
+  logoInset: CANVAS_PX_PER_CM * 0.1,
+  nameCapHeight: CANVAS_PX_PER_CM * 0.4,
+  metaCapHeight: CANVAS_PX_PER_CM * 0.2,
+  nameToMetaGap: CANVAS_PX_PER_CM * 0.2,
+  metaRowGap: CANVAS_PX_PER_CM * 0.2,
+  bottomGap: CANVAS_PX_PER_CM * 0.5,
+  poppinsNameCapRatio: 0.715,
+  poppinsMetaCapRatio: 0.715
+};
+const REPORT_TITLE_PRINT = {
+  topGap: CANVAS_PX_PER_CM * 0.4,
+  capHeight: CANVAS_PX_PER_CM * 0.3,
+  bottomGap: CANVAS_PX_PER_CM * 0.5,
+  poppinsTitleCapRatio: 0.715
+};
+const REPORT_CELL_PRINT = {
+  tableCapHeight: CANVAS_PX_PER_CM * 0.237,
+  smallCapHeight: CANVAS_PX_PER_CM * 0.218,
+  normalRow: CANVAS_PX_PER_CM * 0.526,
+  wrappedRow: CANVAS_PX_PER_CM * 0.94,
+  skillsRow: CANVAS_PX_PER_CM * 0.415,
+  academicTitleRow: CANVAS_PX_PER_CM * 0.526,
+  academicHeaderMainRow: CANVAS_PX_PER_CM * 1.30,
+  academicMarkRow: CANVAS_PX_PER_CM * 0.526,
+  commentRow: CANVAS_PX_PER_CM * 1.19,
+  sectionGap: CANVAS_PX_PER_CM * 0.18,
+  skillsGridGap: CANVAS_PX_PER_CM * 0.14,
+  skillsTableGap: CANVAS_PX_PER_CM * 0.08,
+  skillsMarginTop: CANVAS_PX_PER_CM * 0.13,
+  commentMarginTop: CANVAS_PX_PER_CM * 0.25,
+  commentRowPadY: CANVAS_PX_PER_CM * 0.015,
+  commentLabelCol: CANVAS_PX_PER_CM * 3.95,
+    commentSignCol: CANVAS_PX_PER_CM * 0.86,
+    commentSignLineCol: CANVAS_PX_PER_CM * 1.82,
+  commentDateCol: CANVAS_PX_PER_CM * 0.78,
+    commentDateValueCol: CANVAS_PX_PER_CM * 1.82,
+  commentGap: CANVAS_PX_PER_CM * 0.12,
+  minFitScale: 0.62,
+  minHeavySkillsFitScale: 0.48,
+  lineHeight: 1.08,
+  skillsLineHeight: 0.96,
+  capRatio: 0.715,
+  borderWidth: CANVAS_PX_PER_CM * 0.028,
+  cellPadX: CANVAS_PX_PER_CM * 0.07,
+  cellPadY: CANVAS_PX_PER_CM * 0.015,
+  personalLabelWidth: CANVAS_PX_PER_CM * 2.074,
+  personalCol: CANVAS_PX_PER_CM * 6.887,
+  avatarCol: CANVAS_PX_PER_CM * 2.987,
+  avatarHeight: CANVAS_PX_PER_CM * 3.976,
+  attendanceCol: CANVAS_PX_PER_CM * 6.306,
+  scoreCol: CANVAS_PX_PER_CM * 3.457,
+    section2Gap: CANVAS_PX_PER_CM * 0.04,
+  scoreLabelWidthPct: 69.6,
+  ratingCol: CANVAS_PX_PER_CM * 0.553,
+  academicWidthsCm: {
+    subject: 6.638,
+    ca: 0.774,
+    ca1: 0.774,
+    ca2: 0.774,
+    ca3: 0.774,
+    test: 0.774,
+    exam: 1.272,
+    end_of_term_exams: 1.272,
+    total: 1.162,
+    total_score: 1.162,
+    cum_total: 1.355,
+    cum_total_score: 1.355,
+    percentage: 1.549,
+    position: 1.632,
+    position_in_subject: 1.632,
+    class_average: 1.632,
+    class_avg: 1.632,
+    remarks: 1.66,
+    descriptor: 1.66,
+    sign: 1.272,
+    subject_teacher: 1.66,
+    grade: 1.0,
+    average: 1.549,
+    marks_average: 1.549,
+    max: 0.9,
+    coef: 0.7,
+    point: 0.7
+  }
+};
+let PREVIEW_FIT_MODE = 'width';
+
+function schoolDefaults() {
+  const ss = SCHOOL_SETTINGS || {};
+  return {
+    name:ss.school_name || 'JOYLAND SCHOOLS',
+    motto:ss.school_motto || 'Education Is Treasure',
+    address:ss.school_address || 'P.O. Box 123',
+    phone:ss.school_phone || '0700 000 000',
+    email:ss.school_email || 'info@joylandschools.ac.ke',
+    logo:ss.school_logo || '/uploads/school/logo.jpg'
+  };
+}
+
+function getDefaultState() {
+  const ss = SCHOOL_SETTINGS || {};
+  return {
+    template_name:'Default Template',
+    selected_models:{section_1:'model_2',section_2:'model_1',section_3:'model_4',section_4:'model_1',section_5:'model_1',section_6:'model_2'},
+    theme_color:ss.theme_color || '#d4147a',
+    school:schoolDefaults(),
+    settings:{
+      result_title:ss.result_title || 'END OF TERM REPORT CARD',grade_system:'cbc',footer_text:ss.footer_text || '',
+      grade_label:'Grade',remarks_label:'Remarks',promotion_status:'PROMOTED TO: ________________',
+      student_position:'10th',score_color:ss.theme_color || '#d4147a',
+      teacher_comment:'A dedicated and hardworking student who shows great potential.',
+      head_comment:'Keep up the excellent work. We are proud of your progress.',
+      director_comment:'',
+      teacher_role_label:'Class Teacher',
+      head_role_label:'Headteacher',
+      director_role_label:'Director',
+      show_remarks:true,show_position:true,show_attendance:true,show_promotion:true,
+      show_class_average:true,show_grade_keys:true,show_score_colors:true,show_stamp:true,
+      jumbotron_header_bg:true,autofill_skills:true,
+      show_cum_total:true,show_percentage:true,show_sign_column:false,
+      show_dob:true,show_sex:true,show_admission_no:true,show_class:true,show_photo:true,show_term_duration:true,show_score_summary:true,
+      show_teacher_comment:true,show_head_comment:true,show_director_comment:false,
+      stamp_image:ss.school_stamp || '',bg_image:ss.background_image || ''
+    },
+    customizations:{
+      student_fields:[
+        {key:'name',label:'Name',visible:true},
+        {key:'dob',label:'Date Of Birth',visible:true},
+        {key:'sex',label:'Sex',visible:true},
+        {key:'class',label:'Class',visible:true},
+        {key:'admission_no',label:'Admission No.',visible:true}
+      ],
+      academic_headers:[
+        {key:'ca1',label:'CA',score:30,visible:true},
+        {key:'ca2',label:'CA',score:30,visible:true},
+        {key:'ca3',label:'CA',score:30,visible:true},
+        {key:'exam',label:'Exam',score:100,visible:true},
+        {key:'total',label:'Total Score',visible:true},
+        {key:'grade',label:'Grade',visible:true},
+        {key:'cum_total',label:'Cum. Total',visible:true},
+        {key:'percentage',label:'%',visible:true},
+        {key:'position',label:'Position',visible:true},
+        {key:'class_avg',label:'Class Avg',visible:true},
+        {key:'remarks',label:'Remarks',visible:true},
+        {key:'sign',label:'Sign.',visible:false},
+        {key:'highest',label:'Highest',visible:false},
+        {key:'lowest',label:'Lowest',visible:false}
+      ],
+      skills:{
+        affective:SKILLS_AFFECTIVE.slice(),
+        psychomotor:SKILLS_PSYCHOMOTOR.slice(),
+        ratings:[5,4,3,2,1],
+        rating_labels:['Excellent','Very Good','Good','Fair','Poor']
+      },
+      grade_key: [
+        {range:'100-90',code:'EE1',label:'EXCEEDING EXPECTATIONS'},
+        {range:'89-75',code:'EE2',label:'EXCEEDING EXPECTATIONS'},
+        {range:'74-58',code:'ME1',label:'MEETING EXPECTATIONS'},
+        {range:'57-41',code:'ME2',label:'MEETING EXPECTATIONS'},
+        {range:'40-31',code:'AE1',label:'APPROACHING EXPECTATIONS'},
+        {range:'30-21',code:'AE2',label:'APPROACHING EXPECTATIONS'},
+        {range:'20-11',code:'BE1',label:'BELOW EXPECTATIONS'},
+        {range:'10-0',code:'BE2',label:'BELOW EXPECTATIONS'}
+      ],
+      remarks_table: [
+        {min:90,max:100,text:'Excellent'},
+        {min:75,max:89,text:'Very Good'},
+        {min:58,max:74,text:'Good'},
+        {min:41,max:57,text:'Satisfactory'},
+        {min:31,max:40,text:'Fair'},
+        {min:21,max:30,text:'Needs Improvement'},
+        {min:11,max:20,text:'Weak'},
+        {min:0,max:10,text:'Very Weak'}
+      ],
+      academic_columns:{}
+    }
+  };
+}
+
+let ST = getDefaultState();
+let templateList = ['Default Template'];
+let dirty = false;
+
+// ══════════════════════════════════════
+// API
+// ══════════════════════════════════════
+async function api(method,url,body){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  try{const r=await fetch(url,opts);return r.json();}catch(e){return{success:false,message:e.message};}
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+async function init(){
+  const r=await api('GET','/api/auth/me');
+  if(!r.authenticated)return location.href='/';
+  await loadSchoolSettings();
+  buildSwatches();
+  await loadTemplateList();
+  loadTemplate();
+}
+
+async function loadSchoolSettings(){
+  const r=await api('GET','/api/admin/school-settings');
+  if(r.success&&r.data)SCHOOL_SETTINGS=r.data;
+}
+
+function buildSwatches(){
+  const c=document.getElementById('color-swatches');
+  c.innerHTML=THEME_COLORS.map(clr=>`<div class="te-swatch" style="background:${clr}" onclick="onThemeColorChange('${clr}')"></div>`).join('');
+}
+
+async function loadTemplateList(){
+  const r=await api('GET','/api/admin/templates');
+  if(r.success&&r.templates){templateList=r.templates.length?r.templates:['Default Template'];}
+  else{templateList=['Default Template'];}
+  const sel=document.getElementById('te-template-select');
+  sel.innerHTML=templateList.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+}
+
+async function loadTemplate(){
+  const name=document.getElementById('te-template-select').value||'Default Template';
+  const r=await api('GET',`/api/admin/templates/${encodeURIComponent(name)}`);
+  if(r.success&&r.state){
+    ST=Object.assign(getDefaultState(),r.state);
+    ST.settings=Object.assign(getDefaultState().settings,r.state.settings||{});
+    ST.school=Object.assign(getDefaultState().school,r.state.school||{});
+    ST.customizations=Object.assign(getDefaultState().customizations,r.state.customizations||{});
+  }else{
+    ST=getDefaultState();ST.template_name=name;
+  }
+  ST.school=schoolDefaults();
+  if(SCHOOL_SETTINGS){
+    ST.theme_color=SCHOOL_SETTINGS.theme_color || ST.theme_color;
+    ST.settings.result_title=SCHOOL_SETTINGS.result_title || ST.settings.result_title;
+    ST.settings.footer_text=SCHOOL_SETTINGS.footer_text || ST.settings.footer_text;
+    ST.settings.stamp_image=SCHOOL_SETTINGS.school_stamp || ST.settings.stamp_image;
+    ST.settings.bg_image=SCHOOL_SETTINGS.background_image || ST.settings.bg_image;
+  }
+  applyStateToUI();renderPreview();dirty=false;
+}
+
+async function saveSchoolSettings(){
+  const s=ST.settings,sc=ST.school;
+  const payload={
+    school_name:sc.name,
+    school_motto:sc.motto,
+    school_address:sc.address,
+    school_phone:sc.phone,
+    school_email:sc.email,
+    school_logo:sc.logo,
+    result_title:s.result_title,
+    footer_text:s.footer_text,
+    theme_color:ST.theme_color,
+    school_stamp:s.stamp_image,
+    background_image:s.bg_image
+  };
+  const r=await api('PUT','/api/admin/school-settings',payload);
+  if(r.success&&r.data)SCHOOL_SETTINGS=r.data;
+  return r;
+}
+
+async function saveTemplate(){
+  collectStateFromUI();
+  const schoolSave=await saveSchoolSettings();
+  if(!schoolSave.success)return teToast(schoolSave.message||'School settings failed to save','error');
+  const r=await api('POST','/api/admin/templates',{state:ST});
+  if(r.success){teToast('Template saved!','success');dirty=false;await loadTemplateList();document.getElementById('te-template-select').value=ST.template_name;}
+  else teToast(r.message||'Save failed','error');
+}
+
+async function createNewTemplate(){
+  const name=await tePrompt('New template','Enter a template name:');
+  if(!name||!name.trim())return;
+  ST=getDefaultState();ST.template_name=name.trim();
+  const r=await api('POST','/api/admin/templates',{state:ST});
+  if(r.success){teToast('Created!','success');await loadTemplateList();document.getElementById('te-template-select').value=name.trim();applyStateToUI();renderPreview();}
+  else teToast(r.message||'Failed','error');
+}
+
+async function deleteTemplate(){
+  const name=document.getElementById('te-template-select').value;
+  if(name==='Default Template')return teToast('Cannot delete default','error');
+  const ok=await teConfirm('Delete template?',`Delete "${name}"?`,'Delete');
+  if(!ok)return;
+  const r=await api('DELETE',`/api/admin/templates/${encodeURIComponent(name)}`);
+  if(r.success){teToast('Deleted','success');await loadTemplateList();loadTemplate();}
+  else teToast(r.message||'Failed','error');
+}
+
+async function resetToDefaults(){
+  const ok=await teConfirm('Reset settings?','Reset all template settings to defaults?','Reset');
+  if(!ok)return;
+  const n=ST.template_name;ST=getDefaultState();ST.template_name=n;applyStateToUI();renderPreview();dirty=true;
+}
+
+// ══════════════════════════════════════
+// UI SYNC
+// ══════════════════════════════════════
+function applyStateToUI(){
+  for(const k in ST.selected_models){const el=document.getElementById('model-'+k)||document.getElementById('model-'+k.replace('section','section_'));if(el)el.value=ST.selected_models[k];}
+  for(let i=1;i<=6;i++){const el=document.getElementById('model-section_'+i);if(el&&ST.selected_models['section_'+i])el.value=ST.selected_models['section_'+i];}
+  onThemeColorChange(ST.theme_color,true);
+  const s=ST.settings,sc=ST.school;
+  document.getElementById('set-result-title').value=s.result_title||'';
+  document.getElementById('set-grade-system').value=s.grade_system||'cbc';
+  document.getElementById('set-footer-text').value=s.footer_text||'';
+  document.getElementById('set-grade-label').value=s.grade_label||'Grade';
+  document.getElementById('set-remarks-label').value=s.remarks_label||'Remarks';
+  document.getElementById('set-promotion-status').value=s.promotion_status||'';
+  document.getElementById('set-student-position').value=s.student_position||'';
+  document.getElementById('set-score-color').value=s.score_color||ST.theme_color;
+  document.getElementById('set-teacher-comment').value=s.teacher_comment||'';
+  document.getElementById('set-head-comment').value=s.head_comment||'';
+  document.getElementById('set-director-comment').value=s.director_comment||'';
+  document.getElementById('set-school-name').value=sc.name||'';
+  document.getElementById('set-school-motto').value=sc.motto||'';
+  document.getElementById('set-school-address').value=sc.address||'';
+  document.getElementById('set-school-phone').value=sc.phone||'';
+  document.getElementById('set-school-email').value=sc.email||'';
+  if(sc.logo){const img=document.getElementById('logo-preview');img.src=sc.logo;img.style.display='block';}
+  setStampImageUI(s.stamp_image);
+  if(s.bg_image){document.getElementById('bg-preview').src=s.bg_image;document.getElementById('bg-preview').style.display='block';document.getElementById('bg-placeholder').style.display='none';}
+  document.querySelectorAll('.te-toggle').forEach(el=>{const key=el.dataset.key;if(key&&s[key]!==undefined)el.classList.toggle('on',!!s[key]);});
+  syncCustomizeButtons();
+}
+
+function collectStateFromUI(){
+  ST.selected_models={};
+  for(let i=1;i<=6;i++){const el=document.getElementById('model-section_'+i);if(el)ST.selected_models['section_'+i]=el.value;}
+  ST.theme_color=document.getElementById('color-input').value;
+  ST.school={
+    name:document.getElementById('set-school-name').value,
+    motto:document.getElementById('set-school-motto').value,
+    address:document.getElementById('set-school-address').value,
+    phone:document.getElementById('set-school-phone').value,
+    email:document.getElementById('set-school-email').value,
+    logo:ST.school.logo
+  };
+  const s=ST.settings;
+  s.result_title=document.getElementById('set-result-title').value;
+  s.grade_system=document.getElementById('set-grade-system').value;
+  s.footer_text=document.getElementById('set-footer-text').value;
+  s.grade_label=document.getElementById('set-grade-label').value;
+  s.remarks_label=document.getElementById('set-remarks-label').value;
+  s.promotion_status=document.getElementById('set-promotion-status').value;
+  s.student_position=document.getElementById('set-student-position').value;
+  s.score_color=document.getElementById('set-score-color').value || ST.theme_color;
+  s.teacher_comment=document.getElementById('set-teacher-comment').value;
+  s.head_comment=document.getElementById('set-head-comment').value;
+  s.director_comment=document.getElementById('set-director-comment').value;
+  document.querySelectorAll('.te-toggle').forEach(el=>{const key=el.dataset.key;if(key)s[key]=el.classList.contains('on');});
+}
+
+// ══════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════
+function switchTab(tab){
+  document.querySelectorAll('.te-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.te-tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+tab).classList.add('active');
+  const tabs=document.querySelectorAll('.te-tab');
+  if(tab==='layout')tabs[0].classList.add('active');else tabs[1].classList.add('active');
+}
+function onModelChange(){collectStateFromUI();syncCustomizeButtons();renderPreview();dirty=true;}
+function onSettingChange(){collectStateFromUI();renderPreview();dirty=true;}
+function onThemeColorChange(val,silent){
+  if(!/^#[0-9a-fA-F]{6}$/.test(val))return;
+  document.getElementById('color-input').value=val;
+  document.getElementById('color-hex').value=val;
+  document.getElementById('color-preview').style.background=val;
+  ST.theme_color=val;
+  document.documentElement.style.setProperty('--tc',val);
+  document.querySelectorAll('.te-swatch').forEach(s=>{s.classList.toggle('active',s.style.background===val||rgbToHex(s.style.background)===val.toLowerCase());});
+  if(!silent){renderPreview();dirty=true;}
+}
+function toggleSwitch(el){el.classList.toggle('on');onSettingChange();}
+
+function rgbToHex(rgb){
+  if(!rgb||rgb.startsWith('#'))return rgb;
+  const m=rgb.match(/\d+/g);
+  if(!m||m.length<3)return rgb;
+  return '#'+m.slice(0,3).map(x=>(+x).toString(16).padStart(2,'0')).join('');
+}
+
+// ══════════════════════════════════════
+// IMAGE HANDLERS
+// ══════════════════════════════════════
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadSchoolAsset(assetType,file){
+  const dataUrl=await fileToDataUrl(file);
+  const r=await api('POST','/api/admin/school-assets',{asset_type:assetType,image_data:dataUrl});
+  if(!r.success)throw new Error(r.message||'Image upload failed');
+  return r.data.file_path;
+}
+
+async function handleLogoUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const path=await uploadSchoolAsset('logo',file);
+    ST.school.logo=path;
+    document.getElementById('logo-preview').src=path;
+    document.getElementById('logo-preview').style.display='block';
+    renderPreview();dirty=true;teToast('Logo uploaded','success');
+  }catch(err){teToast(err.message,'error');}
+}
+async function handleStampUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const path=await uploadSchoolAsset('stamp',file);
+    ST.settings.stamp_image=path;
+    setStampImageUI(path);
+    renderPreview();dirty=true;teToast('Stamp uploaded','success');
+  }catch(err){teToast(err.message,'error');}
+}
+function setStampImageUI(path){
+  const preview=document.getElementById('stamp-preview');
+  const placeholder=document.getElementById('stamp-placeholder');
+  const removeBtn=document.getElementById('stamp-remove-btn');
+  const fileInput=document.getElementById('stamp-file');
+  const hasImage=!!path;
+  if(preview){
+    if(hasImage)preview.src=path;
+    else preview.removeAttribute('src');
+    preview.style.display=hasImage?'block':'none';
+  }
+  if(placeholder)placeholder.style.display=hasImage?'none':'block';
+  if(removeBtn)removeBtn.style.display=hasImage?'flex':'none';
+  if(fileInput&&!hasImage)fileInput.value='';
+}
+function removeStampImage(){
+  ST.settings.stamp_image='';
+  if(SCHOOL_SETTINGS)SCHOOL_SETTINGS.school_stamp='';
+  setStampImageUI('');
+  renderPreview();dirty=true;teToast('Stamp image removed','success');
+}
+async function handleBgUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const path=await uploadSchoolAsset('background',file);
+    ST.settings.bg_image=path;
+    document.getElementById('bg-preview').src=path;
+    document.getElementById('bg-preview').style.display='block';
+    document.getElementById('bg-placeholder').style.display='none';
+    document.getElementById('te-preview-shell').style.backgroundImage=`url(${path})`;
+    renderPreview();dirty=true;teToast('Background uploaded','success');
+  }catch(err){teToast(err.message,'error');}
+}
+function removeBgImage(){
+  ST.settings.bg_image='';
+  document.getElementById('bg-preview').style.display='none';
+  document.getElementById('bg-placeholder').style.display='block';
+  document.getElementById('te-preview-shell').style.backgroundImage='none';
+  renderPreview();dirty=true;
+}
+
+// ══════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════
+let teDialogResolve = null;
+function openModal(title,bodyHtml,footerHtml,wide){
+  document.getElementById('te-modal-title').querySelector('span').textContent=title;
+  document.getElementById('te-modal-body').innerHTML=bodyHtml;
+  document.getElementById('te-modal-footer').innerHTML=footerHtml||'';
+  document.getElementById('te-modal').classList.toggle('wide',!!wide);
+  document.getElementById('te-modal-overlay').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('te-modal-overlay').classList.remove('show');
+  if(teDialogResolve){const done=teDialogResolve;teDialogResolve=null;done(null);}
+}
+function teDialogClose(value){
+  document.getElementById('te-modal-overlay').classList.remove('show');
+  if(teDialogResolve){const done=teDialogResolve;teDialogResolve=null;done(value);}
+}
+function teConfirm(title,message,confirmText='Confirm'){
+  openModal(title,`<p style="font-size:13px;color:var(--muted);line-height:1.7;">${esc(message)}</p>`,`<button class="te-btn te-btn-outline" onclick="teDialogClose(false)">Cancel</button><button class="te-btn te-btn-danger" onclick="teDialogClose(true)">${esc(confirmText)}</button>`);
+  return new Promise(resolve=>{teDialogResolve=resolve;});
+}
+function tePrompt(title,message,defaultValue=''){
+  openModal(title,`<p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:12px;">${esc(message)}</p><input id="te-dialog-input" value="${esc(defaultValue)}" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">`,`<button class="te-btn te-btn-outline" onclick="teDialogClose(null)">Cancel</button><button class="te-btn te-btn-primary" onclick="teDialogClose(document.getElementById('te-dialog-input').value)">Continue</button>`);
+  setTimeout(()=>document.getElementById('te-dialog-input')?.focus(),30);
+  return new Promise(resolve=>{teDialogResolve=resolve;});
+}
+
+function openSchoolDetailsModal(){
+  const sc=ST.school;
+  openModal('School Details',`
+    <div class="te-field"><label>School Name</label><input type="text" id="md-school-name" value="${esc(sc.name)}"/></div>
+    <div class="te-field"><label>Motto</label><input type="text" id="md-school-motto" value="${esc(sc.motto)}"/></div>
+    <div class="te-field"><label>Address / Contact Info</label><input type="text" id="md-school-address" value="${esc(sc.address)}"/></div>
+    <div class="te-field"><label>Phone</label><input type="text" id="md-school-phone" value="${esc(sc.phone)}"/></div>
+    <div class="te-field"><label>Email</label><input type="text" id="md-school-email" value="${esc(sc.email)}"/></div>
+  `,`<button class="te-btn te-btn-primary" onclick="applySchoolDetails()"><i class="fas fa-check"></i> Apply</button>
+     <button class="te-btn te-btn-outline" onclick="closeModal()">Cancel</button>`);
+}
+function applySchoolDetails(){
+  ST.school.name=document.getElementById('md-school-name').value;
+  ST.school.motto=document.getElementById('md-school-motto').value;
+  ST.school.address=document.getElementById('md-school-address').value;
+  ST.school.phone=document.getElementById('md-school-phone').value;
+  ST.school.email=document.getElementById('md-school-email').value;
+  document.getElementById('set-school-name').value=ST.school.name;
+  document.getElementById('set-school-motto').value=ST.school.motto;
+  document.getElementById('set-school-address').value=ST.school.address;
+  document.getElementById('set-school-phone').value=ST.school.phone;
+  document.getElementById('set-school-email').value=ST.school.email;
+  closeModal();renderPreview();dirty=true;
+}
+
+function openSkillsModal(){
+  const model=ST.selected_models.section_5||'model_3';
+  const cfg=getSkillsConfig(model);
+  const cats=cfg.categories||[];
+
+  let catsHtml=cats.map((cat,ci)=>{
+    let itemRows=cat.items.map((item,ii)=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+      <span style="flex:1;font-size:11px;">${esc(item)}</span>
+      <button class="te-btn te-btn-sm te-btn-outline" style="padding:3px 6px;" onclick="removeSkillItem('${model}',${ci},${ii})"><i class="fas fa-times" style="font-size:9px;"></i></button>
+    </div>`).join('');
+    return `<div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+      <h4 style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--tc);">${esc(cat.title)} <span style="color:var(--muted);font-weight:400;">(${cat.items.length} items)</span></h4>
+      <div style="max-height:150px;overflow-y:auto;">${itemRows}</div>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <input type="text" id="md-add-skill-${ci}" placeholder="Add item..." style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;"/>
+        <button class="te-btn te-btn-sm te-btn-gold" onclick="addSkillItem('${model}',${ci})"><i class="fas fa-plus"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+
+  let ratingsHtml=cfg.rating_labels.map((l,i)=>`<div style="background:#f8f8f8;border:1px solid var(--border);border-radius:6px;padding:6px 10px;text-align:center;">
+    <div style="font-size:14px;font-weight:800;color:var(--tc);">${cfg.ratings[i]}</div>
+    <input type="text" value="${esc(l)}" style="width:80px;padding:3px;border:1px solid var(--border);border-radius:3px;font-size:10px;text-align:center;margin-top:2px;" data-ridx="${i}"/>
+  </div>`).join('');
+
+  openModal(`Skills & Attributes — ${currentModelName('section_5')}`,`
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Each Section 5 model has its own categories and items from MATOKEO defaults. You can add/remove items per category.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${catsHtml}</div>
+    <div style="margin-top:12px;">
+      <h4 style="font-size:12px;font-weight:700;margin-bottom:6px;">${esc(cfg.rating_title||'Rating Scale')}</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="md-ratings">${ratingsHtml}</div>
+    </div>`,
+    `<button class="te-btn te-btn-primary" onclick="applySkills()"><i class="fas fa-check"></i> Apply</button>
+     <button class="te-btn te-btn-outline" onclick="resetSkills()">Reset</button>
+     <button class="te-btn te-btn-outline" onclick="closeModal()">Cancel</button>`,true);
+}
+
+function ensureSkillsByModel(model){
+  if(!ST.customizations.skills_by_model) ST.customizations.skills_by_model={};
+  if(!ST.customizations.skills_by_model[model]){
+    const def=SECTION_5_DEFAULTS[model];
+    if(def) ST.customizations.skills_by_model[model]=JSON.parse(JSON.stringify(def));
+  }
+  return ST.customizations.skills_by_model[model];
+}
+
+function addSkillItem(model,catIdx){
+  const inp=document.getElementById('md-add-skill-'+catIdx);
+  const val=inp.value.trim();if(!val)return;
+  const cfg=ensureSkillsByModel(model);
+  if(cfg && cfg.categories[catIdx]){
+    cfg.categories[catIdx].items.push(val);
+  }
+  openSkillsModal();dirty=true;
+}
+function removeSkillItem(model,catIdx,itemIdx){
+  const cfg=ensureSkillsByModel(model);
+  if(cfg && cfg.categories[catIdx]){
+    cfg.categories[catIdx].items.splice(itemIdx,1);
+  }
+  openSkillsModal();dirty=true;
+}
+function applySkills(){
+  const model=ST.selected_models.section_5||'model_3';
+  const cfg=ensureSkillsByModel(model);
+  if(cfg){
+    document.querySelectorAll('#md-ratings input').forEach(inp=>{
+      const idx=parseInt(inp.dataset.ridx);
+      if(!isNaN(idx) && cfg.rating_labels) cfg.rating_labels[idx]=inp.value;
+    });
+  }
+  closeModal();renderPreview();dirty=true;
+}
+function resetSkills(){
+  const model=ST.selected_models.section_5||'model_3';
+  if(ST.customizations.skills_by_model) delete ST.customizations.skills_by_model[model];
+  closeModal();openSkillsModal();renderPreview();dirty=true;
+}
+
+function openSectionCustomize(section){
+  collectStateFromUI();
+  const model=ST.selected_models[section];
+  if(model==='none')return teToast('Select a model first, then customize it.','error');
+  if(section==='section_1')return openSchoolDetailsModal();
+  if(section==='section_2')return openStudentDetailsModal();
+  if(section==='section_3')return openAcademicModal();
+  if(section==='section_4')return openGradeModal();
+  if(section==='section_5')return openSkillsModal();
+  if(section==='section_6')return openCommentModal();
+}
+
+function syncCustomizeButtons(){
+  document.querySelectorAll('[data-customize-section]').forEach(btn=>{
+    const section=btn.dataset.customizeSection;
+    const model=ST.selected_models[section] || document.getElementById('model-'+section)?.value;
+    const hidden=model==='none';
+    btn.disabled=hidden;
+    btn.innerHTML=hidden?'<i class="fas fa-lock"></i> Hidden':'<i class="fas fa-edit"></i> Customize';
+  });
+}
+
+function openStudentDetailsModal(){
+  const fields=ST.customizations.student_fields;
+  const rows=fields.map((f,i)=>`<div style="display:grid;grid-template-columns:36px 1fr 120px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #edf2f7;">
+    <input type="checkbox" class="md-student-visible" data-idx="${i}" ${f.visible?'checked':''}/>
+    <input type="text" class="md-student-label" data-idx="${i}" value="${esc(f.label)}" style="padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;"/>
+    <span style="font-size:11px;color:var(--muted);font-weight:700;">${esc(f.key)}</span>
+  </div>`).join('');
+  openModal(`Student Details - ${currentModelName('section_2')}`,
+    `<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Tick fields to show them and edit the labels printed on the report.</div>
+     <div style="display:grid;grid-template-columns:36px 1fr 120px;gap:8px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px;"><span>Show</span><span>Label</span><span>Field</span></div>${rows}`,
+    `<button class="te-btn te-btn-primary" onclick="applyStudentFields()"><i class="fas fa-check"></i> Apply</button>
+     <button class="te-btn te-btn-outline" onclick="resetStudentFields()">Reset</button>
+     <button class="te-btn te-btn-outline" onclick="closeModal()">Cancel</button>`,true);
+}
+
+function applyStudentFields(){
+  document.querySelectorAll('#te-modal-body .md-student-visible').forEach(chk=>{
+    const idx=parseInt(chk.dataset.idx);
+    if(!isNaN(idx))ST.customizations.student_fields[idx].visible=chk.checked;
+  });
+  document.querySelectorAll('#te-modal-body .md-student-label').forEach(inp=>{
+    const idx=parseInt(inp.dataset.idx);
+    if(!isNaN(idx))ST.customizations.student_fields[idx].label=inp.value.trim()||ST.customizations.student_fields[idx].label;
+  });
+  closeModal();renderPreview();dirty=true;
+}
+
+function resetStudentFields(){
+  ST.customizations.student_fields=getDefaultState().customizations.student_fields.map(f=>({...f}));
+  closeModal();openStudentDetailsModal();renderPreview();dirty=true;
+}
+
+function allAcademicColumnsForModal(model,s){
+  const custom=(ST.customizations.academic_columns||{})[model]||{};
+  const modelDefaults=ACADEMIC_MODEL_DEFAULTS[model]||{};
+  const modelScores=ACADEMIC_MODEL_SCORES[model]||{};
+  return baseAcademicColumnsForModel(model,s).map(col=>{
+    const over=custom[col.key];
+    if(over) return Object.assign({},col,over);
+    const patched=Object.assign({},col);
+    if(modelDefaults[col.key]!==undefined) patched.visible=modelDefaults[col.key];
+    if(modelScores[col.key]!==undefined) patched.score=modelScores[col.key];
+    return patched;
+  });
+}
+
+function openAcademicModal(){
+  const model=ST.selected_models.section_3||'model_1';
+  const columns=allAcademicColumnsForModal(model,ST.settings);
+  const rows=columns.map((h,i)=>`<div style="display:grid;grid-template-columns:34px 1fr 84px 88px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #edf2f7;">
+    <input type="checkbox" class="md-academic-visible" data-key="${esc(h.key)}" ${h.visible===false?'':'checked'}/>
+    <input type="text" class="md-academic-label" data-key="${esc(h.key)}" value="${esc(h.label)}" style="padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;"/>
+    <input type="number" class="md-academic-score" data-key="${esc(h.key)}" value="${h.score!==undefined?h.score:''}" placeholder="-" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;"/>
+    <span style="font-size:10px;color:var(--muted);font-weight:700;">${esc(h.key)}</span>
+  </div>`).join('');
+  openModal(`Result Headers - ${currentModelName('section_3')}`,
+    `<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">This customizes the currently selected academic model. Some models have extra columns, so each model keeps its own header settings.</div>
+     <div style="display:grid;grid-template-columns:34px 1fr 84px 88px;gap:8px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px;"><span>Show</span><span>Header Label</span><span>Score</span><span>Key</span></div>${rows}`,
+    `<button class="te-btn te-btn-primary" onclick="applyAcademicHeaders()"><i class="fas fa-check"></i> Apply</button>
+     <button class="te-btn te-btn-gold" onclick="openGradeModal()"><i class="fas fa-star"></i> Grade Keys</button>
+     <button class="te-btn te-btn-gold" onclick="openRemarksModal()"><i class="fas fa-comment-dots"></i> Remarks</button>
+     <button class="te-btn te-btn-outline" onclick="resetAcademicHeaders()">Reset</button>
+     <button class="te-btn te-btn-outline" onclick="closeModal()">Cancel</button>`,true);
+}
+
+function applyAcademicHeaders(){
+  const model=ST.selected_models.section_3||'model_1';
+  if(!ST.customizations.academic_columns)ST.customizations.academic_columns={};
+  const current=ST.customizations.academic_columns[model]||{};
+  document.querySelectorAll('#te-modal-body .md-academic-visible').forEach(chk=>{
+    const key=chk.dataset.key;
+    current[key]=Object.assign(current[key]||{},{visible:chk.checked});
+  });
+  document.querySelectorAll('#te-modal-body .md-academic-label').forEach(inp=>{
+    const key=inp.dataset.key;
+    current[key]=Object.assign(current[key]||{},{label:inp.value.trim()||key});
+  });
+  document.querySelectorAll('#te-modal-body .md-academic-score').forEach(inp=>{
+    const key=inp.dataset.key;
+    const value=inp.value===''?undefined:parseInt(inp.value,10);
+    current[key]=Object.assign(current[key]||{},{score:Number.isFinite(value)?value:undefined});
+  });
+  ST.customizations.academic_columns[model]=current;
+  closeModal();renderPreview();dirty=true;
+}
+
+function resetAcademicHeaders(){
+  const model=ST.selected_models.section_3||'model_1';
+  if(ST.customizations.academic_columns)delete ST.customizations.academic_columns[model];
+  closeModal();openAcademicModal();renderPreview();dirty=true;
+}
+
+function openGradeModal(){
+  const rows=getGradeKeyRows().map((g,i)=>`<div style="display:grid;grid-template-columns:90px 80px 1fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #edf2f7;">
+    <input type="text" class="md-grade-range" data-idx="${i}" value="${esc(g.range)}" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;"/>
+    <input type="text" class="md-grade-code" data-idx="${i}" value="${esc(g.code)}" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;font-weight:800;"/>
+    <input type="text" class="md-grade-label" data-idx="${i}" value="${esc(g.label)}" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;"/>
+  </div>`).join('');
+  openModal(`Grade Keys - ${currentModelName('section_4')}`,
+    `<div class="te-toggle ${ST.settings.show_grade_keys?'on':''}" onclick="toggleSwitch(this)" data-key="show_grade_keys" style="margin-bottom:10px;"><span>Show grade keys section</span><div class="te-switch"></div></div>
+     <div style="display:grid;grid-template-columns:90px 80px 1fr;gap:8px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;"><span>Range</span><span>Code</span><span>Descriptor</span></div>${rows}`,
+    `<button class="te-btn te-btn-primary" onclick="applyGradeSettings()"><i class="fas fa-check"></i> Apply</button>
+     <button class="te-btn te-btn-outline" onclick="useFullDescriptorsForCodes()" title="Replace codes (EE1) with full descriptors (Exceeding Expectations 1)">Use Full Descriptors</button>
+     <button class="te-btn te-btn-outline" onclick="useShortCodesForGrades()" title="Restore short CBC codes (EE1, BE2, etc.)">Use Short Codes</button>
+     <button class="te-btn te-btn-outline" onclick="resetGradeSettings()">Reset</button>
+     <button class="te-btn te-btn-outline" onclick="closeModal()">Cancel</button>`,true);
+}
+function useFullDescriptorsForCodes(){
+  const rows=[];
+  document.querySelectorAll('#te-modal-body .md-grade-range').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].range=inp.value.trim();});
+  document.querySelectorAll('#te-modal-body .md-grade-code').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].code=expandCBCCode(inp.value.trim());});
+  document.querySelectorAll('#te-modal-body .md-grade-label').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].label=inp.value.trim();});
+  ST.customizations.grade_key=rows.filter(r=>r&&r.range);
+  closeModal();openGradeModal();renderPreview();dirty=true;
+}
+function useShortCodesForGrades(){
+  const SHORT={'Exceeding Expectations 1':'EE1','Exceeding Expectations 2':'EE2','Meeting Expectations 1':'ME1','Meeting Expectations 2':'ME2','Approaching Expectations 1':'AE1','Approaching Expectations 2':'AE2','Below Expectations 1':'BE1','Below Expectations 2':'BE2'};
+  const rows=[];
+  document.querySelectorAll('#te-modal-body .md-grade-range').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].range=inp.value.trim();});
+  document.querySelectorAll('#te-modal-body .md-grade-code').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].code=SHORT[inp.value.trim()]||inp.value.trim();});
+  document.querySelectorAll('#te-modal-body .md-grade-label').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].label=inp.value.trim();});
+  ST.customizations.grade_key=rows.filter(r=>r&&r.range);
+  closeModal();openGradeModal();renderPreview();dirty=true;
+}
+
+function applyGradeSettings(){
+  const rows=[];
+  document.querySelectorAll('#te-modal-body .md-grade-range').forEach(inp=>{
+    const idx=parseInt(inp.dataset.idx);
+    rows[idx]=rows[idx]||{};
+    rows[idx].range=inp.value.trim();
+  });
+  document.querySelectorAll('#te-modal-body .md-grade-code').forEach(inp=>{
+    const idx=parseInt(inp.dataset.idx);
+    rows[idx]=rows[idx]||{};
+    rows[idx].code=inp.value.trim();
+  });
+  document.querySelectorAll('#te-modal-body .md-grade-label').forEach(inp=>{
+    const idx=parseInt(inp.dataset.idx);
+    rows[idx]=rows[idx]||{};
+    rows[idx].label=inp.value.trim();
+  });
+  ST.customizations.grade_key=rows.filter(r=>r&&r.range&&r.code);
+  setToggleByKey('show_grade_keys',ST.settings.show_grade_keys);
+  closeModal();renderPreview();dirty=true;
+}
+
+function resetGradeSettings(){
+  ST.customizations.grade_key=getDefaultState().customizations.grade_key.map(g=>({...g}));
+  closeModal();openGradeModal();renderPreview();dirty=true;
+}
+
+function openRemarksModal(){
+  const table=getRemarksTable();
+  const rows=table.map((r,i)=>`<div style="display:grid;grid-template-columns:80px 80px 1fr 30px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #edf2f7;">
+    <input type="number" class="md-rem-min" data-idx="${i}" value="${esc(String(r.min))}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;" placeholder="Min"/>
+    <input type="number" class="md-rem-max" data-idx="${i}" value="${esc(String(r.max))}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;" placeholder="Max"/>
+    <input type="text" class="md-rem-text" data-idx="${i}" value="${esc(r.text||'')}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;" placeholder="e.g. EE1, BE2, Excellent"/>
+    <button class="te-btn te-btn-sm te-btn-outline" style="padding:4px 8px;" onclick="removeRemarksRow(${i})"><i class="fas fa-times" style="font-size:9px;"></i></button>
+  </div>`).join('');
+  openModal('Customize Remarks',
+    `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Define score ranges (e.g. 0–10) and the remark text shown for that range. Use CBC codes like BE1, BE2, AE1, EE1 — or descriptive text like "Excellent".</div>
+     <div class="te-toggle ${ST.settings.show_remarks?'on':''}" onclick="toggleSwitch(this)" data-key="show_remarks" style="margin-bottom:10px;"><span>Show remarks column</span><div class="te-switch"></div></div>
+     <div style="display:grid;grid-template-columns:80px 80px 1fr 30px;gap:8px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px;"><span>Min</span><span>Max</span><span>Remark Text</span><span></span></div>
+     <div id="md-rem-rows">${rows}</div>
+     <button class="te-btn te-btn-sm te-btn-gold" style="margin-top:8px;" onclick="addRemarksRow()"><i class="fas fa-plus"></i> Add Range</button>`,
+    `<button class="te-btn te-btn-primary" onclick="applyRemarksTable()"><i class="fas fa-check"></i> Apply</button>
+     <button class="te-btn te-btn-outline" onclick="useCBCCodesForRemarks()">CBC Codes (EE1)</button>
+     <button class="te-btn te-btn-outline" onclick="useCBCFullDescriptorsForRemarks()">Full Descriptors</button>
+     <button class="te-btn te-btn-outline" onclick="resetRemarksTable()">Reset</button>
+     <button class="te-btn te-btn-outline" onclick="closeModal()">Cancel</button>`,true);
+}
+function collectRemarksRows(){
+  const rows=[];
+  document.querySelectorAll('#te-modal-body .md-rem-min').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].min=parseFloat(inp.value);});
+  document.querySelectorAll('#te-modal-body .md-rem-max').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].max=parseFloat(inp.value);});
+  document.querySelectorAll('#te-modal-body .md-rem-text').forEach(inp=>{const i=+inp.dataset.idx;rows[i]=rows[i]||{};rows[i].text=inp.value.trim();});
+  return rows.filter(r=>r&&!isNaN(r.min)&&!isNaN(r.max)&&r.text);
+}
+function addRemarksRow(){
+  const rows=collectRemarksRows();rows.push({min:0,max:10,text:''});
+  ST.customizations.remarks_table=rows;closeModal();openRemarksModal();
+}
+function removeRemarksRow(idx){
+  const rows=collectRemarksRows();rows.splice(idx,1);
+  ST.customizations.remarks_table=rows;closeModal();openRemarksModal();
+}
+function applyRemarksTable(){
+  ST.customizations.remarks_table=collectRemarksRows();
+  setToggleByKey('show_remarks',ST.settings.show_remarks);
+  closeModal();renderPreview();dirty=true;
+}
+function resetRemarksTable(){
+  ST.customizations.remarks_table=getDefaultState().customizations.remarks_table.map(r=>({...r}));
+  closeModal();openRemarksModal();renderPreview();dirty=true;
+}
+function useCBCCodesForRemarks(){
+  // Build remarks_table from grade_key (range -> code)
+  const out=[];
+  getGradeKeyRows().forEach(g=>{
+    const m=String(g.range||'').match(/(\d+)\s*-\s*(\d+)/);
+    if(m){const a=+m[1],b=+m[2];out.push({min:Math.min(a,b),max:Math.max(a,b),text:g.code||''});}
+  });
+  if(out.length){ST.customizations.remarks_table=out;closeModal();openRemarksModal();renderPreview();dirty=true;}
+}
+function expandCBCCode(code){
+  const map={EE:'Exceeding Expectations',ME:'Meeting Expectations',AE:'Approaching Expectations',BE:'Below Expectations'};
+  const m=String(code||'').match(/^([A-Z]{2})(\d*)$/);
+  if(!m)return code||'';
+  const base=map[m[1]]||code;
+  return m[2]?`${base} ${m[2]}`:base;
+}
+function useCBCFullDescriptorsForRemarks(){
+  // Build remarks_table from grade_key (range -> "Exceeding Expectations 1", etc.)
+  const out=[];
+  getGradeKeyRows().forEach(g=>{
+    const m=String(g.range||'').match(/(\d+)\s*-\s*(\d+)/);
+    if(m){const a=+m[1],b=+m[2];out.push({min:Math.min(a,b),max:Math.max(a,b),text:expandCBCCode(g.code||'')});}
+  });
+  if(out.length){ST.customizations.remarks_table=out;closeModal();openRemarksModal();renderPreview();dirty=true;}
+}
+
+function openCommentModal(){
+  const s=ST.settings;
+  openModal(`Comments - ${currentModelName('section_6')}`,`
+    ${commentToggleRow('show_teacher_comment',"Class Teacher's Comments")}
+    <div class="te-field"><label>Class Teacher's Role Label</label><input type="text" id="md-teacher-role-label" value="${esc(s.teacher_role_label||'Class Teacher')}"/></div>
+    <div class="te-field"><label>Class Teacher Comment</label><textarea id="md-teacher-comment" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:'Poppins',sans-serif;font-size:12px;">${esc(s.teacher_comment||'')}</textarea></div>
+    ${commentToggleRow('show_head_comment',"Headteacher's Comments")}
+    <div class="te-field"><label>Headteacher's Role Label</label><input type="text" id="md-head-role-label" value="${esc(s.head_role_label||'Headteacher')}"/></div>
+    <div class="te-field"><label>Headteacher Comment</label><textarea id="md-head-comment" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:'Poppins',sans-serif;font-size:12px;">${esc(s.head_comment||'')}</textarea></div>
+    ${commentToggleRow('show_director_comment',"Director's Comments")}
+    <div class="te-field"><label>Director's Role Label</label><input type="text" id="md-director-role-label" value="${esc(s.director_role_label||'Director')}"/></div>
+    <div class="te-field"><label>Director Comment</label><textarea id="md-director-comment" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-family:'Poppins',sans-serif;font-size:12px;">${esc(s.director_comment||'')}</textarea></div>
+    ${commentToggleRow('show_promotion','Promotion Status')}
+    <div class="te-field"><label>Promotion Text</label><input type="text" id="md-promotion-status" value="${esc(s.promotion_status||'')}"/></div>
+    ${commentToggleRow('show_stamp','School Stamp')}
+  `,`<button class="te-btn te-btn-primary" onclick="applyCommentSettings()"><i class="fas fa-check"></i> Apply</button>
+     <button class="te-btn te-btn-outline" onclick="closeModal()">Cancel</button>`,true);
+}
+
+function commentToggleRow(key,label){
+  return `<div class="te-toggle ${ST.settings[key]?'on':''}" onclick="toggleSwitch(this)" data-key="${key}" style="margin-bottom:8px;"><span>${esc(label)}</span><div class="te-switch"></div></div>`;
+}
+
+function applyCommentSettings(){
+  ST.settings.teacher_comment=document.getElementById('md-teacher-comment').value;
+  ST.settings.head_comment=document.getElementById('md-head-comment').value;
+  ST.settings.director_comment=document.getElementById('md-director-comment').value;
+  ST.settings.teacher_role_label=document.getElementById('md-teacher-role-label').value.trim()||'Class Teacher';
+  ST.settings.head_role_label=document.getElementById('md-head-role-label').value.trim()||'Headteacher';
+  ST.settings.director_role_label=document.getElementById('md-director-role-label').value.trim()||'Director';
+  ST.settings.promotion_status=document.getElementById('md-promotion-status').value;
+  document.getElementById('set-teacher-comment').value=ST.settings.teacher_comment;
+  document.getElementById('set-head-comment').value=ST.settings.head_comment;
+  document.getElementById('set-director-comment').value=ST.settings.director_comment;
+  document.getElementById('set-promotion-status').value=ST.settings.promotion_status;
+  ['show_teacher_comment','show_head_comment','show_director_comment','show_promotion','show_stamp'].forEach(k=>setToggleByKey(k,ST.settings[k]));
+  closeModal();renderPreview();dirty=true;
+}
+
+// ══════════════════════════════════════
+// PREVIEW
+// ══════════════════════════════════════
+function renderPreview(){
+  const m=ST.selected_models,s=ST.settings,sc=ST.school;
+  const shell=document.getElementById('te-preview-shell');
+  shell.style.backgroundImage='none';
+  shell.style.setProperty('--tc',ST.theme_color);
+  shell.style.setProperty('--template-theme-color',ST.theme_color);
+  shell.style.setProperty('--template-theme-soft',hexToRgba(ST.theme_color,.11));
+  shell.style.setProperty('--template-theme-soft-strong',hexToRgba(ST.theme_color,.2));
+  const page=document.getElementById('tp-page');
+  page.className='tp-page template-preview-report';
+  let html='';
+  html+=s.bg_image?`<div class="template-preview-background"><img src="${esc(s.bg_image)}" alt=""></div>`:'<div class="template-preview-background" hidden></div>';
+  html+=sectionWrap('section_1',m.section_1,renderS1(m.section_1,sc,s));
+  html+=`<div class="template-preview-title" data-preview-result-title>${esc(s.result_title||'2026 First Term Report Sheet')}</div>`;
+  if(m.section_3==='model_3'){
+    html+=`<div class="template-preview-combined template-preview-combined--s3m3">
+      <div class="template-preview-combined-s2" data-combined-preview="section_2">${modelWrap(m.section_2,renderS2(m.section_2,s,sc))}</div>
+      <div class="template-preview-combined-s3" data-combined-preview="section_3">${modelWrap(m.section_3,renderS3(m.section_3,s))}</div>
+    </div>`;
+  }else{
+    html+=sectionWrap('section_2',m.section_2,renderS2(m.section_2,s,sc));
+    html+=sectionWrap('section_3',m.section_3,renderS3(m.section_3,s));
+  }
+  if(m.section_4!=='none'&&s.show_grade_keys)html+=renderS4(m.section_4);
+  if(m.section_5!=='none')html+=sectionWrap('section_5',m.section_5,renderS5(m.section_5));
+  if(m.section_6!=='none')html+=sectionWrap('section_6',m.section_6,renderS6(m.section_6,s));
+  if(s.footer_text)html+=`<div class="template-preview-footer-note" data-preview-footer-text>${esc(s.footer_text)}</div>`;
+  page.innerHTML=html;
+  applyReportLayoutMode(page,m,s);
+  fitReportContentToPage();
+  balanceReportVerticalSpace(page,page.dataset.layoutMode||'balanced');
+  fitReportContentToPage();
+  fitPreviewSheet();
+  requestAnimationFrame(()=>{
+    balanceReportVerticalSpace(page,page.dataset.layoutMode||'balanced');
+    fitReportContentToPage();
+    fitPreviewSheet();
+  });
+}
+
+function renderS1(model,sc,s){
+  const logo=logoHtml(sc);
+  const contact=[sc.phone,sc.email].filter(Boolean).join(' - ');
+  const meta=[
+    '(PRIMARY)',
+    sc.address,
+    sc.motto?`Motto: ${sc.motto}`:'',
+    contact
+  ].filter(Boolean).map(esc).map(t=>`<div>${t}</div>`).join('');
+  if(model==='model_3'){
+    const bg=s.jumbotron_header_bg?'var(--template-theme-soft-strong)':'#fff';
+    return `<div class="template-preview-box template-preview-s1m3-header" style="background:${bg};">
+      <div class="template-preview-s1m3-side">
+        <div class="template-preview-s1m3-school-name">${esc(sc.name)}</div>
+        <div class="template-preview-s1m3-meta">${meta}</div>
+      </div>
+      <div class="template-preview-s1m3-logo">${logo}</div>
+      <div class="template-preview-s1m3-side">
+        <div class="template-preview-s1m3-school-name">${esc(sc.name)}</div>
+        <div class="template-preview-s1m3-meta">${meta}</div>
+      </div>
+    </div>`;
+  }
+  return `<div class="template-preview-box template-preview-header">
+    <div class="template-preview-logo">${logo}</div>
+    <div class="template-preview-school">
+      <div class="template-preview-school-name">${esc(sc.name)}</div>
+      <div class="template-preview-school-meta">${meta}</div>
+    </div>
+  </div>`;
+}
+
+function renderLegacyS2(model,s,sc){
+  const sampleData={name:'Amani Wanjiku Odhiambo',dob:'12 March 2015',sex:'Female',class:'Grade 5',admission_no:'JOY-2024-0042'};
+  let fields=getVisibleStudentFields();
+  let fieldHtml=fields.map(f=>`<div class="tp-student-row"><span>${f.label}:</span><strong>${sampleData[f.key]||'—'}</strong></div>`).join('');
+
+  let attHtml='';
+  if(s.show_attendance){
+    attHtml=`<div class="tp-attendance-box">
+      <div class="tp-att-item"><div class="val">65</div><div class="lbl">School Opened</div></div>
+      <div class="tp-att-item"><div class="val">62</div><div class="lbl">Present</div></div>
+      <div class="tp-att-item"><div class="val">3</div><div class="lbl">Absent</div></div></div>`;
+  }
+  let termHtml='';
+  if(s.show_term_duration){
+    termHtml=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:9px;text-align:center;margin-top:4px;">
+      <div class="tp-att-item"><div class="lbl">Term Begins</div><div style="font-weight:600;font-size:10px;">01/01/2026</div></div>
+      <div class="tp-att-item"><div class="lbl">Term Ends</div><div style="font-weight:600;font-size:10px;">01/03/2026</div></div>
+      <div class="tp-att-item"><div class="lbl">Next Term</div><div style="font-weight:600;font-size:10px;">23/04/2026</div></div></div>`;
+  }
+  let scoreHtml='';
+  if(s.show_score_summary){
+    scoreHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;margin-top:4px;">
+      <div class="tp-att-item"><div class="lbl">Total Obtainable</div><div class="val" style="font-size:11px;">1300</div></div>
+      <div class="tp-att-item"><div class="lbl">Total Obtained</div><div class="val" style="font-size:11px;">398</div></div>
+      <div class="tp-att-item"><div class="lbl">Average %</div><div class="val" style="font-size:11px;">30.6</div></div>
+      <div class="tp-att-item"><div class="lbl">Position</div><div class="val" style="font-size:11px;">10th</div></div></div>`;
+  }
+
+  let photoHtml='';
+  if(s.show_photo&&(model==='model_5'||model==='model_6'||model==='model_9'||model==='model_10')){
+    photoHtml=`<div class="tp-student-photo"><i class="fas fa-user"></i></div>`;
+  }
+
+  // Different layout models
+  if(model==='model_2'){
+    let cards=fields.map(f=>`<div style="background:#f8f8f8;border-radius:6px;padding:6px 10px;"><span style="font-size:9px;color:var(--muted);display:block;">${f.label}</span><strong style="font-size:12px;">${sampleData[f.key]||'—'}</strong></div>`).join('');
+    return `<div style="padding:10px 0;border-bottom:2px solid var(--tc);"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${cards}</div>${attHtml}${termHtml}${scoreHtml}</div>`;
+  }
+  if(model==='model_3'){
+    let half=Math.ceil(fields.length/2);
+    let col=arr=>arr.map(f=>`<div class="tp-student-row"><span>${f.label}:</span><strong>${sampleData[f.key]||'—'}</strong></div>`).join('');
+    return `<div style="padding:10px 0;border-bottom:2px solid var(--tc);"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">${col(fields.slice(0,half))}${col(fields.slice(half))}</div>${attHtml}${termHtml}${scoreHtml}</div>`;
+  }
+  if(model==='model_4'){
+    let items=fields.map(f=>`<strong>${f.label}:</strong> ${sampleData[f.key]||'—'}`).join(' &nbsp;| &nbsp;');
+    return `<div style="padding:8px 0;border-bottom:2px solid var(--tc);text-align:center;font-size:11px;">${items}${attHtml}${termHtml}${scoreHtml}</div>`;
+  }
+  if(model==='model_5'||model==='model_6'){
+    return `<div style="display:grid;grid-template-columns:75px 1fr;gap:10px;padding:10px 0;border-bottom:2px solid var(--tc);">
+      ${photoHtml}<div><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">${fieldHtml}</div>${attHtml}${termHtml}${scoreHtml}</div></div>`;
+  }
+  if(model==='model_7'||model==='model_8'){
+    return `<div style="padding:10px 0;border-bottom:2px solid var(--tc);">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;"><tbody>
+      ${fields.map(f=>`<tr><td style="padding:3px 8px;background:#f8f8f8;font-weight:600;width:40%;border:1px solid #eee;">${f.label}</td><td style="padding:3px 8px;border:1px solid #eee;">${sampleData[f.key]||'—'}</td></tr>`).join('')}
+      </tbody></table>${attHtml}${termHtml}${scoreHtml}</div>`;
+  }
+  if(model==='model_9'||model==='model_10'){
+    return `<div style="display:grid;grid-template-columns:1fr 75px;gap:10px;padding:10px 0;border-bottom:2px solid var(--tc);">
+      <div><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">${fieldHtml}</div>${attHtml}${termHtml}</div>
+      <div style="text-align:right;">${photoHtml}${scoreHtml}</div></div>`;
+  }
+  // model_1 (default)
+  return `<div class="tp-student">${fieldHtml}${attHtml?`<div style="grid-column:1/-1;">${attHtml}</div>`:''}${termHtml?`<div style="grid-column:1/-1;">${termHtml}</div>`:''}${scoreHtml?`<div style="grid-column:1/-1;">${scoreHtml}</div>`:''}</div>`;
+}
+
+function renderLegacyS3(model,s){
+  const headers=ST.customizations.academic_headers.filter(h=>h.visible);
+  const scoreColor=s.show_score_colors ? (s.score_color||ST.theme_color) : 'inherit';
+  const scores=[[88,92,85],[72,68,79],[90,86,93],[65,70,62],[78,74,80],[85,82,88],[70,75,68],[82,78,86],[76,80,72]];
+  const caHeaders=headers.filter(h=>h.key.startsWith('ca')||h.key==='exam');
+  const metaHeaders=headers.filter(h=>!h.key.startsWith('ca')&&h.key!=='exam');
+
+  let allCols=[...caHeaders,...metaHeaders];
+  let thead='<th>Subject</th>'+allCols.map(h=>{
+    const label=h.key==='grade'?(s.grade_label||h.label):h.key==='remarks'?(s.remarks_label||h.label):h.label;
+    if(h.score)return `<th>${esc(label)}<div style="font-size:8px;font-weight:400;">${h.score}</div></th>`;
+    return `<th>${esc(label)}</th>`;
+  }).join('');
+
+  let tbody='';
+  SUBJECTS.forEach((subj,i)=>{
+    const sc=scores[i]||[70,70,70];
+    const total=Math.round((sc[0]+sc[1]+sc[2])/3);
+    const grade=getCBCGrade(total);
+    let cells=`<td>${subj}</td>`;
+    allCols.forEach(h=>{
+      if(h.key==='ca1')cells+=`<td>${sc[0]}</td>`;
+      else if(h.key==='ca2')cells+=`<td>${sc[1]}</td>`;
+      else if(h.key==='ca3')cells+=`<td>${sc[2]}</td>`;
+      else if(h.key==='exam')cells+=`<td style="color:${scoreColor};font-weight:700;">${Math.round((sc[0]+sc[1]+sc[2])/3)}</td>`;
+      else if(h.key==='total')cells+=`<td><strong>${total}</strong></td>`;
+      else if(h.key==='grade')cells+=`<td><span style="color:${gradeColor(grade)};font-weight:700;">${grade}</span></td>`;
+      else if(h.key==='cum_total')cells+=`<td>${total}</td>`;
+      else if(h.key==='percentage')cells+=`<td>${total}%</td>`;
+      else if(h.key==='position')cells+=`<td>${i+1}</td>`;
+      else if(h.key==='class_avg')cells+=`<td>${Math.round(total*0.95)}</td>`;
+      else if(h.key==='remarks')cells+=`<td style="font-size:8px;">${getRemarks(grade,total)}</td>`;
+      else if(h.key==='sign')cells+=`<td></td>`;
+      else if(h.key==='highest')cells+=`<td>${Math.min(100,total+8)}</td>`;
+      else if(h.key==='lowest')cells+=`<td>${Math.max(10,total-15)}</td>`;
+      else cells+=`<td>—</td>`;
+    });
+    tbody+=`<tr>${cells}</tr>`;
+  });
+  const avg=79,avgG=getCBCGrade(avg);
+  let totalCells='<td><strong>OVERALL</strong></td>';
+  allCols.forEach(h=>{
+    if(h.key==='total')totalCells+=`<td><strong>${avg}</strong></td>`;
+    else if(h.key==='grade')totalCells+=`<td><strong>${avgG}</strong></td>`;
+    else totalCells+='<td></td>';
+  });
+  tbody+=`<tr class="total-row">${totalCells}</tr>`;
+
+  let titleText='ACADEMIC PERFORMANCE';
+  if(model==='model_3'||model==='model_4')titleText='ACADEMIC PERFORMANCE & REMARKS';
+  return `<div class="tp-academic"><h3>${titleText}</h3><table class="tp-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+function renderLegacyS4(model){
+  if(model==='model_2'){
+    return `<div class="tp-grade"><h3>Grading Scale</h3><div class="tp-grade-horiz">${CBC_GRADES.map(g=>`<div class="tp-grade-chip"><strong>${g.code}</strong> ${g.min}-${g.max}</div>`).join('')}</div></div>`;
+  }
+  if(model==='model_3'){
+    return `<div class="tp-grade"><h3>Grading Scale</h3><table style="width:100%;border-collapse:collapse;font-size:9px;">
+      <tr>${CBC_GRADES.map(g=>`<th style="background:var(--tc);color:#fff;padding:4px 6px;font-size:9px;">${g.code}</th>`).join('')}</tr>
+      <tr>${CBC_GRADES.map(g=>`<td style="padding:4px 6px;text-align:center;border:1px solid #eee;">${g.min}-${g.max}</td>`).join('')}</tr>
+      <tr>${CBC_GRADES.map(g=>`<td style="padding:4px 6px;text-align:center;border:1px solid #eee;font-size:8px;">${g.label}</td>`).join('')}</tr></table></div>`;
+  }
+  if(model==='model_4'){
+    return `<div class="tp-grade"><h3>Grading Scale</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;font-size:9px;">
+      ${CBC_GRADES.map(g=>`<div style="display:flex;gap:8px;padding:3px 8px;background:#f8f8f8;border-radius:3px;">
+        <span style="font-weight:700;color:var(--tc);width:30px;">${g.code}</span><span>${g.min}-${g.max}</span><span style="color:var(--muted);">(${g.label})</span></div>`).join('')}</div></div>`;
+  }
+  // model_1
+  return `<div class="tp-grade"><h3>Grading Scale</h3><div class="tp-grade-grid">${CBC_GRADES.map(g=>`<div class="tp-grade-item"><span>${g.code}</span><small>${g.min}-${g.max} (${g.label})</small></div>`).join('')}</div></div>`;
+}
+
+function renderLegacyS5(model){
+  const sk=ST.customizations.skills;
+  const ratings=sk.ratings;
+  function circles(filled){return ratings.map(r=>`<td><div class="tp-rating ${ST.settings.autofill_skills && r<=filled?'filled':''}"></div></td>`).join('');}
+  let thR=ratings.map(r=>`<th>${r}</th>`).join('');
+
+  if(model==='model_1'){
+    let t1=sk.affective.map((s,i)=>`<tr><td>${s}</td>${circles(4-(i%2))}</tr>`).join('');
+    let t2=sk.psychomotor.map((s,i)=>`<tr><td>${s}</td>${circles(3+(i%2))}</tr>`).join('');
+    return `<div class="tp-skills"><h3>Skills & Behavioral Assessment</h3><div class="tp-skills-grid">
+      <table class="tp-skills-table"><caption>Affective Traits</caption><thead><tr><th>Trait</th>${thR}</tr></thead><tbody>${t1}</tbody></table>
+      <table class="tp-skills-table"><caption>Psychomotor Skills</caption><thead><tr><th>Skill</th>${thR}</tr></thead><tbody>${t2}</tbody></table></div></div>`;
+  }
+  if(model==='model_2'){
+    let all=[...sk.affective,...sk.psychomotor];
+    let rows=all.map((s,i)=>`<tr><td>${s}</td>${circles(3+(i%3))}</tr>`).join('');
+    return `<div class="tp-skills"><h3>Skills & Behavioral Assessment</h3>
+      <table class="tp-skills-table"><thead><tr><th>Skill</th>${thR}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  // model_3
+  let rows=[...sk.affective,...sk.psychomotor].map((s,i)=>{
+    let cat=i<sk.affective.length?'Affective':'Psychomotor';
+    return `<tr><td>${s}</td><td style="font-size:8px;color:var(--muted);">${cat}</td>${circles(3+(i%3))}</tr>`;
+  }).join('');
+  return `<div class="tp-skills"><h3>Skills & Behavioral Assessment</h3>
+    <table class="tp-skills-table"><thead><tr><th>Skill</th><th>Category</th>${thR}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderLegacyS6(model,s){
+  let comments=[];
+  if(s.show_teacher_comment)comments.push({role:'Class Teacher',text:s.teacher_comment || 'A dedicated and hardworking student who shows great potential.'});
+  if(s.show_head_comment)comments.push({role:'Headteacher',text:s.head_comment || 'Keep up the excellent work. We are proud of your progress.'});
+  if(model==='model_1'&&s.show_director_comment)comments.push({role:'Director',text:s.director_comment || ''});
+  return `<div class="tp-comments">${comments.map(c=>`<div class="tp-comment-row">
+    <div class="tp-comment-label">${c.role}'s Comment</div>
+    <div class="tp-comment-text">${c.text||'________________________________________'}</div>
+    <div class="tp-comment-sign"><span>Signature</span><span>Date</span></div></div>`).join('')}</div>`;
+}
+
+// MATOKEO-aligned preview functions. These intentionally override the
+// lightweight mock functions above so the preview uses the same report anatomy
+// as the original template editor.
+function getSkillsConfig(model){
+  const userCustom=ST.customizations.skills_by_model && ST.customizations.skills_by_model[model];
+  if(userCustom) return userCustom;
+  const defaults=SECTION_5_DEFAULTS[model];
+  if(defaults) return defaults;
+  // Fallback to generic user skills
+  const sk=ST.customizations.skills;
+  return {
+    rating_title:'Keys To Rating',ratings:sk.ratings,rating_labels:sk.rating_labels,
+    categories:[
+      {key:'affective_traits',title:'AFFECTIVE TRAITS',side:'left',items:sk.affective},
+      {key:'psychomotor_skills',title:'PSYCHOMOTOR SKILLS',side:'right',items:sk.psychomotor}
+    ]
+  };
+}
+
+function renderS5(model){
+  const cfg=getSkillsConfig(model);
+  const ratings=cfg.ratings;
+  const thR=ratings.map(r=>`<th>${r}</th>`).join('');
+  const ratingCells=(offset)=>ratings.map((r,ri)=>`<td>${ST.settings.autofill_skills && ri===((offset)%ratings.length)?'&check;':''}</td>`).join('');
+  const tableFor=(title,items,offset=0)=>`<table class="template-preview-table template-preview-skills-table">
+    <tr><th class="template-preview-skills-category">${esc(title)}</th>${thR}</tr>
+    ${items.map((item,i)=>`<tr><td><span class="template-preview-skills-text">${esc(item)}</span></td>${ratingCells(i+offset)}</tr>`).join('')}
+  </table>`;
+
+  const cats=cfg.categories||[];
+  if(model==='model_1'){
+    const left=cats.filter(c=>c.side==='left'||!c.side);
+    const right=cats.filter(c=>c.side==='right');
+    return `<div class="template-preview-skills">
+      <div class="template-preview-skills-side">${left.map((c,i)=>tableFor(c.title,c.items,i)).join('')}</div>
+      <div class="template-preview-skills-side">${right.map((c,i)=>tableFor(c.title,c.items,i+1)).join('')}</div></div>`;
+  }
+  if(model==='model_2'){
+    let tables=cats.map((c,i)=>tableFor(c.title,c.items,i)).join('');
+    return `<div class="template-preview-skills" style="grid-template-columns:1fr;"><div class="template-preview-skills-side">${tables}${ratingKeyTable(cfg)}</div></div>`;
+  }
+  // model_3 (early years — many categories, left/right)
+  const left=cats.filter(c=>c.side==='left');
+  const right=cats.filter(c=>c.side==='right');
+  return `<div class="template-preview-skills">
+    <div class="template-preview-skills-side">${left.map((c,i)=>tableFor(c.title,c.items,i)).join('')}${ratingKeyTable(cfg)}</div>
+    <div class="template-preview-skills-side">${right.map((c,i)=>tableFor(c.title,c.items,i+1)).join('')}</div>
+  </div>`;
+}
+
+// Final model-accurate overrides: every selector option changes visible report structure.
+function renderS2(model,s,sc){
+  const sampleData={name:'Amani Wanjiku Odhiambo',dob:'12 March 2015',sex:'Female',class:'Grade 5',admission_no:'JOY-2024-0042'};
+  const fields=getVisibleStudentFields();
+  const fieldByKey=k=>fields.find(f=>f.key===k);
+  const personalTable=`<table class="template-preview-table template-preview-personal">
+    <colgroup><col style="width:30.2%"><col style="width:69.8%"></colgroup>
+    <tr><th colspan="2">Student's Personal Data</th></tr>
+    ${fields.map(f=>`<tr data-s2-row="${esc(f.key)}"><td>${esc(f.label)}</td><td data-s2-value="${esc(f.key)}">${esc(sampleData[f.key]||'-')}</td></tr>`).join('')}
+  </table>`;
+  const attendance=s.show_attendance?renderAttendanceTable():'';
+  const duration=s.show_term_duration?renderDurationTable():'';
+  const score=s.show_score_summary?renderScorecardTable(s):'';
+  const avatar=(cls='',reserve=false)=>s.show_photo?`<div class="template-preview-avatar ${cls}">${sampleStudentPhoto()}</div>`:(reserve?`<div class="template-preview-avatar template-preview-avatar--placeholder ${cls}"></div>`:'');
+  const row=(prefix,label,value,key='')=>`<div class="${prefix}-row" ${key?`data-s2-row="${esc(key)}"`:''}><div class="${prefix}-label">${esc(label)}</div><div class="${prefix}-value" ${key?`data-s2-value="${esc(key)}"`:''}>${esc(value)}</div></div>`;
+  const personalRow=(prefix,key)=>{const f=fieldByKey(key);return f?row(prefix,f.label,sampleData[f.key]||'-',f.key):'';};
+  const personalRowsForKeys=(prefix,keys)=>keys.map(k=>personalRow(prefix,k)).filter(Boolean);
+  const fullRows=prefix=>[
+    ...personalRowsForKeys(prefix,['name','dob','sex','class','admission_no']),
+    ...(s.show_score_summary?[row(prefix,'No. in Class','32')]:[])
+  ];
+  const termRows=prefix=>s.show_term_duration?[row(prefix,'Terminal Duration','65 days'),row(prefix,'Term Begins','06/01/2026'),row(prefix,'Term End','03/04/2026'),row(prefix,'Next Term Begins','28/04/2026'),row(prefix,'No. of Times Sch. Opened','65')]:[];
+  const scoreRows=prefix=>[
+    ...(s.show_attendance?[row(prefix,'No. of Times Present','62'),row(prefix,'No. of Times Absent','3')]:[]),
+    ...(s.show_score_summary?[row(prefix,'Total Score Obtainable','900'),row(prefix,'Total Score Obtained','711'),row(prefix,'Average Percentage','79')]:[]),
+    ...(s.show_score_summary&&s.show_position?[row(prefix,'Position',s.student_position||'10th')]:[])
+  ];
+  const splitRows=(prefix,items)=>`<div class="${prefix}-column">${items.join('')}</div>`;
+
+  if(model==='model_1'){
+    return `${personalTable}${avatar('',true)}<div class="template-preview-s2m1-attendance-stack">${attendance}${duration}</div><div class="template-preview-s2m1-score-stack">${score}</div>`;
+  }
+  if(model==='model_2'){
+    const p='template-preview-s2m2';
+    return `<div class="${p}-grid">${splitRows(p,fullRows(p))}${splitRows(p,termRows(p))}<div class="${p}-column ${p}-column--score">${scoreRows(p).join('')}</div></div>`;
+  }
+  if(model==='model_3'){
+    return `${personalTable}<div class="template-preview-s2m3-attendance-stack">${attendance}${duration}</div><div class="template-preview-s2m3-score-stack">${score}</div>${avatar('',true)}`;
+  }
+  if(model==='model_4'){
+    return `${personalTable}<div class="template-preview-s2m4-attendance-stack">${attendance}${duration}</div><div class="template-preview-s2m4-score-stack">${score}</div>`;
+  }
+  if(model==='model_5'){
+    const p='template-preview-s2m5';
+    return `<div class="${p}-grid">${splitRows(p,fullRows(p))}${splitRows(p,termRows(p))}<div class="${p}-column ${p}-column--score">${scoreRows(p).join('')}</div>${avatar(`${p}-avatar`,true)}</div>`;
+  }
+  if(model==='model_6'){
+    const p='template-preview-s2m6';
+    return `<div class="${p}-grid">${splitRows(p,personalRowsForKeys(p,['name','sex','admission_no']))}${splitRows(p,personalRowsForKeys(p,['dob','class']))}</div>`;
+  }
+  if(model==='model_7'){
+    const p='template-preview-s2m7';
+    const col1=personalRowsForKeys(p,['name','sex','admission_no']);
+    const col2=[
+      ...personalRowsForKeys(p,['dob','class']),
+      ...(s.show_score_summary?[row(p,'No. in Class','32')]:[])
+    ];
+    return `<div class="${p}-grid">${splitRows(p,col1)}${splitRows(p,col2)}${avatar(`${p}-avatar`,true)}</div>`;
+  }
+  if(model==='model_8'){
+    const p='template-preview-s2m8';
+    const termA=s.show_term_duration?[row(p,'Term Begins','06/01/2026'),row(p,'Next Term Begins','28/04/2026')]:[];
+    const termB=s.show_term_duration?[row(p,'Terminal Duration','65 days'),row(p,'Term End','03/04/2026'),row(p,'No. of Times Sch. Opened','65')]:[];
+    const noInClass=s.show_score_summary?[row(p,'No. in Class','32')]:[];
+    const col1=[...personalRowsForKeys(p,['name','sex','admission_no']),...termA];
+    const col2=[...personalRowsForKeys(p,['dob','class']),...termB,...noInClass];
+    return `<div class="${p}-grid">${splitRows(p,col1)}${splitRows(p,col2)}</div>`;
+  }
+  if(model==='model_9'){
+    const p='template-preview-s2m9';
+    const termA=s.show_term_duration?[row(p,'Term Begins','06/01/2026'),row(p,'Next Term Begins','28/04/2026')]:[];
+    const termB=s.show_term_duration?[row(p,'Terminal Duration','65 days'),row(p,'Term End','03/04/2026'),row(p,'No. of Times Sch. Opened','65')]:[];
+    const noInClass=s.show_score_summary?[row(p,'No. in Class','32')]:[];
+    const col1=[...personalRowsForKeys(p,['name','sex','admission_no']),...termA];
+    const col2=[...personalRowsForKeys(p,['dob','class']),...termB,...noInClass];
+    return `<div class="${p}-grid">${splitRows(p,col1)}${splitRows(p,col2)}${avatar(`${p}-avatar`,true)}</div>`;
+  }
+  if(model==='model_10'){
+    const p='template-preview-s2m10';
+    const score1=s.show_score_summary?[row(p,'Total Score Obtained','711'),...(s.show_position?[row(p,'Position',s.student_position||'10th')]:[])]:[];
+    const score2=s.show_score_summary?[row(p,'Total Score Obtainable','900'),row(p,'Average Percentage','79'),row(p,'No. in Class','32')]:[];
+    const col1=[...personalRowsForKeys(p,['name','sex','admission_no']),...score1];
+    const col2=[...personalRowsForKeys(p,['dob','class']),...score2];
+    return `<div class="${p}-grid">${splitRows(p,col1)}${splitRows(p,col2)}${avatar(`${p}-avatar`,true)}</div>`;
+  }
+  return `${personalTable}${avatar('',true)}<div class="template-preview-s2m1-attendance-stack">${attendance}${duration}</div><div class="template-preview-s2m1-score-stack">${score}</div>`;
+}
+
+function renderS3(model,s){
+  const headers=academicColumnsForModel(model,s);
+  const scoreColor=s.show_score_colors ? (s.score_color||ST.theme_color) : 'inherit';
+  const scores=[[88,92,85],[72,68,79],[90,86,93],[65,70,62],[78,74,80],[85,82,88],[70,75,68],[82,78,86],[76,80,72],[68,73,77],[81,79,84],[71,69,75]];
+  const subjects=SUBJECTS.concat(['Computer Studies','Physical Education','Life Skills']).slice(0,model==='model_6'||model==='model_8'?10:12);
+  const scoreHeaders=headers.filter(h=>h.score);
+  const metaHeaders=headers.filter(h=>!h.score);
+  const colspan=1+headers.length;
+  const widths=academicColumnWidths(headers,subjects.length);
+  const colgroup=`<colgroup><col data-s3-role="subject-col" style="width:${widths.subject}%">
+    ${headers.map((h,i)=>`<col class="${h.score?'template-preview-academic-col-score':'template-preview-academic-col-meta'}" data-s3-col="${esc(h.key)}" style="width:${widths.columns[i]}%">`).join('')}</colgroup>`;
+  const header1=`<tr><th colspan="${colspan}" class="template-preview-academic-title">Academic Performance</th></tr>`;
+  const header2=`<tr><th rowspan="2" class="template-preview-academic-subject">SUBJECT</th>
+    ${scoreHeaders.map(h=>`<th class="template-preview-academic-main" data-s3-col="${esc(h.key)}">${formatAcademicHeader(h.label)}</th>`).join('')}
+    ${metaHeaders.map(h=>`<th rowspan="2" class="template-preview-academic-main" data-s3-col="${esc(h.key)}">${formatAcademicHeader(h.label)}</th>`).join('')}</tr>`;
+  const header3=`<tr>${scoreHeaders.map(h=>`<th class="template-preview-academic-mark" data-s3-col="${esc(h.key)}">${h.score||''}</th>`).join('')}</tr>`;
+  let body='';
+  subjects.forEach((subj,i)=>{
+    const sc=scores[i]||[70,70,70], total=Math.round((sc[0]+sc[1]+sc[2])/3), grade=getCBCGrade(total);
+    body+=`<tr class="template-preview-academic-subject-row"><td>${esc(subj.toUpperCase())}</td>${headers.map(h=>academicCell(h,sc,total,grade,i,scoreColor)).join('')}</tr>`;
+  });
+  if(model==='model_2'){
+    body+=`<tr class="template-preview-academic-summary-row"><td colspan="${Math.ceil(colspan/2)}">Conduct: Very Good</td><td colspan="${Math.floor(colspan/2)}">Promoted To: Grade 6</td></tr>`;
+    body+=`<tr class="template-preview-academic-summary-row"><td colspan="${Math.ceil(colspan/2)}">Total Marks: 711 / 900</td><td colspan="${Math.floor(colspan/2)}">Average: 79</td></tr>`;
+  }else{
+    const avg=79, avgG=getCBCGrade(avg);
+    body+=`<tr class="template-preview-total-row"><td><strong>OVERALL</strong></td>${headers.map(h=>h.key==='total'||h.key==='total_score'?`<td><strong>${avg}</strong></td>`:h.key==='grade'?`<td><strong>${avgG}</strong></td>`:'<td></td>').join('')}</tr>`;
+  }
+  const modelClass=model==='model_1'?'':` template-preview-academic-${esc(model.replace('_',''))}`;
+  return `<div class="template-preview-academic${modelClass}" data-subjects="${subjects.length}" data-columns="${colspan}"><table class="template-preview-table">${colgroup}${header1}${header2}${header3}${body}</table></div>`;
+}
+
+function renderS6(model,s){
+  const comments=[];
+  if(s.show_teacher_comment)comments.push({role:s.teacher_role_label||'Class Teacher',text:s.teacher_comment || 'A dedicated and hardworking student who shows great potential.'});
+  if(s.show_head_comment)comments.push({role:s.head_role_label||'Headteacher',text:s.head_comment || 'Keep up the excellent work. We are proud of your progress.'});
+  if(s.show_director_comment)comments.push({role:s.director_role_label||'Director',text:s.director_comment || ''});
+  const promotion=s.show_promotion?`<div class="template-preview-promotion-status">${esc(s.promotion_status||'PROMOTED TO: ________________')}</div>`:'';
+  const date=new Date().toLocaleDateString('en-GB');
+  const stampPanel=s.show_stamp?`<aside class="template-preview-stamp-panel">
+    <div class="template-preview-stamp-title">School Stamp</div>
+    ${renderStamp(s,ST.school)}
+  </aside>`:'';
+  const layoutClass=stampPanel?'':' template-preview-comments--no-stamp';
+  if(model==='model_2'){
+    return `<div class="template-preview-comments template-preview-comments--model-2${layoutClass}" style="margin-top:var(--comment-margin-top,18px);">
+      <div class="template-preview-comments-box" style="padding:0 8px;">
+      ${comments.map(c=>`<div class="template-preview-comment-row template-preview-comment-row--model-2" data-comment-row="${esc(c.role.toLowerCase().replace(/\s+/g,'_'))}" style="border-bottom:2px solid #d8d8d8;">
+        <div class="template-preview-comment-label">${esc(c.role)}'s Comments:</div><div class="template-preview-comment-text">${esc(c.text||'________________________________________')}</div>
+        <div class="template-preview-comment-sign">Sign.:</div><div class="template-preview-sign-line"></div><div class="template-preview-comment-date">Date:</div><div class="template-preview-comment-date-value">${date}</div>
+      </div>`).join('')}</div>${stampPanel}</div>${promotion}`;
+  }
+  return `<div class="template-preview-comments${layoutClass}"><div class="template-preview-comments-box">${comments.map(c=>`<div class="template-preview-comment-row" data-comment-row="${esc(c.role.toLowerCase().replace(/\s+/g,'_'))}">
+    <div class="template-preview-comment-label">${esc(c.role)}'s Comments:</div><div class="template-preview-comment-text">${esc(c.text||'________________________________________')}</div><div class="template-preview-comment-sign">Sign:</div><div class="template-preview-sign-line"></div><div class="template-preview-comment-date">Date:</div><div class="template-preview-comment-date-value">${date}</div>
+  </div>`).join('')}</div>${stampPanel}</div>${promotion}`;
+}
+
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+function sectionWrap(section,model,inner){
+  return `<section class="template-preview-section template-preview-section--${esc(section)}" data-preview-section="${esc(section)}" data-selected-model="${esc(model)}">${modelWrap(model,inner)}</section>`;
+}
+function modelWrap(model,inner){
+  return `<div class="template-preview-model template-preview-model--${esc(model)} is-active" data-preview-model="${esc(model)}">${inner}</div>`;
+}
+function logoHtml(sc){
+  if(sc.logo)return `<img src="${esc(sc.logo)}" alt="${esc(sc.name||'School')} logo">`;
+  const abbr=(sc.name||'SCH').split(/\s+/).map(w=>w[0]).join('').slice(0,4).toUpperCase();
+  return `<div class="template-preview-logo-fallback">${esc(abbr||'SCH')}</div>`;
+}
+function sampleStudentPhoto(){
+  return '<i class="fas fa-user"></i>';
+}
+function renderStamp(s,sc){
+  if(!s.show_stamp) return '<div class="template-preview-stamp" hidden></div>';
+  if(s.stamp_image) return `<div class="template-preview-stamp"><img src="${esc(s.stamp_image)}" alt="Stamp"></div>`;
+  const name=sc.name||'JOYLAND SCHOOLS';
+  const sub=sc.type||'PRIMARY';
+  return `<div class="template-preview-stamp"><div class="template-preview-stamp-oval">
+    <span class="stamp-name">${esc(name)}</span>
+    <div class="stamp-line"></div>
+    <span class="stamp-sub">${esc(sub)}</span>
+    <span class="stamp-sub">Official Stamp</span>
+  </div></div>`;
+}
+function renderAttendanceTable(){
+  return `<table class="template-preview-table template-preview-attendance">
+    <colgroup><col style="width:41.7%"><col style="width:28.1%"><col style="width:30.2%"></colgroup>
+    <tr><th colspan="3">Attendance</th></tr>
+    <tr>
+      <th class="template-preview-subhead">No. of Times School Opened</th>
+      <th class="template-preview-subhead">No. of Times Present</th>
+      <th class="template-preview-subhead">No. of Times Absent</th>
+    </tr>
+    <tr><td>65</td><td>62</td><td>3</td></tr>
+  </table>`;
+}
+function renderDurationTable(){
+  return `<table class="template-preview-table template-preview-attendance template-preview-s2m1-duration">
+    <colgroup><col style="width:30.3%"><col style="width:28.5%"><col style="width:41.2%"></colgroup>
+    <tr><th colspan="3">Terminal Duration (65 days)</th></tr>
+    <tr>
+      <th class="template-preview-subhead">Term Begins</th>
+      <th class="template-preview-subhead">Term Ends</th>
+      <th class="template-preview-subhead">Next Term Begins</th>
+    </tr>
+    <tr><td>06/01/2026</td><td>03/04/2026</td><td>28/04/2026</td></tr>
+  </table>`;
+}
+function renderScorecardTable(s){
+  const showPos=s.show_position;
+  return `<table class="template-preview-table template-preview-scorecard">
+    <colgroup><col style="width:69.6%"><col style="width:30.4%"></colgroup>
+    <tr><td>Total Score Obtainable</td><td>900</td></tr>
+    <tr><td>Total Score Obtained</td><td>711</td></tr>
+    <tr><td>Average Percentage</td><td>79</td></tr>
+  </table>
+  <table class="template-preview-table template-preview-scorecard-bottom">
+    <colgroup>${showPos?'<col style="width:58%"><col style="width:42%">':'<col style="width:100%">'}</colgroup>
+    <tr><td>No. in Class</td>${showPos?'<td>Position</td>':''}</tr>
+    <tr><td>32</td>${showPos?`<td>${esc(s.student_position||'10th')}</td>`:''}</tr>
+  </table>`;
+}
+function academicHeadersForModel(headers,s,model){
+  const labelFor=h=>{
+    if(h.key==='grade')return {...h,label:s.grade_label||h.label};
+    if(h.key==='remarks')return {...h,label:s.remarks_label||h.label};
+    if(h.key==='position')return {...h,label:'Position In Subject'};
+    if(h.key==='class_avg')return {...h,label:'Class Average'};
+    if(h.key==='cum_total')return {...h,label:'Cum. Total Score'};
+    if(h.key==='percentage')return {...h,label:'Percentage'};
+    if(h.key==='highest')return {...h,label:'Class Highest'};
+    if(h.key==='lowest')return {...h,label:'Class Lowest'};
+    return h;
+  };
+  const base=headers.map(labelFor);
+  if(!base.some(h=>h.key==='subject_teacher')){
+    const gradeIndex=base.findIndex(h=>h.key==='grade');
+    base.splice(gradeIndex>0?gradeIndex:base.length,0,{key:'subject_teacher',label:'Subject Teacher',visible:true});
+  }
+  if(model==='model_5')return base.filter(h=>!['sign','subject_teacher','highest','lowest'].includes(h.key));
+  if(model==='model_6')return base.filter(h=>!['class_avg','highest','lowest'].includes(h.key));
+  return base;
+}
+function formatAcademicHeader(label){
+  return esc(String(label||'')).replace(/\s+/g,'<br>');
+}
+function ratingKeyTable(cfg){
+  const ratings=cfg?cfg.ratings:(ST.customizations.skills.ratings||[]);
+  const labels=cfg?cfg.rating_labels:(ST.customizations.skills.rating_labels||[]);
+  const cells=ratings.map((r,i)=>`<td><span class="rating-key-score">${esc(String(r))}</span>${esc(labels[i]||'')}</td>`).join('');
+  return `<table class="template-preview-table template-preview-rating-key template-preview-rating-key--blank"><tr><th colspan="${ratings.length||1}">Keys To Rating</th></tr><tr>${cells}</tr></table>`;
+}
+function ordinal(n){
+  const v=n%100;
+  if(v>=11&&v<=13)return `${n}th`;
+  return `${n}${['th','st','nd','rd'][Math.min(n%10,4)]||'th'}`;
+}
+function hexToRgba(hex,alpha){
+  let value=String(hex||'#d4147a').replace('#','').trim();
+  if(value.length===3)value=value.split('').map(c=>c+c).join('');
+  const num=parseInt(value,16);
+  if(Number.isNaN(num))return `rgba(212,20,122,${alpha})`;
+  const r=(num>>16)&255,g=(num>>8)&255,b=num&255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function px(value){return `${Number(value).toFixed(3)}px`;}
+function applySectionOneMeasurements(page){
+  if(!page)return;
+  const m=SECTION_1_PRINT;
+  const borderedLogoSize=m.sectionHeight-(m.logoInset*2)-4;
+  const unborderedLogoSize=m.sectionHeight-(m.logoInset*2);
+  const nameFont=m.nameCapHeight/m.poppinsNameCapRatio;
+  const metaFont=m.metaCapHeight/m.poppinsMetaCapRatio;
+  page.style.setProperty('--s1-section-height',px(m.sectionHeight));
+  page.style.setProperty('--s1-pad-y',px(m.logoInset));
+  page.style.setProperty('--s1-pad-x',px(m.logoInset));
+  page.style.setProperty('--s1-pad-y-model2',px(m.logoInset));
+  page.style.setProperty('--s1-pad-x-model2',px(m.logoInset));
+  page.style.setProperty('--s1-logo-size',px(borderedLogoSize));
+  page.style.setProperty('--s1m3-logo-size',px(borderedLogoSize));
+  page.style.setProperty('--s1-grid-logo-col',px(borderedLogoSize+m.logoInset+4));
+  page.style.setProperty('--s1-school-text-pad',px(borderedLogoSize+m.logoInset+18));
+  page.style.setProperty('--s1-school-name-size',px(nameFont));
+  page.style.setProperty('--s1m3-name-size',px(nameFont));
+  page.style.setProperty('--s1-school-name-line-height',m.poppinsNameCapRatio.toFixed(3));
+  page.style.setProperty('--s1-school-meta-size',px(metaFont));
+  page.style.setProperty('--s1m3-meta-size',px(metaFont));
+  page.style.setProperty('--s1-school-meta-line-height',m.poppinsMetaCapRatio.toFixed(3));
+  page.style.setProperty('--s1-name-meta-gap',px(m.nameToMetaGap));
+  page.style.setProperty('--s1-meta-row-gap',px(m.metaRowGap));
+  page.style.setProperty('--s1-text-top-pad',px(m.bottomGap));
+  page.style.setProperty('--s1-text-bottom-pad',px(m.bottomGap));
+  page.style.setProperty('--s1-text-inset','-2px');
+  page.style.setProperty('--s1m3-side-pad-x',px(m.logoInset*2));
+  page.style.setProperty('--s1m3-gap',px(m.logoInset));
+  page.style.setProperty('--s1-logo-size-model2',px(unborderedLogoSize));
+}
+function applyReportTitleMeasurements(page){
+  if(!page)return;
+  const m=REPORT_TITLE_PRINT;
+  const titleFont=m.capHeight/m.poppinsTitleCapRatio;
+  page.style.setProperty('--result-title-margin',`${px(m.topGap)} 0 ${px(m.bottomGap)}`);
+  page.style.setProperty('--result-title-size',px(titleFont));
+  page.style.setProperty('--result-title-line-height',m.poppinsTitleCapRatio.toFixed(3));
+}
+function applyReportCellMeasurements(page, fitScale=1){
+  if(!page)return;
+  const m=REPORT_CELL_PRINT;
+  const scale=Math.max(0.42,Math.min(1,Number(fitScale)||1));
+  const fontScale=Math.max(0.56,scale);
+  const rowScale=Math.max(0.42,scale);
+  const compactText=scale<0.72;
+  const tableFont=(m.tableCapHeight/m.capRatio)*fontScale;
+  const smallFont=(m.smallCapHeight/m.capRatio)*fontScale;
+  page.dataset.lockPrintMeasurements='true';
+  page.dataset.measurementScale=scale.toFixed(3);
+  page.dataset.skillsFitScale='1.000';
+  page.classList.toggle('report-layout-overflow-fit',scale<.995);
+  page.classList.remove('report-layout-tight-fit');
+  page.style.setProperty('--skills-line-clamp','2');
+  page.style.setProperty('--comment-line-clamp','2');
+  page.style.setProperty('--table-border-width',px(Math.max(1.25,m.borderWidth)));
+  page.style.setProperty('--table-font-size',px(tableFont));
+  page.style.setProperty('--table-small-font-size',px(smallFont));
+  page.style.setProperty('--table-line-height',m.lineHeight.toFixed(2));
+  page.style.setProperty('--table-row-height',px(m.normalRow*rowScale));
+  page.style.setProperty('--table-wrap-row-height',px(m.wrappedRow*rowScale));
+  page.style.setProperty('--table-cell-pad-y',px(Math.max(.5,m.cellPadY*rowScale)));
+  page.style.setProperty('--table-cell-pad-x',px(m.cellPadX));
+  page.style.setProperty('--section-gap',px(Math.max(2,m.sectionGap*rowScale)));
+  page.style.setProperty('--s2-font-size',px(tableFont));
+  page.style.setProperty('--s2-cell-pad-y',px(Math.max(.5,m.cellPadY*rowScale)));
+  page.style.setProperty('--s2-cell-pad-x',px(m.cellPadX));
+  page.style.setProperty('--s2-subhead-font-size',px(smallFont));
+  page.style.setProperty('--s2-score-label-size',px(smallFont));
+  page.style.setProperty('--s2-score-value-size',px(tableFont));
+  page.style.setProperty('--s2-score-label-width',`${m.scoreLabelWidthPct}%`);
+  page.style.setProperty('--s2-personal-label-width',px(m.personalLabelWidth));
+  page.style.setProperty('--s2-personal-col',px(m.personalCol));
+  page.style.setProperty('--s2-avatar-col',px(m.avatarCol));
+  page.style.setProperty('--s2m3-avatar-col',px(m.avatarCol));
+  page.style.setProperty('--s2m5-avatar-col',px(m.avatarCol));
+  page.style.setProperty('--s2m7-avatar-col',px(m.avatarCol));
+  page.style.setProperty('--s2m9-avatar-col',px(m.avatarCol));
+  page.style.setProperty('--s2m10-avatar-col',px(m.avatarCol));
+  page.style.setProperty('--s2-avatar-w',px(m.avatarCol));
+  page.style.setProperty('--s2-avatar-h',px(m.avatarHeight));
+  page.style.setProperty('--s2m5-avatar-w',px(m.avatarCol));
+  page.style.setProperty('--s2m5-avatar-h',px(m.avatarHeight));
+  page.style.setProperty('--s2m7-avatar-w',px(m.avatarCol));
+  page.style.setProperty('--s2m7-avatar-h',px(m.avatarHeight));
+  page.style.setProperty('--s2m9-avatar-w',px(m.avatarCol));
+  page.style.setProperty('--s2m9-avatar-h',px(m.avatarHeight));
+  page.style.setProperty('--s2-attendance-col',px(m.attendanceCol));
+  page.style.setProperty('--s2-score-col',px(m.scoreCol));
+  page.style.setProperty('--s2-grid-gap',px(m.section2Gap));
+  page.style.setProperty('--s2-mini-gap',px(m.section2Gap));
+  page.style.setProperty('--s2-row-gap',px(m.section2Gap));
+  page.style.setProperty('--s2-row-label-gap',px(CANVAS_PX_PER_CM*.12));
+  page.style.setProperty('--s2-inline-label-size',px(tableFont));
+  page.style.setProperty('--s2-inline-value-size',px(tableFont));
+  page.style.setProperty('--academic-font-size',px(tableFont));
+  page.style.setProperty('--academic-line-height',m.lineHeight.toFixed(2));
+  page.style.setProperty('--academic-cell-pad-y',px(Math.max(.5,m.cellPadY*rowScale)));
+  page.style.setProperty('--academic-header-pad-y',px(Math.max(.5,m.cellPadY*rowScale)));
+  page.style.setProperty('--academic-title-row-height',px(m.academicTitleRow*rowScale));
+  page.style.setProperty('--academic-header-main-row-height',px(m.academicHeaderMainRow*rowScale));
+  page.style.setProperty('--academic-mark-row-height',px(m.academicMarkRow*rowScale));
+  page.style.setProperty('--academic-body-row-height',px(m.normalRow*rowScale));
+  page.style.setProperty('--academic-total-row-height',px(m.normalRow*rowScale));
+  page.style.setProperty('--academic-title-font-size',px(tableFont));
+  page.style.setProperty('--academic-subject-header-font-size',px(tableFont));
+  page.style.setProperty('--academic-main-font-size',px(smallFont));
+  page.style.setProperty('--academic-mark-font-size',px(tableFont));
+  page.style.setProperty('--academic-remarks-font-size',px(smallFont));
+  page.style.setProperty('--skills-margin-top',px(Math.max(2,m.skillsMarginTop*rowScale)));
+  page.style.setProperty('--skills-grid-gap',px(Math.max(2,m.skillsGridGap*rowScale)));
+  page.style.setProperty('--skills-table-gap',px(Math.max(1,m.skillsTableGap*rowScale)));
+  page.style.setProperty('--skills-row-height',px(m.skillsRow*rowScale));
+  page.style.setProperty('--skills-font-size',px(tableFont));
+  page.style.setProperty('--skills-rating-font-size',px(tableFont));
+  page.style.setProperty('--skills-category-font-size',px(tableFont));
+  page.style.setProperty('--skills-line-height',(compactText?Math.max(.88,m.skillsLineHeight-.04):m.skillsLineHeight).toFixed(2));
+  page.style.setProperty('--skills-cell-pad-y',px(Math.max(.5,m.cellPadY*.7*rowScale)));
+  page.style.setProperty('--skills-cell-pad-x',px(m.cellPadX));
+  page.style.setProperty('--skills-rating-col-width',px(m.ratingCol));
+  page.style.setProperty('--skills-rating-key-margin',px(Math.max(1,m.skillsTableGap*rowScale)));
+  page.style.setProperty('--skills-key-pad-y',px(Math.max(.5,m.cellPadY*rowScale)));
+  page.style.setProperty('--skills-key-head-size',px(tableFont));
+  page.style.setProperty('--skills-key-font-size',px(smallFont));
+  page.style.setProperty('--comment-margin-top',px(Math.max(2,m.commentMarginTop*rowScale)));
+  page.style.setProperty('--comment-row-height',px(m.commentRow*rowScale));
+  page.style.setProperty('--comment-row-pad-y',px(Math.max(.5,m.commentRowPadY*rowScale)));
+  page.style.setProperty('--comment-font-size',px(tableFont));
+  page.style.setProperty('--comment-grid',`${px(m.commentLabelCol)} minmax(0,1fr) ${px(m.commentSignCol)} ${px(m.commentSignLineCol)} ${px(m.commentDateCol)} ${px(m.commentDateValueCol)}`);
+  page.style.setProperty('--comment-gap',px(m.commentGap));
+}
+function applyLowerSectionFit(page, fitScale=1){
+  if(!page)return;
+  const m=REPORT_CELL_PRINT;
+  const scale=Math.max(0.38,Math.min(1,Number(fitScale)||1));
+  const fontScale=Math.max(0.46,scale);
+  const rowScale=Math.max(0.34,scale);
+  const tableFont=(m.tableCapHeight/m.capRatio)*fontScale;
+  const smallFont=(m.smallCapHeight/m.capRatio)*fontScale;
+  const tight=scale<.62;
+  page.dataset.skillsFitScale=scale.toFixed(3);
+  page.classList.toggle('report-layout-lower-fit',scale<.995);
+  page.style.setProperty('--skills-line-clamp',tight?'1':'2');
+  page.style.setProperty('--comment-line-clamp',tight?'1':'2');
+  page.style.setProperty('--skills-margin-top',px(Math.max(1,m.skillsMarginTop*rowScale)));
+  page.style.setProperty('--skills-grid-gap',px(Math.max(1,m.skillsGridGap*rowScale)));
+  page.style.setProperty('--skills-table-gap',px(Math.max(1,m.skillsTableGap*rowScale)));
+  page.style.setProperty('--skills-row-height',px(m.skillsRow*rowScale));
+  page.style.setProperty('--skills-font-size',px(tableFont));
+  page.style.setProperty('--skills-rating-font-size',px(tableFont));
+  page.style.setProperty('--skills-category-font-size',px(tableFont));
+  page.style.setProperty('--skills-line-height',(tight ? .84 : Math.max(.88,m.skillsLineHeight-.03)).toFixed(2));
+  page.style.setProperty('--skills-cell-pad-y',px(Math.max(.25,m.cellPadY*.55*rowScale)));
+  page.style.setProperty('--skills-cell-pad-x',px(m.cellPadX));
+  page.style.setProperty('--skills-rating-col-width',px(Math.max(CANVAS_PX_PER_CM*.34,m.ratingCol*rowScale)));
+  page.style.setProperty('--skills-rating-key-margin',px(Math.max(1,m.skillsTableGap*rowScale)));
+  page.style.setProperty('--skills-key-pad-y',px(Math.max(.25,m.cellPadY*rowScale)));
+  page.style.setProperty('--skills-key-head-size',px(tableFont));
+  page.style.setProperty('--skills-key-font-size',px(smallFont));
+  page.style.setProperty('--comment-margin-top',px(Math.max(1,m.commentMarginTop*rowScale)));
+  page.style.setProperty('--comment-row-height',px(m.commentRow*Math.max(.48,rowScale)));
+  page.style.setProperty('--comment-row-pad-y',tight?'0px':px(Math.max(.25,m.commentRowPadY*rowScale)));
+  page.style.setProperty('--comment-font-size',px(tableFont));
+  page.style.setProperty('--comment-grid',`${px(m.commentLabelCol)} minmax(0,1fr) ${px(m.commentSignCol)} ${px(Math.max(CANVAS_PX_PER_CM*1.45,m.commentSignLineCol*rowScale))} ${px(m.commentDateCol)} ${px(m.commentDateValueCol)}`);
+  page.style.setProperty('--comment-gap',px(Math.max(3,m.commentGap*rowScale)));
+}
+function fitPreviewSheet(){
+  const area=document.getElementById('te-preview-area');
+  const shell=document.getElementById('te-preview-shell');
+  if(!area||!shell)return;
+  const areaRect=area.getBoundingClientRect();
+  const leftRect=document.querySelector('.te-left')?.getBoundingClientRect();
+  const fallbackW=Math.max(420,window.innerWidth-(leftRect?.width||0)-72);
+  const fallbackH=Math.max(420,window.innerHeight-72);
+  const areaWidth=Math.max(area.clientWidth,areaRect.width,fallbackW);
+  const areaHeight=Math.max(area.clientHeight,areaRect.height,fallbackH);
+  const availableW=Math.max(420,areaWidth-72);
+  const availableH=Math.max(420,areaHeight-72);
+  const fitWidth=availableW/PREVIEW_PAGE_WIDTH;
+  const fitPage=Math.min(fitWidth,availableH/PREVIEW_PAGE_HEIGHT);
+  let scale=1;
+  if(PREVIEW_FIT_MODE==='width')scale=Math.min(1,fitWidth);
+  else if(PREVIEW_FIT_MODE==='page')scale=Math.min(1,fitPage);
+  shell.style.transform=`scale(${scale})`;
+  const note=document.getElementById('te-preview-scale-note');
+  if(note)note.textContent=Math.round(scale*100)+'%';
+  document.querySelectorAll('.te-preview-fit-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.fitMode===PREVIEW_FIT_MODE));
+}
+function fitReportContentToPage(){
+  const shell=document.getElementById('te-preview-shell');
+  const page=document.getElementById('tp-page');
+  if(!shell||!page)return;
+  page.style.transform='none';
+  page.style.width='100%';
+  page.style.height='100%';
+  page.dataset.contentScale='1.000';
+}
+function setPreviewFitMode(mode){
+  if(!['width','page','actual'].includes(mode))return;
+  PREVIEW_FIT_MODE=mode;
+  fitPreviewSheet();
+}
+function academicColumnWidths(headers,subjectCount){
+  const reference=REPORT_CELL_PRINT.academicWidthsCm;
+  const weights=headers.map(h=>reference[h.key] || (h.score ? reference.ca : 1.25));
+  const totalColumns=weights.reduce((sum,w)=>sum+w,0)||1;
+  let subject=reference.subject;
+  if(subjectCount>12)subject=Math.max(5.7,subject-.45);
+  const total=subject+totalColumns;
+  return {
+    subject:Number(((subject/total)*100).toFixed(2)),
+    columns:weights.map(w=>Number(((w/total)*100).toFixed(2)))
+  };
+}
+function applyReportLayoutMode(page,m,s){
+  if(!page)return;
+  const academic=page.querySelector('.template-preview-academic');
+  const subjectRows=academic?Number(academic.dataset.subjects||0):0;
+  const columnCount=academic?Number(academic.dataset.columns||0):0;
+  const hasSkills=m.section_5!=='none';
+  const hasGrade=m.section_4!=='none'&&s.show_grade_keys;
+  const hasComments=m.section_6!=='none';
+  const heavyAcademic=columnCount>=12||subjectRows>12;
+  const lightAcademic=columnCount<=6&&subjectRows<=12;
+  let mode='balanced';
+  if(hasSkills||heavyAcademic)mode='compact';
+  else if(!hasSkills&&lightAcademic)mode='loose';
+  else if(!hasSkills&&hasComments&&subjectRows<=12&&columnCount<=10)mode='spacious';
+  else if(!hasSkills&&!hasGrade&&subjectRows<=10&&columnCount<=8)mode='loose';
+  page.dataset.layoutMode=mode;
+  page.classList.add(`report-layout-${mode}`);
+
+  const presets={
+    loose:{row:66,total:54,font:.98,remarks:.78,title:1.44,titleMargin:'22px 0 20px',gap:18,cell:7,header:6,main:.84,mark:.98,academicTitle:1.05,subjectHeader:1.06,s1Logo:200,s1Col:210,s1PadY:7,s1PadX:7,s1Name:1.72,s1Meta:.73,s1m3Logo:200,s1m3Name:1.72,s1m3Meta:.73,s2Font:1.02,s2PadY:6,s2PadX:6,s2Subhead:.84,s2ScoreLabel:.88,s2ScoreValue:.96,s2AvatarW:102,s2AvatarH:150,s2Gap:10,s2RowGap:9,s2Inline:.92,skillsFont:.78,skillsRating:.76,skillsCategory:.78,skillsPadY:4,skillsPadX:5,skillsCol:30,skillsGap:12,skillsTableGap:8,skillsLine:1.2,skillsKey:.76},
+    spacious:{row:58,total:48,font:.92,remarks:.72,title:1.40,titleMargin:'20px 0 18px',gap:16,cell:6,header:5,main:.78,mark:.92,academicTitle:1.0,subjectHeader:.99,s1Logo:200,s1Col:210,s1PadY:7,s1PadX:7,s1Name:1.72,s1Meta:.73,s1m3Logo:200,s1m3Name:1.72,s1m3Meta:.73,s2Font:.98,s2PadY:5,s2PadX:6,s2Subhead:.8,s2ScoreLabel:.84,s2ScoreValue:.92,s2AvatarW:98,s2AvatarH:146,s2Gap:8,s2RowGap:8,s2Inline:.88,skillsFont:.75,skillsRating:.74,skillsCategory:.75,skillsPadY:4,skillsPadX:4,skillsCol:28,skillsGap:11,skillsTableGap:7,skillsLine:1.18,skillsKey:.74},
+    balanced:{row:48,total:40,font:.82,remarks:.64,title:1.34,titleMargin:'16px 0 14px',gap:12,cell:4,header:4,main:.69,mark:.82,academicTitle:.92,subjectHeader:.9,s1Logo:200,s1Col:210,s1PadY:7,s1PadX:7,s1Name:1.72,s1Meta:.73,s1m3Logo:200,s1m3Name:1.72,s1m3Meta:.73,s2Font:.92,s2PadY:3,s2PadX:4,s2Subhead:.76,s2ScoreLabel:.8,s2ScoreValue:.86,s2AvatarW:92,s2AvatarH:138,s2Gap:6,s2RowGap:6,s2Inline:.82,skillsFont:.72,skillsRating:.7,skillsCategory:.72,skillsPadY:3,skillsPadX:4,skillsCol:26,skillsGap:10,skillsTableGap:6,skillsLine:1.16,skillsKey:.72},
+    compact:{row:38,total:34,font:.72,remarks:.56,title:1.24,titleMargin:'12px 0 10px',gap:8,cell:2,header:2,main:.6,mark:.74,academicTitle:.84,subjectHeader:.82,s1Logo:200,s1Col:210,s1PadY:7,s1PadX:7,s1Name:1.72,s1Meta:.73,s1m3Logo:200,s1m3Name:1.72,s1m3Meta:.73,s2Font:.82,s2PadY:2,s2PadX:3,s2Subhead:.68,s2ScoreLabel:.72,s2ScoreValue:.78,s2AvatarW:82,s2AvatarH:124,s2Gap:5,s2RowGap:4,s2Inline:.74,skillsFont:.68,skillsRating:.68,skillsCategory:.7,skillsPadY:2,skillsPadX:3,skillsCol:24,skillsGap:8,skillsTableGap:5,skillsLine:1.14,skillsKey:.68}
+  };
+  const p=presets[mode];
+  page.style.setProperty('--academic-body-row-height',`${p.row}px`);
+  page.style.setProperty('--academic-total-row-height',`${p.total}px`);
+  page.style.setProperty('--academic-font-size',`${p.font}rem`);
+  page.style.setProperty('--academic-remarks-font-size',`${p.remarks}rem`);
+  page.style.setProperty('--result-title-size',`${p.title}rem`);
+  page.style.setProperty('--result-title-margin',p.titleMargin);
+  page.style.setProperty('--section-gap',`${p.gap}px`);
+  page.style.setProperty('--academic-cell-pad-y',`${p.cell}px`);
+  page.style.setProperty('--academic-header-pad-y',`${p.header}px`);
+  page.style.setProperty('--academic-main-font-size',`${p.main}rem`);
+  page.style.setProperty('--academic-mark-font-size',`${p.mark}rem`);
+  page.style.setProperty('--academic-title-font-size',`${p.academicTitle}rem`);
+  page.style.setProperty('--academic-subject-header-font-size',`${p.subjectHeader}rem`);
+  page.style.setProperty('--s1-logo-size',`${p.s1Logo}px`);
+  page.style.setProperty('--s1-grid-logo-col',`${p.s1Col}px`);
+  page.style.setProperty('--s1-pad-y',`${p.s1PadY}px`);
+  page.style.setProperty('--s1-pad-x',`${p.s1PadX}px`);
+  page.style.setProperty('--s1-pad-y-model2',`${p.s1PadY+2}px`);
+  page.style.setProperty('--s1-pad-x-model2',`${p.s1PadX+2}px`);
+  page.style.setProperty('--s1-school-name-size',`${p.s1Name}rem`);
+  page.style.setProperty('--s1-school-meta-size',`${p.s1Meta}rem`);
+  page.style.setProperty('--s1m3-logo-size',`${p.s1m3Logo}px`);
+  page.style.setProperty('--s1m3-gap',`${Math.max(8,Math.round(p.s1PadX*.55))}px`);
+  page.style.setProperty('--s1m3-side-pad-y','27px');
+  page.style.setProperty('--s1m3-side-pad-x',`${p.s1PadX}px`);
+  page.style.setProperty('--s1m3-name-size',`${p.s1m3Name}rem`);
+  page.style.setProperty('--s1m3-meta-size',`${p.s1m3Meta}rem`);
+  page.style.setProperty('--s1-school-text-pad',`${p.s1Col+p.s1PadX+10}px`);
+  page.style.setProperty('--s2-font-size',`${p.s2Font}rem`);
+  page.style.setProperty('--s2-cell-pad-y',`${p.s2PadY}px`);
+  page.style.setProperty('--s2-cell-pad-x',`${p.s2PadX}px`);
+  page.style.setProperty('--s2-subhead-font-size',`${p.s2Subhead}rem`);
+  page.style.setProperty('--s2-score-label-size',`${p.s2ScoreLabel}rem`);
+  page.style.setProperty('--s2-score-value-size',`${p.s2ScoreValue}rem`);
+  page.style.setProperty('--s2-avatar-w',`${p.s2AvatarW}px`);
+  page.style.setProperty('--s2-avatar-h',`${p.s2AvatarH}px`);
+  page.style.setProperty('--s2-avatar-col',`${p.s2AvatarW}px`);
+  page.style.setProperty('--s2m3-avatar-col',`${p.s2AvatarW+14}px`);
+  page.style.setProperty('--s2-grid-gap',`${p.s2Gap}px`);
+  page.style.setProperty('--s2-mini-gap',`${Math.max(2,Math.round(p.s2Gap*.45))}px`);
+  page.style.setProperty('--s2-inline-grid-gap',`${p.s2Gap+2}px`);
+  page.style.setProperty('--s2-inline-wide-gap',`${p.s2Gap+8}px`);
+  page.style.setProperty('--s2-inline-margin',`${Math.max(2,p.s2Gap-4)}px 0 ${Math.max(4,p.s2Gap-2)}px`);
+  page.style.setProperty('--s2-wide-margin',`${p.s2Gap}px ${p.s2Gap+2}px ${p.s2Gap+2}px`);
+  page.style.setProperty('--s2-row-gap',`${p.s2RowGap}px`);
+  page.style.setProperty('--s2-row-label-gap',`${p.s2Gap+2}px`);
+  page.style.setProperty('--s2-inline-label-size',`${p.s2Inline}rem`);
+  page.style.setProperty('--s2-inline-value-size',`${p.s2Inline}rem`);
+  page.style.setProperty('--s2m5-avatar-col',`${p.s2AvatarW+24}px`);
+  page.style.setProperty('--s2m10-avatar-col',`${p.s2AvatarW+44}px`);
+  page.style.setProperty('--s2m7-avatar-col',`${p.s2AvatarW+34}px`);
+  page.style.setProperty('--s2m9-avatar-col',`${p.s2AvatarW+44}px`);
+  page.style.setProperty('--s2m5-avatar-w',`${p.s2AvatarW+24}px`);
+  page.style.setProperty('--s2m5-avatar-h',`${p.s2AvatarH+8}px`);
+  page.style.setProperty('--s2m7-avatar-w',`${p.s2AvatarW+34}px`);
+  page.style.setProperty('--s2m7-avatar-h',`${p.s2AvatarH+12}px`);
+  page.style.setProperty('--s2m9-avatar-w',`${p.s2AvatarW+44}px`);
+  page.style.setProperty('--s2m9-avatar-h',`${p.s2AvatarH+20}px`);
+  page.style.setProperty('--skills-margin-top',`${Math.max(8,p.gap-2)}px`);
+  page.style.setProperty('--skills-grid-gap',`${p.skillsGap}px`);
+  page.style.setProperty('--skills-table-gap',`${p.skillsTableGap}px`);
+  page.style.setProperty('--skills-font-size',`${p.skillsFont}rem`);
+  page.style.setProperty('--skills-line-height',p.skillsLine);
+  page.style.setProperty('--skills-cell-pad-y',`${p.skillsPadY}px`);
+  page.style.setProperty('--skills-cell-pad-x',`${p.skillsPadX}px`);
+  page.style.setProperty('--skills-rating-col-width',`${p.skillsCol}px`);
+  page.style.setProperty('--skills-rating-font-size',`${p.skillsRating}rem`);
+  page.style.setProperty('--skills-category-font-size',`${p.skillsCategory}rem`);
+  page.style.setProperty('--skills-rating-key-margin',`${Math.max(5,p.skillsTableGap)}px`);
+  page.style.setProperty('--skills-key-pad-y',`${Math.max(2,p.skillsPadY)}px`);
+  page.style.setProperty('--skills-key-head-size',`${Math.min(.82,p.skillsKey+.04)}rem`);
+  page.style.setProperty('--skills-key-font-size',`${p.skillsKey}rem`);
+  applySectionOneMeasurements(page);
+  applyReportTitleMeasurements(page);
+  applyReportCellMeasurements(page);
+}
+function balanceReportVerticalSpace(page,mode){
+  const shell=document.getElementById('te-preview-shell');
+  if(!page||!shell)return;
+  const hasSkills=!!page.querySelector('[data-preview-section="section_5"]');
+  const heavySkills=!!page.querySelector('[data-preview-section="section_5"] [data-preview-model="model_3"]');
+  const metrics=()=> {
+    const available=page.clientHeight||shell.clientHeight;
+    const children=[...page.children].filter(el=>!el.hidden&&!el.classList.contains('template-preview-background'));
+    const contentBottom=children.reduce((max,el)=>Math.max(max,el.offsetTop+el.offsetHeight),0);
+    const content=Math.max(page.scrollHeight,contentBottom);
+    return {available,content,overflow:content-available};
+  };
+  let m=metrics();
+  if(m.overflow<=1){
+    page.dataset.overflowPx='0';
+    return;
+  }
+  if(hasSkills){
+    const minLowerScale=heavySkills ? .40 : .46;
+    let lowerScale=Number(page.dataset.skillsFitScale||1)||1;
+    for(let i=0;i<12&&m.overflow>1;i++){
+      const lower=page.querySelector('[data-preview-section="section_5"]');
+      const lowerHeight=lower?.offsetHeight||Math.max(m.available*.35,1);
+      const step=Math.max(.025,Math.min(.16,(m.overflow/Math.max(lowerHeight,1))*.9));
+      const next=Math.max(minLowerScale,lowerScale-step);
+      if(next>=lowerScale-.001)break;
+      lowerScale=next;
+      applyLowerSectionFit(page,lowerScale);
+      m=metrics();
+    }
+    if(m.overflow<=1){
+      page.dataset.overflowPx='0';
+      return;
+    }
+    page.classList.add('report-layout-tight-fit');
+    page.style.setProperty('--skills-line-clamp','1');
+    page.style.setProperty('--comment-line-clamp','1');
+    applyLowerSectionFit(page,minLowerScale);
+    m=metrics();
+    if(m.overflow<=1){
+      page.dataset.overflowPx='0';
+      return;
+    }
+  }
+  const minScale=heavySkills?REPORT_CELL_PRINT.minHeavySkillsFitScale:(hasSkills?REPORT_CELL_PRINT.minFitScale:.72);
+  let scale=Number(page.dataset.measurementScale||1)||1;
+  if(m.overflow>1){
+    for(let i=0;i<10&&m.overflow>1;i++){
+      const step=Math.max(.015,Math.min(.12,(m.overflow/Math.max(m.available,1))*.78));
+      const next=Math.max(minScale,scale-step);
+      if(next>=scale-.001)break;
+      scale=next;
+      applyReportCellMeasurements(page,scale);
+      if(hasSkills)applyLowerSectionFit(page,Math.min(Number(page.dataset.skillsFitScale||1)||1,heavySkills ? .44 : .50));
+      m=metrics();
+    }
+  }
+  page.dataset.overflowPx=String(Math.max(0,Math.ceil(m.overflow)));
+}
+const STUDENT_FIELD_TOGGLES={dob:'show_dob',sex:'show_sex',admission_no:'show_admission_no',class:'show_class'};
+function getVisibleStudentFields(){
+  const s=ST.settings;
+  return ST.customizations.student_fields.filter(f=>{
+    if(!f.visible)return false;
+    const tk=STUDENT_FIELD_TOGGLES[f.key];
+    if(tk && s[tk]===false)return false;
+    return true;
+  });
+}
+function academicColumnsForModel(model,s){
+  const standard=[
+    {key:'ca',label:'CA',score:30},{key:'exam',label:'EXAM',score:100},{key:'total_score',label:'TOTAL SCORE',score:100},
+    {key:'cum_total_score',label:'CUM. TOTAL SCORE'},{key:'percentage',label:'PERCENTAGE'},{key:'position_in_subject',label:'POSITION IN SUBJECT'},
+    {key:'class_average',label:'CLASS AVERAGE'},{key:'remarks',label:s.remarks_label||'REMARKS'},{key:'sign',label:'SIGN.'},{key:'subject_teacher',label:'SUBJECT TEACHER'},
+    {key:'grade',label:s.grade_label||'GRADE'},{key:'class_highest',label:'CLASS HIGHEST'},{key:'class_lowest',label:'CLASS LOWEST'}
+  ];
+  if(model==='model_2')return [
+    {key:'ca',label:'CA',score:20},{key:'coef',label:'COEF.',score:1},{key:'marks_average',label:'MARKS AVERAGE',score:20},
+    {key:'competences_developed',label:'COMPETENCES DEVELOPED'},{key:'attendance',label:'ATTENDANCE'},{key:'class_work',label:'CLASS WORK'},
+    {key:'home_work',label:'HOME WORK'},{key:'assignment',label:'ASSIGNMENT'},{key:'activities',label:'ACTIVITIES'},{key:'assessment',label:'ASSESSMENT'},
+    {key:'project',label:'PROJECT'},{key:'exam',label:'EXAM',score:80},{key:'total_score',label:'TOTAL SCORE',score:100},
+    {key:'percentage',label:'PERCENTAGE'},{key:'position_in_subject',label:'POSITION IN SUBJECT'},{key:'class_average',label:'CLASS AVERAGE'},
+    {key:'remarks',label:s.remarks_label||'REMARKS'},{key:'sign',label:'SIGN.'},{key:'subject_teacher',label:'SUBJECT TEACHER'},{key:'grade',label:s.grade_label||'GRADE'}
+  ];
+  if(model==='model_3')return [
+    {key:'max',label:'MAX',score:100},{key:'test',label:'TEST 1',score:100},{key:'total_score',label:'TOTAL',score:100},
+    {key:'cum_total_score',label:'CUM. TOTAL SCORE'},{key:'percentage',label:'PERCENTAGE'},{key:'position_in_subject',label:'POSITION IN SUBJECT'},
+    {key:'class_average',label:'CLASS AVERAGE'},{key:'remarks',label:s.remarks_label||'REMARKS'},{key:'sign',label:'SIGN.'},
+    {key:'mean',label:'MEAN'},{key:'subject_teacher',label:'SUBJECT TEACHER'},{key:'grade',label:s.grade_label||'GRADE'},{key:'class_highest',label:'CLASS HIGHEST'},{key:'class_lowest',label:'CLASS LOWEST'}
+  ];
+  if(model==='model_4')return [
+    {key:'ca',label:'CA',score:20},{key:'ca2',label:'CA',score:20},{key:'exam',label:'EXAM',score:60},
+    {key:'total_score',label:'TOTAL SCORE',score:100},{key:'cum_total_score',label:'CUM. TOTAL SCORE'},
+    {key:'percentage',label:'PERCENTAGE'},{key:'position_in_subject',label:'POSITION IN SUBJECT'},
+    {key:'class_average',label:'CLASS AVERAGE'},{key:'remarks',label:s.remarks_label||'REMARKS'},{key:'sign',label:'SIGN.'}
+  ];
+  if(model==='model_5')return [
+    {key:'ca',label:'C1',score:100},{key:'average',label:'AVERAGE'},{key:'position_in_subject',label:'POSITION IN SUBJECT'},
+    {key:'class_average',label:'CLASS AVERAGE'},{key:'descriptor',label:'DESCRIPTOR'},{key:'sign',label:'SIGN.'},
+    {key:'subject_teacher',label:'SUBJECT TEACHER'},{key:'identifier',label:'IDENTIFIER'},{key:'class_highest',label:'CLASS HIGHEST'},{key:'class_lowest',label:'CLASS LOWEST'}
+  ];
+  if(model==='model_6')return [
+    {key:'ca',label:'CA',score:20},{key:'attendance',label:'ATTENDANCE'},{key:'class_work',label:'CLASS WORK'},{key:'home_work',label:'HOME WORK'},
+    {key:'assignment',label:'ASSIGNMENT'},{key:'activities',label:'ACTIVITIES'},{key:'assessment',label:'ASSESSMENT'},{key:'project',label:'PROJECT'},
+    {key:'percentage',label:'PERCENTAGE'},{key:'exam',label:'EXAM',score:80},{key:'position_in_subject',label:'POSITION IN SUBJECT'},
+    {key:'total_score',label:'TOTAL SCORE',score:100},{key:'class_average',label:'CLASS AVERAGE'},{key:'remarks',label:s.remarks_label||'REMARKS'},
+    {key:'cum_total_score',label:'CUM. TOTAL SCORE'},{key:'sign',label:'SIGN.'},{key:'subject_teacher',label:'SUBJECT TEACHER'},
+    {key:'grade',label:s.grade_label||'GRADE'},{key:'class_highest',label:'CLASS HIGHEST'},{key:'class_lowest',label:'CLASS LOWEST'}
+  ];
+  if(model==='model_7')return [
+    {key:'bot_exams',label:'B. O. T. EXAMS',score:100},{key:'midterm_exams',label:'MID-TERM EXAMS',score:100},{key:'average',label:'AVERAGE'},
+    {key:'end_of_term_exams',label:'END OF TERM EXAMS',score:100},{key:'position_in_subject',label:'POSITION IN SUBJECT'},
+    {key:'total_score',label:'TOTAL SCORE'},{key:'remarks',label:s.remarks_label||'REMARKS'},{key:'sign',label:'SIGN.'},{key:'subject_teacher',label:'SUBJECT TEACHER'},
+    {key:'grade',label:s.grade_label||'GRADE'}
+  ];
+  if(model==='model_8')return [
+    {key:'ca',label:'CA',score:20},{key:'unit',label:'UNIT'},{key:'attendance',label:'ATTENDANCE'},{key:'class_work',label:'CLASS WORK'},
+    {key:'home_work',label:'HOME WORK'},{key:'assignment',label:'ASSIGNMENT'},{key:'activities',label:'ACTIVITIES'},{key:'assessment',label:'ASSESSMENT'},
+    {key:'project',label:'PROJECT'},{key:'exam',label:'EXAM',score:80},{key:'total_score',label:'TOTAL SCORE',score:100},
+    {key:'cum_total_score',label:'CUM. TOTAL SCORE'},{key:'percentage',label:'PERCENTAGE'},{key:'position_in_subject',label:'POSITION IN SUBJECT'},
+    {key:'class_average',label:'CLASS AVERAGE'},{key:'remarks',label:s.remarks_label||'REMARKS'},{key:'point',label:'POINT'},
+    {key:'sign',label:'SIGN.'},{key:'subject_teacher',label:'SUBJECT TEACHER'},{key:'grade',label:s.grade_label||'GRADE'}
+  ];
+  return standard;
+}
+function academicCell(h,sc,total,grade,i,scoreColor){
+  const attrs=`data-s3-col="${esc(h.key)}"`;
+  if(h.key==='ca'||h.key==='ca1'||h.key==='bot_exams')return `<td ${attrs}>${sc[0]}</td>`;
+  if(h.key==='ca2'||h.key==='midterm_exams'||h.key==='test')return `<td ${attrs}>${sc[1]}</td>`;
+  if(h.key==='ca3'||h.key==='end_of_term_exams'||h.key==='exam')return `<td ${attrs} style="color:${scoreColor};font-weight:800;">${sc[2]}</td>`;
+  if(h.key==='max')return `<td ${attrs}>100</td>`;
+  if(h.key==='total'||h.key==='total_score')return `<td ${attrs}><strong>${total}</strong></td>`;
+  if(h.key==='cum_total_score'||h.key==='average'||h.key==='marks_average'||h.key==='percentage'||h.key==='mean')return `<td ${attrs}>${total}</td>`;
+  if(h.key==='position'||h.key==='position_in_subject')return `<td ${attrs}>${ordinal(i+1)}</td>`;
+  if(h.key==='class_average')return `<td ${attrs}>${Math.round(total*.95)}</td>`;
+  if(h.key==='remarks'||h.key==='descriptor')return `<td ${attrs}>${esc(getRemarks(grade,total).toUpperCase())}</td>`;
+  if(h.key==='grade'||h.key==='identifier')return `<td ${attrs}><span style="color:${gradeColor(grade)};font-weight:800;">${grade}</span></td>`;
+  if(h.key==='class_highest')return `<td ${attrs}>${Math.min(100,total+8)}</td>`;
+  if(h.key==='class_lowest')return `<td ${attrs}>${Math.max(10,total-15)}</td>`;
+  if(h.key==='coef')return `<td ${attrs}>1</td>`;
+  if(h.key==='point')return `<td ${attrs}>${Math.max(1,Math.round(total/20))}</td>`;
+  if(['attendance','class_work','home_work','assignment','activities','assessment','project','unit'].includes(h.key))return `<td ${attrs}>${i%3===0?'A':i%3===1?'B':'C'}</td>`;
+  if(h.key==='competences_developed')return `<td ${attrs}>ME</td>`;
+  return `<td ${attrs}></td>`;
+}
+// Per-model default visibility from MATOKEO source (views_template_editor.py lines 541-774)
+const ACADEMIC_MODEL_DEFAULTS = {
+  model_1: {ca:true,exam:true,total_score:true,cum_total_score:true,percentage:true,position_in_subject:true,class_average:true,remarks:true,sign:true, subject_teacher:false,grade:false,class_highest:false,class_lowest:false},
+  model_2: {ca:true,coef:true,marks_average:true,exam:true,total_score:true,cum_total_score:true,percentage:true,position_in_subject:true,class_average:true,remarks:true,sign:true, competences_developed:false,attendance:false,class_work:false,home_work:false,assignment:false,activities:false,assessment:false,project:false,subject_teacher:false,grade:false,class_highest:false,class_lowest:false},
+  model_3: {max:true,test:true,percentage:true,position_in_subject:true,total_score:true,class_average:true,remarks:true,cum_total_score:true,sign:true, mean:false,subject_teacher:false,grade:false,class_highest:false,class_lowest:false},
+  model_4: {ca:true,ca2:true,exam:true,total_score:true,cum_total_score:true,percentage:true,position_in_subject:true,class_average:true,remarks:true,sign:true, subject_teacher:false,grade:false,class_highest:false,class_lowest:false},
+  model_5: {ca:true,average:true,position_in_subject:true,class_average:true,descriptor:true,sign:true, subject_teacher:false,identifier:false,class_highest:false,class_lowest:false},
+  model_6: {ca:true,percentage:true,exam:true,position_in_subject:true,total_score:true,class_average:true,remarks:true,cum_total_score:true,sign:true, attendance:false,class_work:false,home_work:false,assignment:false,activities:false,assessment:false,project:false,subject_teacher:false,grade:false,class_highest:false,class_lowest:false},
+  model_7: {bot_exams:true,midterm_exams:true,average:true,end_of_term_exams:true,position_in_subject:true,total_score:true,remarks:true,sign:true, subject_teacher:false,grade:false},
+  model_8: {ca:true,unit:true,exam:true,total_score:true,cum_total_score:true,percentage:true,position_in_subject:true,class_average:true,remarks:true,point:true,sign:true, attendance:false,class_work:false,home_work:false,assignment:false,activities:false,assessment:false,project:false,subject_teacher:false,grade:false,class_highest:false,class_lowest:false}
+};
+
+// Per-model default score_obtainable values from MATOKEO
+const ACADEMIC_MODEL_SCORES = {
+  model_1: {ca:30,exam:60},
+  model_2: {ca:20,marks_average:20,attendance:10,class_work:10,home_work:10,assignment:10,activities:10,assessment:10,project:10,exam:60},
+  model_3: {test:30},
+  model_4: {ca:20,ca2:20,exam:60},
+  model_5: {ca:20},
+  model_6: {ca:20,attendance:10,class_work:10,home_work:10,assignment:10,activities:10,assessment:10,project:10,exam:60},
+  model_7: {bot_exams:10,midterm_exams:10,end_of_term_exams:60},
+  model_8: {ca:20,attendance:10,class_work:10,home_work:10,assignment:10,activities:10,assessment:10,project:10,exam:60}
+};
+
+const baseAcademicColumnsForModel = academicColumnsForModel;
+academicColumnsForModel = function(model,s){
+  return applyAcademicColumnOverrides(model,baseAcademicColumnsForModel(model,s));
+};
+const GLOBAL_COLUMN_TOGGLES={
+  show_remarks:'remarks',show_position:'position_in_subject',show_class_average:'class_average',
+  show_cum_total:'cum_total_score',show_percentage:'percentage',show_sign_column:'sign'
+};
+function applyAcademicColumnOverrides(model,cols){
+  const custom=(ST.customizations.academic_columns||{})[model]||{};
+  const modelDefaults=ACADEMIC_MODEL_DEFAULTS[model]||{};
+  const modelScores=ACADEMIC_MODEL_SCORES[model]||{};
+  const s=ST.settings;
+  return cols.map(col=>{
+    const over=custom[col.key];
+    let patched;
+    if(over){
+      patched=Object.assign({},col,over);
+    }else{
+      patched=Object.assign({},col);
+      const defaultVisible=modelDefaults[col.key];
+      const defaultScore=modelScores[col.key];
+      if(defaultVisible!==undefined)patched.visible=defaultVisible;
+      if(defaultScore!==undefined)patched.score=defaultScore;
+    }
+    // Global toggles force-hide columns regardless of model defaults / per-column overrides
+    for(const tk in GLOBAL_COLUMN_TOGGLES){
+      if(GLOBAL_COLUMN_TOGGLES[tk]===col.key && s[tk]===false){patched.visible=false;break;}
+    }
+    return patched;
+  }).filter(col=>col.visible!==false);
+}
+function getGradeKeyRows(){
+  const rows=ST.customizations.grade_key&&ST.customizations.grade_key.length?ST.customizations.grade_key:getDefaultState().customizations.grade_key;
+  return rows.map(g=>({range:g.range||'',code:g.code||'',label:g.label||''}));
+}
+function renderS4(model){
+  if(model==='none')return '';
+  const grades=getGradeKeyRows();
+  let content='';
+  if(model==='model_2'){
+    content=`<tr><th colspan="${grades.length}">Keys To Rating</th></tr><tr>${grades.map(g=>`<td>${esc(g.code)} ${esc(g.range)}</td>`).join('')}</tr>`;
+  }else if(model==='model_3'){
+    content=`<tr><th colspan="${grades.length}">Keys To Rating</th></tr><tr>${grades.map(g=>`<td>[${esc(g.range)}] = ${esc(g.code)}</td>`).join('')}</tr>`;
+  }else if(model==='model_4'){
+    content=`<tr><th colspan="${grades.length}">Keys To Rating</th></tr><tr>${grades.map(g=>`<td>${esc(g.range)}<br>${esc(g.code)}</td>`).join('')}</tr>`;
+  }else{
+    content=`<tr><th colspan="${grades.length}">Keys To Rating</th></tr><tr>${grades.map(g=>`<td>${esc(g.range)} (${esc(g.code)})</td>`).join('')}</tr>`;
+  }
+  return sectionWrap('section_4',model,`<div class="template-preview-grade"><table class="template-preview-table">${content}</table></div>`);
+}
+function currentModelName(section){
+  const model=ST.selected_models[section]||'model_1';
+  return model==='none'?'None':model.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+function setToggleByKey(key,value){
+  document.querySelectorAll(`.te-toggle[data-key="${key}"]`).forEach(el=>el.classList.toggle('on',!!value));
+}
+function getCBCGrade(score){for(const g of CBC_GRADES)if(score>=g.min)return g.code;return 'BE2';}
+function getRemarksTable(){
+  const t=ST.customizations&&ST.customizations.remarks_table;
+  return (t&&t.length)?t:getDefaultState().customizations.remarks_table;
+}
+function getRemarksByScore(score){
+  const n=Number(score);if(isNaN(n))return '';
+  for(const r of getRemarksTable()){
+    if(n>=Number(r.min)&&n<=Number(r.max))return r.text||'';
+  }
+  return '';
+}
+function getRemarks(input,score){
+  // Score-aware: if a score number is supplied, use range table directly
+  if(score!==undefined)return getRemarksByScore(score);
+  if(typeof input==='number')return getRemarksByScore(input);
+  // Legacy grade-code lookup: map code -> midpoint of its grade_key range -> remarks table
+  const code=String(input||'');
+  const gk=getGradeKeyRows().find(g=>g.code===code);
+  if(gk){
+    const m=String(gk.range||'').match(/(\d+)\s*-\s*(\d+)/);
+    if(m){const a=+m[1],b=+m[2];return getRemarksByScore(Math.round((a+b)/2));}
+  }
+  return '';
+}
+function gradeColor(g){if(!g)return'#333';if(g.startsWith('EE'))return'#276749';if(g.startsWith('ME'))return'#2b6cb0';if(g.startsWith('AE'))return'#b7791f';return'#c53030';}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function teToast(msg,type='success'){
+  const t=document.getElementById('te-toast');
+  t.className=`te-toast show ${type}`;
+  t.querySelector('i').className=`fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'}`;
+  document.getElementById('te-toast-msg').textContent=msg;
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+window.addEventListener('resize',()=>{fitReportContentToPage();fitPreviewSheet();});
+window.addEventListener('beforeprint',()=>{
+  collectStateFromUI();
+  renderPreview();
+  const page=document.getElementById('tp-page');
+  balanceReportVerticalSpace(page,page?.dataset.layoutMode||'balanced');
+  fitReportContentToPage();
+});
+init();
+</script>
+</body>
+</html>

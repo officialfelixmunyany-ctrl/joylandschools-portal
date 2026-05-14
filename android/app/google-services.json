@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "889199007942",
+    "firebase_url": "https://joyland-schools-default-rtdb.firebaseio.com",
+    "project_id": "joyland-schools",
+    "storage_bucket": "joyland-schools.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:889199007942:android:384f1baa3f01b621831fc7",
+        "android_client_info": {
+          "package_name": "com.joyland.daraja"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfn4dMtp_l9LJq7RuG8jtJYpcM0YO5yyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

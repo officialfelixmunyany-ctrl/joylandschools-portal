@@ -1,0 +1,328 @@
+{
+  "template_name": "Primary",
+  "selected_models": {
+    "section_1": "model_2",
+    "section_2": "model_1",
+    "section_3": "model_4",
+    "section_4": "model_1",
+    "section_5": "none",
+    "section_6": "model_2"
+  },
+  "theme_color": "#d4147a",
+  "school": {
+    "name": "JOYLAND SCHOOLS",
+    "motto": "Education Is Treasure",
+    "address": "P.O. Box 86713-80100",
+    "phone": "0710404488",
+    "email": "joylandpa@gmail.com",
+    "logo": "/uploads/school/logo.jpg"
+  },
+  "settings": {
+    "result_title": "END OF TERM REPORT CARD",
+    "grade_system": "cbc",
+    "footer_text": "Printed By Joyland Schools Portal",
+    "grade_label": "Grade",
+    "remarks_label": "Remarks",
+    "promotion_status": "PROMOTED TO: ________________",
+    "student_position": "10th",
+    "score_color": "#d4147a",
+    "teacher_comment": "A dedicated and hardworking student who shows great potential.",
+    "head_comment": "Keep up the excellent work. We are proud of your progress.",
+    "director_comment": "",
+    "teacher_role_label": "Class Teacher",
+    "head_role_label": "Headteacher",
+    "director_role_label": "Director",
+    "show_remarks": true,
+    "show_position": true,
+    "show_attendance": true,
+    "show_promotion": false,
+    "show_class_average": true,
+    "show_grade_keys": true,
+    "show_score_colors": true,
+    "show_stamp": true,
+    "jumbotron_header_bg": true,
+    "autofill_skills": true,
+    "show_cum_total": true,
+    "show_percentage": true,
+    "show_sign_column": true,
+    "show_dob": false,
+    "show_sex": true,
+    "show_admission_no": true,
+    "show_class": true,
+    "show_photo": true,
+    "show_term_duration": true,
+    "show_score_summary": true,
+    "show_teacher_comment": true,
+    "show_head_comment": true,
+    "show_director_comment": true,
+    "stamp_image": "",
+    "bg_image": ""
+  },
+  "customizations": {
+    "student_fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "visible": true
+      },
+      {
+        "key": "dob",
+        "label": "Date Of Birth",
+        "visible": false
+      },
+      {
+        "key": "sex",
+        "label": "Sex",
+        "visible": true
+      },
+      {
+        "key": "class",
+        "label": "Class",
+        "visible": true
+      },
+      {
+        "key": "admission_no",
+        "label": "Admission No.",
+        "visible": true
+      }
+    ],
+    "academic_headers": [
+      {
+        "key": "ca1",
+        "label": "CA",
+        "score": 30,
+        "visible": true
+      },
+      {
+        "key": "ca2",
+        "label": "CA",
+        "score": 30,
+        "visible": true
+      },
+      {
+        "key": "ca3",
+        "label": "CA",
+        "score": 30,
+        "visible": true
+      },
+      {
+        "key": "exam",
+        "label": "Exam",
+        "score": 100,
+        "visible": true
+      },
+      {
+        "key": "total",
+        "label": "Total Score",
+        "visible": true
+      },
+      {
+        "key": "grade",
+        "label": "Grade",
+        "visible": true
+      },
+      {
+        "key": "cum_total",
+        "label": "Cum. Total",
+        "visible": true
+      },
+      {
+        "key": "percentage",
+        "label": "%",
+        "visible": true
+      },
+      {
+        "key": "position",
+        "label": "Position",
+        "visible": true
+      },
+      {
+        "key": "class_avg",
+        "label": "Class Avg",
+        "visible": true
+      },
+      {
+        "key": "remarks",
+        "label": "Remarks",
+        "visible": true
+      },
+      {
+        "key": "sign",
+        "label": "Sign.",
+        "visible": false
+      },
+      {
+        "key": "highest",
+        "label": "Highest",
+        "visible": false
+      },
+      {
+        "key": "lowest",
+        "label": "Lowest",
+        "visible": false
+      }
+    ],
+    "skills": {
+      "affective": [
+        "Punctuality",
+        "Attentiveness",
+        "Neatness",
+        "Honesty",
+        "Politeness"
+      ],
+      "psychomotor": [
+        "Handwriting",
+        "Drawing",
+        "Sports",
+        "Crafts",
+        "Verbal Fluency"
+      ],
+      "ratings": [
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      "rating_labels": [
+        "Excellent",
+        "Very Good",
+        "Good",
+        "Fair",
+        "Poor"
+      ]
+    },
+    "grade_key": [
+      {
+        "range": "100-90",
+        "code": "EE1",
+        "label": "EXCEEDING EXPECTATIONS"
+      },
+      {
+        "range": "89-75",
+        "code": "EE2",
+        "label": "EXCEEDING EXPECTATIONS"
+      },
+      {
+        "range": "74-58",
+        "code": "ME1",
+        "label": "MEETING EXPECTATIONS"
+      },
+      {
+        "range": "57-41",
+        "code": "ME2",
+        "label": "MEETING EXPECTATIONS"
+      },
+      {
+        "range": "40-31",
+        "code": "AE1",
+        "label": "APPROACHING EXPECTATIONS"
+      },
+      {
+        "range": "30-21",
+        "code": "AE2",
+        "label": "APPROACHING EXPECTATIONS"
+      },
+      {
+        "range": "20-11",
+        "code": "BE1",
+        "label": "BELOW EXPECTATIONS"
+      },
+      {
+        "range": "10-0",
+        "code": "BE2",
+        "label": "BELOW EXPECTATIONS"
+      }
+    ],
+    "remarks_table": [
+      {
+        "min": 90,
+        "max": 100,
+        "text": "EE1"
+      },
+      {
+        "min": 75,
+        "max": 89,
+        "text": "EE2"
+      },
+      {
+        "min": 58,
+        "max": 74,
+        "text": "ME1"
+      },
+      {
+        "min": 41,
+        "max": 57,
+        "text": "ME2"
+      },
+      {
+        "min": 31,
+        "max": 40,
+        "text": "AE1"
+      },
+      {
+        "min": 21,
+        "max": 30,
+        "text": "AE2"
+      },
+      {
+        "min": 11,
+        "max": 20,
+        "text": "BE1"
+      },
+      {
+        "min": 0,
+        "max": 10,
+        "text": "BE2"
+      }
+    ],
+    "academic_columns": {
+      "model_4": {
+        "ca": {
+          "visible": false,
+          "label": "CA",
+          "score": 20
+        },
+        "ca2": {
+          "visible": false,
+          "label": "CA",
+          "score": 20
+        },
+        "exam": {
+          "visible": true,
+          "label": "EXAM",
+          "score": 100
+        },
+        "total_score": {
+          "visible": false,
+          "label": "TOTAL SCORE",
+          "score": 100
+        },
+        "cum_total_score": {
+          "visible": false,
+          "label": "CUM. TOTAL SCORE"
+        },
+        "percentage": {
+          "visible": false,
+          "label": "PERCENTAGE"
+        },
+        "position_in_subject": {
+          "visible": true,
+          "label": "POSITION IN SUBJECT"
+        },
+        "class_average": {
+          "visible": true,
+          "label": "CLASS AVERAGE"
+        },
+        "remarks": {
+          "visible": true,
+          "label": "Remarks"
+        },
+        "sign": {
+          "visible": true,
+          "label": "SIGN."
+        }
+      }
+    }
+  }
+}

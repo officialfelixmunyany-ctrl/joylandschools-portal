@@ -1,0 +1,36 @@
+node_modules/
+.env
+.env.*
+secrets/
+*.log
+
+# Local database and live data
+data/*.db
+data/*.db-*
+data/*.sqlite
+data/*.sqlite3
+!data/templates/
+!data/templates/*.json
+
+# Uploaded learner/school files stay on the server, not GitHub
+public/uploads/
+
+# Build outputs and deploy bundles
+*.apk
+*.aab
+*.zip
+android/.gradle/
+android/app/build/
+android/build/
+
+# Local tooling
+.tools/
+.claude/
+
+# Print/check artifacts
+portal-print-check.pdf
+portal-print-check.png
+
+# Design mocks and QA screenshots
+public/mock-*.html
+public/app-qa-*.png

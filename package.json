@@ -1,0 +1,25 @@
+{
+  "name": "joyland-school-portal",
+  "version": "1.0.0",
+  "description": "JOYLAND SCHOOLS Portal - Education Is Treasure",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android",
+    "android:build": "cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/push-notifications": "^8.0.4",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "heic-convert": "^2.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4"
+  }
+}

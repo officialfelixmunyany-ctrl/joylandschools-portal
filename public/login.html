@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>JOYLAND SCHOOLS — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#1B5E20;--green2:#2E7D32;--green3:#4CAF50;--gold:#FFC107;--gold2:#F9A825;--white:#fff;}
+
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;overflow:hidden;}
+
+.bg{position:fixed;inset:0;z-index:0;}
+.bg img{width:100%;height:100%;object-fit:cover;}
+.bg-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,40,20,0.92) 0%,rgba(27,94,32,0.85) 50%,rgba(10,40,20,0.92) 100%);}
+
+.particles{position:absolute;inset:0;overflow:hidden;}
+.particle{position:absolute;width:4px;height:4px;background:rgba(255,193,7,0.4);border-radius:50%;animation:float linear infinite;}
+@keyframes float{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:1;}90%{opacity:0.5;}100%{transform:translateY(-10vh) rotate(720deg);opacity:0;}}
+
+.container{position:relative;z-index:10;width:100%;max-width:1100px;padding:20px;display:flex;align-items:center;gap:60px;}
+
+/* LEFT BRANDING */
+.branding{flex:1;color:var(--white);text-align:center;}
+.crest{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,var(--gold2),var(--gold));margin:0 auto 24px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 8px rgba(255,193,7,0.2),0 0 0 16px rgba(255,193,7,0.08);animation:pulse 3s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 8px rgba(255,193,7,0.2),0 0 0 16px rgba(255,193,7,0.08);}50%{box-shadow:0 0 0 12px rgba(255,193,7,0.3),0 0 0 24px rgba(255,193,7,0.12);}}
+.crest i{font-size:52px;color:var(--green);}
+.school-name{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,0.5);}
+.school-name span{color:var(--gold);}
+.divider{width:80px;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto;}
+.motto{font-style:italic;font-family:'Playfair Display',serif;font-size:16px;color:rgba(255,193,7,0.9);letter-spacing:2px;text-transform:uppercase;}
+.tagline{margin-top:30px;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.8;}
+.tagline i{color:var(--gold);margin-right:6px;}
+
+/* RIGHT FORM */
+.card{flex:0 0 420px;background:rgba(255,255,255,0.06);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:40px;box-shadow:0 32px 80px rgba(0,0,0,0.4);}
+.card-header{text-align:center;margin-bottom:32px;}
+.card-header h2{color:var(--white);font-size:22px;font-weight:600;}
+.card-header p{color:rgba(255,255,255,0.55);font-size:13px;margin-top:4px;}
+
+.tab-row{display:flex;background:rgba(0,0,0,0.25);border-radius:10px;padding:4px;margin-bottom:28px;gap:4px;}
+.tab-btn{flex:1;padding:8px;border:none;background:transparent;color:rgba(255,255,255,0.55);font-size:13px;font-family:'Poppins',sans-serif;border-radius:7px;cursor:pointer;transition:.3s;}
+.tab-btn.active{background:var(--gold);color:var(--green);font-weight:600;}
+
+.form-group{margin-bottom:18px;position:relative;}
+.form-group label{display:block;color:rgba(255,255,255,0.75);font-size:12px;font-weight:500;margin-bottom:6px;letter-spacing:.5px;}
+.input-wrap{position:relative;}
+.input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);font-size:15px;}
+.form-group input{width:100%;padding:13px 14px 13px 42px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:var(--white);font-size:14px;font-family:'Poppins',sans-serif;outline:none;transition:.3s;}
+.form-group input::placeholder{color:rgba(255,255,255,0.3);}
+.form-group input:focus{border-color:var(--gold);background:rgba(255,255,255,0.12);box-shadow:0 0 0 3px rgba(255,193,7,0.15);}
+
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:4px;}
+
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;border-radius:10px;font-size:15px;font-weight:700;color:var(--green);font-family:'Poppins',sans-serif;cursor:pointer;transition:.3s;letter-spacing:.5px;margin-top:8px;}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,193,7,0.4);}
+.btn-login:active{transform:translateY(0);}
+.btn-login i{margin-right:8px;}
+
+.error-box{background:rgba(244,67,54,0.15);border:1px solid rgba(244,67,54,0.3);border-radius:8px;padding:10px 14px;color:#ff8a80;font-size:12.5px;margin-bottom:16px;display:none;}
+.error-box.show{display:flex;align-items:center;gap:8px;}
+
+.loading{display:inline-block;width:18px;height:18px;border:2px solid var(--green);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.form-section{display:none;}
+.form-section.active{display:block;}
+
+@media(max-width:768px){
+  .container{flex-direction:column;gap:30px;}
+  .card{flex:none;width:100%;}
+  .branding{padding:20px 0 0;}
+  .school-name{font-size:28px;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1920&q=80" alt="School" onerror="this.style.display='none'"/>
+  <div class="bg-overlay"></div>
+  <div class="particles" id="particles"></div>
+</div>
+
+<div class="container">
+  <!-- Branding -->
+  <div class="branding">
+    <div class="crest"><i class="fas fa-graduation-cap"></i></div>
+    <div class="school-name">JOYLAND<br/><span>SCHOOLS</span></div>
+    <div class="divider"></div>
+    <div class="motto">Education Is Treasure</div>
+    <div class="tagline" style="margin-top:40px;">
+      <div><i class="fas fa-check-circle"></i> Safe & Secure Platform</div>
+      <div><i class="fas fa-check-circle"></i> Real-Time Academic Tracking</div>
+      <div><i class="fas fa-check-circle"></i> Seamless Communication</div>
+    </div>
+  </div>
+
+  <!-- Login Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Welcome Back</h2>
+      <p>Sign in to your portal</p>
+    </div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('password')"><i class="fas fa-lock" style="margin-right:5px"></i>Password</button>
+      <button class="tab-btn" onclick="switchTab('tempcode')"><i class="fas fa-key" style="margin-right:5px"></i>Temp Code</button>
+    </div>
+
+    <div id="error-box" class="error-box">
+      <i class="fas fa-exclamation-circle"></i><span id="error-msg">Error</span>
+    </div>
+
+    <!-- Password Login -->
+    <div class="form-section active" id="section-password">
+      <div class="form-group">
+        <label>LOGIN ID</label>
+        <div class="input-wrap">
+          <i class="fas fa-user"></i>
+          <input type="text" id="p-identifier" placeholder="Enter your login ID" autocomplete="username"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>PASSWORD</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="p-password" placeholder="Enter your password" autocomplete="current-password"/>
+          <button class="eye-btn" onclick="togglePwd('p-password',this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <button class="btn-login" onclick="doLogin()" id="btn-login"><i class="fas fa-sign-in-alt"></i>Sign In</button>
+    </div>
+
+    <!-- Temp Code Login -->
+    <div class="form-section" id="section-tempcode">
+      <div class="form-group">
+        <label>LOGIN ID</label>
+        <div class="input-wrap">
+          <i class="fas fa-user"></i>
+          <input type="text" id="t-identifier" placeholder="Enter your login ID"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>TEMPORARY CODE</label>
+        <div class="input-wrap">
+          <i class="fas fa-key"></i>
+          <input type="text" id="t-code" placeholder="Enter the temporary code" style="text-transform:uppercase;letter-spacing:4px;"/>
+        </div>
+      </div>
+      <button class="btn-login" onclick="doTempLogin()" id="btn-temp"><i class="fas fa-key"></i>Sign In with Code</button>
+    </div>
+
+    <p style="text-align:center;margin-top:20px;color:rgba(255,255,255,0.35);font-size:11px;">
+      <i class="fas fa-shield-alt" style="color:var(--gold);margin-right:4px;"></i>
+      Secured · JOYLAND SCHOOLS © 2026
+    </p>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', (i===0&&tab==='password')||(i===1&&tab==='tempcode')));
+  document.getElementById('section-password').classList.toggle('active', tab==='password');
+  document.getElementById('section-tempcode').classList.toggle('active', tab==='tempcode');
+  hideError();
+}
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  const show = inp.type==='password';
+  inp.type = show ? 'text' : 'password';
+  btn.querySelector('i').className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  document.getElementById('error-msg').textContent = msg;
+  box.classList.add('show');
+}
+function hideError() { document.getElementById('error-box').classList.remove('show'); }
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="loading"></span> Signing in...' : (btnId==='btn-login' ? '<i class="fas fa-sign-in-alt"></i> Sign In' : '<i class="fas fa-key"></i> Sign In with Code');
+}
+
+async function doLogin() {
+  hideError();
+  const identifier = document.getElementById('p-identifier').value.trim();
+  const password   = document.getElementById('p-password').value;
+  if (!identifier || !password) return showError('Please fill in all fields');
+  setLoading('btn-login', true);
+  try {
+    const r = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier,password})});
+    const d = await r.json();
+    if (d.success) { window.location.href = d.redirect; }
+    else { showError(d.message || 'Login failed'); setLoading('btn-login',false); }
+  } catch(e) { showError('Network error. Please try again.'); setLoading('btn-login',false); }
+}
+
+async function doTempLogin() {
+  hideError();
+  const identifier = document.getElementById('t-identifier').value.trim();
+  const temp_code  = document.getElementById('t-code').value.trim().toUpperCase();
+  if (!identifier || !temp_code) return showError('Please fill in all fields');
+  setLoading('btn-temp', true);
+  try {
+    const r = await fetch('/api/auth/temp-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier,temp_code})});
+    const d = await r.json();
+    if (d.success) { window.location.href = d.redirect; }
+    else { showError(d.message || 'Invalid code'); setLoading('btn-temp',false); }
+  } catch(e) { showError('Network error. Please try again.'); setLoading('btn-temp',false); }
+}
+
+document.addEventListener('keydown', e => { if (e.key==='Enter') { const s = document.getElementById('section-password').classList.contains('active'); s ? doLogin() : doTempLogin(); }});
+
+// Particles
+(function(){
+  const pc = document.getElementById('particles');
+  for(let i=0;i<30;i++){
+    const p=document.createElement('div');p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;width:${2+Math.random()*4}px;height:${2+Math.random()*4}px;animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s;opacity:${0.2+Math.random()*0.4}`;
+    pc.appendChild(p);
+  }
+})();
+</script>
+</body>
+</html>
