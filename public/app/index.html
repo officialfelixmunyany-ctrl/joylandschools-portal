@@ -345,37 +345,9 @@ html,body{font-family:var(--f7-font-family);-webkit-font-smoothing:antialiased;-
 .assessment-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;}
 .assessment-tabs button{border:1px solid var(--d-border);background:#fff;color:var(--d-muted);border-radius:999px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:11px;white-space:nowrap;box-shadow:var(--d-card-shadow);}
 .assessment-tabs button.active{background:var(--d-green2);border-color:var(--d-green2);color:#fff;}
-.mini-report-template{--rt:#2e7d32;background:#fff;border:1.5px solid var(--rt);border-radius:12px;box-shadow:var(--d-card-shadow);overflow:hidden;margin-bottom:14px;}
-.mini-report-head{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;padding:12px;background:linear-gradient(135deg,var(--rt),rgba(255,255,255,.92));color:#fff;}
-.mini-report-logo{width:48px;height:48px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--rt);font-weight:900;overflow:hidden;}
-.mini-report-logo img{width:100%;height:100%;object-fit:contain;}
-.mini-report-school{font-size:16px;font-weight:900;line-height:1.05;text-transform:uppercase;}
-.mini-report-meta{font-size:10px;font-weight:700;line-height:1.35;opacity:.95;margin-top:3px;}
-.mini-report-title{text-align:center;padding:9px 12px 7px;color:var(--rt);font-size:13px;font-weight:900;text-transform:uppercase;border-bottom:1px solid rgba(0,0,0,.08);}
-.mini-report-body{padding:12px;}
-.mini-report-grid{display:grid;grid-template-columns:1fr 82px;gap:10px;align-items:stretch;}
-.mini-report-details{border:1px solid #e5e7eb;border-radius:9px;overflow:hidden;}
-.mini-report-detail{display:grid;grid-template-columns:82px 1fr;border-bottom:1px solid #eef0f3;font-size:10.5px;}
-.mini-report-detail:last-child{border-bottom:0;}
-.mini-report-detail span{background:#f8fafc;color:#667085;font-weight:800;padding:7px 8px;}
-.mini-report-detail strong{padding:7px 8px;color:#172033;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mini-report-scorebox{border:1px solid var(--rt);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px;color:var(--rt);background:rgba(46,125,50,.05);}
-.mini-report-scorebox b{font-size:25px;line-height:1;font-weight:900;letter-spacing:-.04em;}
-.mini-report-scorebox span{font-size:9px;font-weight:900;text-transform:uppercase;margin-top:4px;}
-.mini-report-table-wrap{overflow-x:auto;margin-top:11px;border:1px solid #dfe3e8;border-radius:9px;}
-.mini-report-table{width:100%;min-width:360px;border-collapse:collapse;font-size:10px;}
-.mini-report-table th{background:var(--rt);color:#fff;text-align:left;padding:7px 6px;font-weight:900;text-transform:uppercase;}
-.mini-report-table td{padding:7px 6px;border-top:1px solid #eef0f3;color:#172033;font-weight:700;vertical-align:top;}
-.mini-report-table td:nth-child(n+2),.mini-report-table th:nth-child(n+2){text-align:center;}
-.mini-report-components{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;}
-.mini-report-components span{background:#f5f7f9;border:1px solid #e5e7eb;border-radius:999px;padding:2px 5px;font-size:9px;color:#667085;}
-.mini-report-comments{display:grid;gap:6px;margin-top:10px;}
-.mini-report-comment{border:1px solid #e5e7eb;border-radius:9px;padding:8px;background:#fbfcfd;font-size:10.5px;}
-.mini-report-comment b{display:block;color:var(--rt);font-size:10px;text-transform:uppercase;margin-bottom:3px;}
-.mini-report-footer{padding:8px 12px;border-top:1px solid rgba(0,0,0,.08);font-size:9.5px;color:#667085;text-align:center;font-weight:700;}
-.report-template-summary{background:#fff;border:1px solid var(--d-border);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;color:var(--d-text);box-shadow:var(--d-card-shadow);}
-.report-template-summary h4{font-size:14px;font-weight:900;color:var(--d-green2);margin:0 0 3px;}
-.report-template-summary p{font-size:11px;color:var(--d-muted);line-height:1.45;margin:0;}
+/* The renderer prepends an admin-context summary block ("1 learner" + template name).
+   It's noise in the teacher's single-learner report view, so hide it. */
+.report-template-summary{display:none!important;}
 .report-template-page-stack{width:100%;display:flex;flex-direction:column;align-items:center;gap:18px;--report-template-scale:.29;--report-frame-width:435px;--report-frame-height:615px;}
 .report-template-sheet-frame{position:relative;width:min(100%,var(--report-frame-width));height:var(--report-frame-height);flex:0 0 auto;overflow:visible;}
 .report-template-sheet-frame>.te-preview-shell{position:absolute;top:0;left:50%;box-sizing:border-box;width:1500px;min-width:1500px;height:2121px;min-height:2121px;background:#fff;padding:43px 43px 32px;overflow:hidden;box-shadow:0 10px 34px rgba(15,23,42,.16);margin:0!important;transform:translateX(-50%) scale(var(--report-template-scale))!important;transform-origin:top center!important;}
@@ -2608,7 +2580,7 @@ function previewComponentDefs(report){
 
 async function renderAdminReportPreviewSheet(report){
   const renderer = window.DarajaReportPreview;
-  if(!renderer) return renderMobileReportTemplate(report);
+  if(!renderer) throw new Error('Report template engine failed to load. Fully close and reopen the app.');
   await renderer.ensureStyles();
   const classId = String(report.class?.id || '');
   const termId = String(report.term?.id || '');
@@ -2647,129 +2619,6 @@ async function renderAdminReportPreviewSheet(report){
     skillRatings:report.skill_ratings || {}
   });
   return html;
-}
-
-function reportThemeColor(report){
-  return report?.template?.state?.theme_color || report?.template?.state?.settings?.score_color || '#2e7d32';
-}
-
-function reportLogoHtml(report){
-  const stateTemplate = report?.template?.state || {};
-  const src = stateTemplate.school?.logo || report.school?.school_logo || state.school?.school_logo || '';
-  if(src) return `<img src="${esc(src)}" alt="">`;
-  const name = stateTemplate.school?.name || report.school?.school_name || state.school?.school_name || 'School';
-  return esc(String(name).split(/\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase() || 'SCH');
-}
-
-function reportResultTitle(report){
-  const raw = String(report?.template?.state?.settings?.result_title || '').trim();
-  if(raw && !/^end\s+of\s+term\s+report\s+card$/i.test(raw)) return raw;
-  if(report.assessment_type === 'opener') return 'OPENER REPORT CARD';
-  if(report.assessment_type === 'midterm') return 'MIDTERM REPORT CARD';
-  return 'END OF TERM REPORT CARD';
-}
-
-function reportTemplateGrade(report, percent){
-  if(percent == null || percent === '' || !Number.isFinite(Number(percent))) return '-';
-  const p = Number(percent);
-  const key = report?.template?.state?.customizations?.grade_key || [];
-  for(const row of key){
-    const nums = String(row.range || '').match(/\d+(\.\d+)?/g);
-    if(nums && nums.length >= 2){
-      const a = Number(nums[0]), b = Number(nums[1]);
-      const min = Math.min(a,b), max = Math.max(a,b);
-      if(p >= min && p <= max) return row.code || row.label || '-';
-    }
-  }
-  return marksBandFromPercent(p).code;
-}
-
-function reportTemplateRemarks(report, percent){
-  if(percent == null || percent === '' || !Number.isFinite(Number(percent))) return '-';
-  const p = Number(percent);
-  const rows = report?.template?.state?.customizations?.remarks_table || [];
-  const match = rows.find(r => p >= Number(r.min) && p <= Number(r.max));
-  if(match?.text) return match.text;
-  return marksBandFromPercent(percent).label;
-}
-
-function reportCommentBlocks(report){
-  const stateTemplate = report?.template?.state || {};
-  const settings = stateTemplate.settings || {};
-  const saved = report.comments || [];
-  const byRole = Object.fromEntries(saved.map(c => [c.role, c]));
-  const rows = [];
-  if(settings.show_teacher_comment !== false || byRole.class_teacher){
-    rows.push({ label:settings.teacher_role_label || 'Class Teacher', text:byRole.class_teacher?.text || settings.teacher_comment || '' });
-  }
-  if(settings.show_head_comment !== false || byRole.headteacher){
-    rows.push({ label:settings.head_role_label || 'Headteacher', text:byRole.headteacher?.text || settings.head_comment || '' });
-  }
-  if(settings.show_director_comment || byRole.director){
-    rows.push({ label:settings.director_role_label || 'Director', text:byRole.director?.text || settings.director_comment || '' });
-  }
-  return rows.filter(r => String(r.text || '').trim());
-}
-
-function renderMobileReportTemplate(report){
-  const tpl = report?.template?.state || {};
-  const settings = tpl.settings || {};
-  const school = tpl.school || {};
-  const learner = report.learner || {};
-  const subjects = report.subjects || [];
-  const theme = reportThemeColor(report);
-  const overall = report.overall_percent == null ? '-' : `${report.overall_percent}%`;
-  const subjectRows = subjects.map(s => {
-    const componentText = (s.components || []).map(c => `<span>${esc(c.name)} ${c.score == null ? '-' : esc(c.score)}/${esc(c.max)}</span>`).join('');
-    const pct = s.percent == null ? null : Number(s.percent);
-    return `<tr>
-      <td>${esc(s.subject_name || 'Subject')}</td>
-      <td>${s.total == null ? '-' : esc(s.total)}</td>
-      <td>${pct == null ? '-' : esc(s.percent) + '%'}</td>
-      <td>${esc(reportTemplateGrade(report, pct))}</td>
-      <td>${esc(reportTemplateRemarks(report, pct))}</td>
-      <td><div class="mini-report-components">${componentText || '<span>No marks</span>'}</div></td>
-    </tr>`;
-  }).join('');
-  const comments = reportCommentBlocks(report).map(c => `
-    <div class="mini-report-comment"><b>${esc(c.label)}</b>${esc(c.text)}</div>
-  `).join('');
-  return `
-    <div class="mini-report-template" style="--rt:${esc(theme)}">
-      <div class="mini-report-head">
-        <div class="mini-report-logo">${reportLogoHtml(report)}</div>
-        <div>
-          <div class="mini-report-school">${esc(school.name || report.school?.school_name || state.school?.school_name || 'School')}</div>
-          <div class="mini-report-meta">${esc(school.motto || report.school?.school_motto || '')}<br>${esc(school.address || report.school?.school_address || '')}</div>
-        </div>
-      </div>
-      <div class="mini-report-title">${esc(reportResultTitle(report))}</div>
-      <div class="mini-report-body">
-        <div class="mini-report-grid">
-          <div class="mini-report-details">
-            <div class="mini-report-detail"><span>Name</span><strong>${esc(learner.name || learner.full_name || 'Learner')}</strong></div>
-            ${settings.show_admission_no === false ? '' : `<div class="mini-report-detail"><span>Adm No.</span><strong>${esc(learner.admission_no || learner.user_id || '-')}</strong></div>`}
-            ${settings.show_class === false ? '' : `<div class="mini-report-detail"><span>Class</span><strong>${esc(report.class?.name || learner.class_name || '-')}</strong></div>`}
-            <div class="mini-report-detail"><span>Term</span><strong>${esc(report.term?.name || '-')}</strong></div>
-            <div class="mini-report-detail"><span>Exam</span><strong>${esc(ASSESSMENT_LABELS[report.assessment_type] || report.assessment_type || '-')}</strong></div>
-            ${settings.show_attendance === false ? '' : `<div class="mini-report-detail"><span>Attendance</span><strong>${esc(report.attendance?.present || 0)} / ${esc(report.attendance?.opened || 0)}</strong></div>`}
-          </div>
-          <div class="mini-report-scorebox">
-            <b>${esc(overall)}</b>
-            <span>${esc(reportTemplateGrade(report, report.overall_percent))}</span>
-          </div>
-        </div>
-        <div class="mini-report-table-wrap">
-          <table class="mini-report-table">
-            <thead><tr><th>Subject</th><th>Total</th><th>%</th><th>Grade</th><th>Remarks</th><th>Components</th></tr></thead>
-            <tbody>${subjectRows || '<tr><td colspan="6">No subject marks recorded for this filter.</td></tr>'}</tbody>
-          </table>
-        </div>
-        ${comments ? `<div class="mini-report-comments">${comments}</div>` : ''}
-      </div>
-      <div class="mini-report-footer">${esc(report.template?.name || 'Default Template')} template${settings.footer_text ? ` - ${esc(settings.footer_text)}` : ''}</div>
-    </div>
-  `;
 }
 
 /* ════════════════════════════════════════════════════════════════════
