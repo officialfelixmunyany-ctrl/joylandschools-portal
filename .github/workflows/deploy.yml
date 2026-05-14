@@ -1,0 +1,31 @@
+name: Deploy Portal
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Update Google Cloud VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ secrets.VM_PORT || 22 }}
+          script: |
+            set -e
+            cd ~/portal
+            git fetch origin main
+            git reset --hard origin/main
+            npm install
+            node --check server.js
+            node --check database.js
+            for f in routes/*.js; do node --check "$f"; done
+            pm2 restart joyland-portal || pm2 start server.js --name joyland-portal
+            pm2 save
