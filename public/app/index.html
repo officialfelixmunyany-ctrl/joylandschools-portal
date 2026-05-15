@@ -290,6 +290,9 @@ html,body{font-family:var(--f7-font-family);-webkit-font-smoothing:antialiased;-
 .marks-assess-seg{display:flex;background:#fff;border:1px solid var(--d-border);border-radius:12px;padding:4px;gap:4px;box-shadow:var(--d-card-shadow);margin-bottom:10px;}
 .marks-assess-seg button{flex:1;border:0;background:transparent;padding:9px 4px;border-radius:9px;font-family:inherit;font-size:12px;font-weight:800;color:var(--d-muted);}
 .marks-assess-seg button.active{background:linear-gradient(135deg,var(--d-green2),var(--d-green3));color:#fff;box-shadow:0 4px 12px rgba(46,125,50,.24);}
+.marks-picker-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px;}
+.marks-picker-row select{width:100%;height:42px;border:1px solid var(--d-border);border-radius:11px;background:#fff;padding:0 10px;font-family:inherit;font-size:12.5px;font-weight:800;color:var(--d-text);box-shadow:var(--d-card-shadow);outline:none;}
+.marks-picker-row select:focus{border-color:var(--d-green3);box-shadow:0 0 0 4px rgba(67,160,71,.1);}
 .marks-comp-row{display:flex;gap:7px;overflow-x:auto;padding:1px 0 4px;margin-bottom:10px;}
 .marks-comp-chip{border:1px solid var(--d-border);background:#fff;border-radius:10px;padding:8px 12px;font-family:inherit;font-size:11.5px;font-weight:800;color:var(--d-text-2);white-space:nowrap;box-shadow:var(--d-card-shadow);}
 .marks-comp-chip.active{background:var(--d-text);border-color:var(--d-text);color:#fff;}
@@ -2126,14 +2129,17 @@ function routeAttendanceClass({ resolve, to }){
 /* ════════════════════════════════════════════════════════════════════
    MARKS TAB
    ════════════════════════════════════════════════════════════════════ */
-async function routeMarks({ resolve }){
+async function routeMarks({ resolve, to }){
   let rows = [];
-  let assessment = state.dashboard?.current_period?.period || 'midterm';
-  let termName = state.dashboard?.current_period?.term_name || '';
+  const terms = reportTermList();
+  let termId = String(to?.query?.term_id || defaultReportTermId() || '');
+  let assessment = ASSESSMENT_LABELS[to?.query?.assessment] ? to.query.assessment : (state.dashboard?.current_period?.period || 'midterm');
+  let termName = terms.find(t => String(t.id) === termId)?.label || state.dashboard?.current_period?.term_name || '';
   try{
     const data = await api.get('/api/teacher/teaching');
-    assessment = data.current_assessment || assessment;
-    termName = data.current_term?.name || termName;
+    if(!ASSESSMENT_LABELS[to?.query?.assessment]) assessment = data.current_assessment || assessment;
+    if(!termId && data.current_term?.id) termId = String(data.current_term.id);
+    termName = terms.find(t => String(t.id) === termId)?.label || data.current_term?.name || termName;
     rows = (data.teaching || []).map(s => ({
       classId: s.class_id,
       className: s.class_name,
@@ -2146,7 +2152,7 @@ async function routeMarks({ resolve }){
       class_id:r.classId, class_name:r.className, subject_id:r.subjectId,
       subject_name:r.subjectName, subject_code:r.subjectCode, learner_count:r.learners
     }));
-    rows = await Promise.all(rows.map(row => loadMarksSubjectProgress(row, assessment).catch(() => row)));
+    rows = await Promise.all(rows.map(row => loadMarksSubjectProgress(row, assessment, termId).catch(() => row)));
   }catch(_){
     rows = (state.subjectClasses || []).map(s => ({
       classId: s.class_id,
@@ -2161,6 +2167,8 @@ async function routeMarks({ resolve }){
   const total = rows.length;
   const percent = total ? Math.round((complete / total) * 100) : 0;
   const label = ASSESSMENT_LABELS[assessment] || 'Midterm';
+  const termOpts = terms.map(t => `<option value="${esc(t.id)}" ${String(t.id)===String(termId)?'selected':''}>${esc(t.label)}</option>`).join('');
+  const assessmentOpts = Object.entries(ASSESSMENT_LABELS).map(([k,v]) => `<option value="${esc(k)}" ${k===assessment?'selected':''}>${esc(v)}</option>`).join('');
   resolve({
     content: `
       <div class="page" data-name="marks-home">
@@ -2183,12 +2191,20 @@ async function routeMarks({ resolve }){
                 <div class="d">${Math.max(0,total-complete)} subject${Math.max(0,total-complete)===1?'':'s'} still need work</div>
               </div>
             </div>
+            <div class="marks-picker-row">
+              <select id="marks-home-term" onchange="marksGo(marksHomeUrl(this.value, document.getElementById('marks-home-assessment')?.value || '${esc(assessment)}'))">
+                ${termOpts || `<option value="">Current term</option>`}
+              </select>
+              <select id="marks-home-assessment" onchange="marksGo(marksHomeUrl(document.getElementById('marks-home-term')?.value || '${esc(termId)}', this.value))">
+                ${assessmentOpts}
+              </select>
+            </div>
             <div class="d-list-label">Your subjects</div>
             ${rows.length === 0 ? `
               <div class="empty-card"><i class="fas fa-pen-alt"></i><p>You don't teach any subjects yet.</p></div>
             ` : `
               <div class="class-list">
-                ${rows.map((r,i) => marksSubjectCard(r, assessment, i)).join('')}
+                ${rows.map((r,i) => marksSubjectCard(r, assessment, i, termId)).join('')}
               </div>
             `}
           </div>
@@ -2198,12 +2214,22 @@ async function routeMarks({ resolve }){
   });
 }
 
-function marksEntryUrl(row, assessment){
+function marksHomeUrl(termId, assessment){
+  const q = new URLSearchParams();
+  if(termId) q.set('term_id', termId);
+  if(assessment) q.set('assessment', assessment);
+  return `/marks/${q.toString() ? '?' + q.toString() : ''}`;
+}
+
+function marksEntryUrl(row, assessment, termId){
   if(!row) return '';
   const classId = row.classId ?? row.class_id;
   const subjectId = row.subjectId ?? row.subject_id;
   if(classId == null || subjectId == null) return '';
-  return `/marks/${encodeURIComponent(classId)}/${encodeURIComponent(subjectId)}/?assessment=${encodeURIComponent(assessment || 'midterm')}`;
+  const q = new URLSearchParams();
+  q.set('assessment', assessment || 'midterm');
+  if(termId) q.set('term_id', termId);
+  return `/marks/${encodeURIComponent(classId)}/${encodeURIComponent(subjectId)}/?${q.toString()}`;
 }
 
 function marksGo(url){
@@ -2214,10 +2240,11 @@ function marksGo(url){
   navTab('#view-marks', url);
 }
 
-async function loadMarksSubjectProgress(row, assessment){
+async function loadMarksSubjectProgress(row, assessment, termId=''){
+  const termParam = termId ? `&term_id=${encodeURIComponent(termId)}` : '';
   const [componentsData, marksData] = await Promise.all([
     api.get(`/api/teacher/assessment-components?class_id=${row.classId}&subject_id=${row.subjectId}&assessment_type=${assessment}`),
-    api.get(`/api/teacher/marks?class_id=${row.classId}&subject_id=${row.subjectId}&assessment_type=${assessment}`)
+    api.get(`/api/teacher/marks?class_id=${row.classId}&subject_id=${row.subjectId}&assessment_type=${assessment}${termParam}`)
   ]);
   const components = componentsData.components || [];
   const entries = marksData.entries || {};
@@ -2246,13 +2273,13 @@ async function loadMarksSubjectProgress(row, assessment){
   return { ...row, components, totalCells, doneCells, scoredCells, notSatCells, mean, status };
 }
 
-function marksSubjectCard(r, assessment, i=0){
+function marksSubjectCard(r, assessment, i=0, termId=''){
   const pct = r.totalCells ? Math.round((Number(r.doneCells || 0) / r.totalCells) * 100) : 0;
   const status = r.status || 'empty';
   const label = status === 'done' ? 'Complete' : status === 'progress' ? 'In Progress' : 'Not Started';
   const band = marksBandFromPercent(r.mean);
   const code = subjectAbbr(r.subjectCode, r.subjectName || 'Subject');
-  return `<button class="marks-subject-card ${status}" onclick="marksGo('/marks/${r.classId}/${r.subjectId}/?assessment=${encodeURIComponent(assessment)}')">
+  return `<button class="marks-subject-card ${status}" onclick="marksGo('${marksEntryUrl(r, assessment, termId)}')">
     <div class="marks-subject-top">
       <div class="marks-subject-icon">${esc(code)}</div>
       <div class="marks-subject-info">
@@ -3699,11 +3726,18 @@ function attendanceDateNav(classId, date){
     <div class="att-dn-center">
       <div class="att-dn-day">${esc(date === today ? 'Today' : formatShortWeekday(date))}</div>
       <div class="att-dn-full">${esc(formatLongDate(date))}</div>
-      <input class="att-date-input" type="date" value="${esc(date)}" max="${today}" onchange="loadAttendanceClass('${esc(classId)}','', this.value)">
+      <input id="att-date-picker-${esc(classId)}" class="att-date-input" type="date" value="${esc(date)}" max="${today}" onchange="loadAttendanceClass('${esc(classId)}', window.f7Attendance?.title || '', this.value)">
     </div>
     <button class="att-dn-arrow" ${date>=today?'disabled':''} onclick="loadAttendanceClass('${esc(classId)}','', '${shiftIsoDate(date,1)}')"><i class="fas fa-chevron-right"></i></button>
-    <button class="att-dn-today" onclick="loadAttendanceClass('${esc(classId)}','', '${today}')"><i class="fas fa-calendar"></i></button>
+    <button class="att-dn-today" onclick="openAttendanceDatePicker('${esc(classId)}')"><i class="fas fa-calendar"></i></button>
   </div>`;
+}
+
+function openAttendanceDatePicker(classId){
+  const input = document.getElementById(`att-date-picker-${classId}`);
+  if(!input) return;
+  if(typeof input.showPicker === 'function') input.showPicker();
+  else { input.focus(); input.click(); }
 }
 
 function attendanceLearnerRow(l, i, row){
@@ -3891,6 +3925,7 @@ routeMarksEntry = function({ resolve, to }){
   const classId = to.params.classId;
   const subjectId = to.params.subjectId;
   const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'midterm';
+  const termId = String(to.query?.term_id || defaultReportTermId() || '');
   const item = (state.subjectClasses||[]).find(s=>String(s.class_id)===String(classId) && String(s.subject_id)===String(subjectId)) || {};
   resolve({
     content: `<div class="page" data-name="marks-entry"><div class="navbar"><div class="navbar-bg"></div><div class="navbar-inner">
@@ -3898,25 +3933,26 @@ routeMarksEntry = function({ resolve, to }){
       <div class="title">${esc(item.subject_name || 'Marks')}</div>
       <div class="subtitle">${esc(item.class_name || '')}</div>
     </div></div><div class="page-content"><div class="d-content" id="marks-work-${esc(classId)}-${esc(subjectId)}"><div class="empty-card"><i class="fas fa-spinner fa-spin"></i><p>Loading marks...</p></div></div></div></div>`,
-    on:{ pageInit:()=>loadMarksEntry(classId, subjectId, item, assessment) }
+    on:{ pageInit:()=>loadMarksEntry(classId, subjectId, item, assessment, termId) }
   });
-  setTimeout(() => loadMarksEntry(classId, subjectId, item, assessment), 0);
+  setTimeout(() => loadMarksEntry(classId, subjectId, item, assessment, termId), 0);
 };
 
-async function loadMarksEntry(classId, subjectId, item={}, assessment='midterm'){
+async function loadMarksEntry(classId, subjectId, item={}, assessment='midterm', termId=''){
   const root = document.getElementById(`marks-work-${classId}-${subjectId}`);
   if(!root) return;
   root.innerHTML = `<div class="empty-card"><i class="fas fa-spinner fa-spin"></i><p>Loading marks...</p></div>`;
   try{
+    const termParam = termId ? `&term_id=${encodeURIComponent(termId)}` : '';
     const [componentsData, rosterData, marksData] = await Promise.all([
       api.get(`/api/teacher/assessment-components?class_id=${classId}&subject_id=${subjectId}&assessment_type=${assessment}`),
       api.get(`/api/teacher/classes/${classId}/learners`),
-      api.get(`/api/teacher/marks?class_id=${classId}&subject_id=${subjectId}&assessment_type=${assessment}`)
+      api.get(`/api/teacher/marks?class_id=${classId}&subject_id=${subjectId}&assessment_type=${assessment}${termParam}`)
     ]);
     const components = (componentsData.components || []).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
     const learners = rosterData.learners || [];
     const existing = marksData.entries || {};
-    window.f7Marks = { classId, subjectId, assessment, item, components, learners, entries:{}, termId:marksData.term?.id || null, selected:components[0]?.component_key, dirty:false };
+    window.f7Marks = { classId, subjectId, assessment, item, components, learners, entries:{}, termId:marksData.term?.id || termId || null, selected:components[0]?.component_key, dirty:false };
     learners.forEach(l=>{
       window.f7Marks.entries[l.id] = {};
       components.forEach(c=>{
@@ -3926,8 +3962,19 @@ async function loadMarksEntry(classId, subjectId, item={}, assessment='midterm')
         window.f7Marks.entries[l.id][c.component_key] = { score:v === null || v === undefined ? '' : String(v), notSat:has && v === null };
       });
     });
+    const terms = reportTermList();
+    const currentTermId = String(window.f7Marks.termId || '');
+    const termOpts = terms.map(t => `<option value="${esc(t.id)}" ${String(t.id)===currentTermId?'selected':''}>${esc(t.label)}</option>`).join('');
+    const assessmentOpts = Object.entries(ASSESSMENT_LABELS).map(([k,label])=>`<option value="${esc(k)}" ${assessment===k?'selected':''}>${esc(label)}</option>`).join('');
     root.innerHTML = `
-      <div class="marks-assess-seg">${Object.entries(ASSESSMENT_LABELS).map(([k,label])=>`<button class="${assessment===k?'active':''}" onclick="loadMarksEntry('${classId}','${subjectId}',window.f7Marks?.item||{},'${k}')">${label}</button>`).join('')}</div>
+      <div class="marks-picker-row">
+        <select id="marks-entry-term" onchange="changeMarksEntryWindow(window.f7Marks?.assessment||'${esc(assessment)}', this.value)">
+          ${termOpts || `<option value="">Current term</option>`}
+        </select>
+        <select id="marks-entry-assessment" onchange="changeMarksEntryWindow(this.value, window.f7Marks?.termId||'${esc(currentTermId)}')">
+          ${assessmentOpts}
+        </select>
+      </div>
       <div class="marks-comp-row" id="mk-comp-row"></div>
       <div class="marks-stat-card" id="mk-stats"></div>
       <div class="marks-search"><i class="fas fa-search"></i><input type="search" placeholder="Search learner..." oninput="filterF7Rows('mk-row-v2', this.value)"></div>
@@ -3943,6 +3990,16 @@ async function loadMarksEntry(classId, subjectId, item={}, assessment='midterm')
     }
     root.innerHTML = `<div class="empty-card"><i class="fas fa-triangle-exclamation"></i><p>${esc(err.message || 'Could not load marks')}</p></div>`;
   }
+}
+function changeMarksEntryWindow(assessment, termId){
+  const ctx = window.f7Marks;
+  if(!ctx) return;
+  const run = () => loadMarksEntry(ctx.classId, ctx.subjectId, ctx.item || {}, assessment || ctx.assessment, termId || ctx.termId || '');
+  if(ctx.dirty){
+    app.dialog.confirm('You have unsaved marks changes. Change term or assessment anyway?', 'Unsaved changes', run);
+    return;
+  }
+  run();
 }
 function currentMarkComponent(){ return (window.f7Marks?.components || []).find(c=>c.component_key === window.f7Marks.selected); }
 function markCell(learnerId, key){ return window.f7Marks?.entries?.[learnerId]?.[key] || { score:'', notSat:false }; }
