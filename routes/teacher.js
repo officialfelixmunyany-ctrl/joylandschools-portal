@@ -676,6 +676,15 @@ router.get('/home', (req, res) => {
     return res.json({ success: true, data: { empty: true, message: 'No academic terms configured yet.' } });
   }
 
+  const calendarTerm = allTerms.find((t) => t.start_date <= today && t.end_date >= today) || null;
+  const calendarPeriod = calendarTerm ? detectAssessmentPeriod(calendarTerm, today) : null;
+  const nextTerm = allTerms.find((t) => t.start_date > today) || null;
+  function isoDayNumber(iso) {
+    const [y, m, d] = String(iso || '').split('-').map(Number);
+    return Math.floor(Date.UTC(y || 1970, (m || 1) - 1, d || 1) / 86400000);
+  }
+  const daysToNextTerm = nextTerm ? Math.max(0, isoDayNumber(nextTerm.start_date) - isoDayNumber(today)) : null;
+
   const windows = [];
   allTerms.forEach((t) => {
     ASSESSMENT_SEQUENCE.forEach((a) => {
@@ -1079,6 +1088,22 @@ router.get('/home', (req, res) => {
         assessment: selAssessment,
         assessment_label: ASSESSMENT_FULL[selAssessment],
         period_label: detected.period_label,
+        today,
+        calendar: calendarTerm ? {
+          term_id: calendarTerm.id,
+          term_name: calendarTerm.term_name,
+          session_year: calendarTerm.session_year,
+          week_no: calendarPeriod ? calendarPeriod.week_no : null,
+          total_weeks: calendarPeriod ? calendarPeriod.total_weeks : null
+        } : null,
+        next_term: nextTerm ? {
+          id: nextTerm.id,
+          term_name: nextTerm.term_name,
+          session_year: nextTerm.session_year,
+          start_date: nextTerm.start_date,
+          days_until: daysToNextTerm,
+          weeks_until: Math.ceil(daysToNextTerm / 7)
+        } : null,
         class_id: classFilter
       },
       filters: {
