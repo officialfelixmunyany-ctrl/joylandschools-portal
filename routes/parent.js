@@ -46,11 +46,10 @@ function detectAssessmentPeriod(term, today) {
   const now = today ? new Date(today) : new Date();
   const totalMs = end - start;
   const elapsedMs = now - start;
-  if (elapsedMs < 0) return 'opener';
+  if (elapsedMs < 0) return 'midterm';
   if (elapsedMs > totalMs) return 'endterm';
   const progress = elapsedMs / totalMs;
-  if (progress < 1/3) return 'opener';
-  if (progress < 2/3) return 'midterm';
+  if (progress < 1/2) return 'midterm';
   return 'endterm';
 }
 function termForDate(db, date) {
@@ -75,8 +74,8 @@ function resolveTerm(db, termIdQuery) {
   }
   return defaultTerm(db, todayStr());
 }
-const VALID_ASSESSMENTS = new Set(['opener','midterm','endterm']);
-function validAssessment(value, fallback='opener') {
+const VALID_ASSESSMENTS = new Set(['midterm','endterm']);
+function validAssessment(value, fallback='midterm') {
   return VALID_ASSESSMENTS.has(String(value || '').toLowerCase()) ? String(value).toLowerCase() : fallback;
 }
 function attendanceStatusToApi(value) {
@@ -311,7 +310,7 @@ router.get('/children', (req, res) => {
   `).all(req.session.user.id);
   const children = rows.map((learner) => {
     const summary = learnerSummary(db, learner);
-    const marks = learnerMarks(db, learner, { assessment_type:summary.current_assessment || 'opener' });
+    const marks = learnerMarks(db, learner, { assessment_type:summary.current_assessment || 'midterm' });
     return {
       ...summary.profile,
       class:summary.class,

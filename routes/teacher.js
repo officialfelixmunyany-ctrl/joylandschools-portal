@@ -97,7 +97,7 @@ function requireOwnedSubject(req, res, db, classId, subjectId) {
   return cls;
 }
 
-const VALID_ASSESSMENT_TYPES = new Set(['opener','midterm','endterm']);
+const VALID_ASSESSMENT_TYPES = new Set(['midterm','endterm']);
 function validAssessmentType(value) {
   return VALID_ASSESSMENT_TYPES.has(String(value || '').toLowerCase()) ? String(value).toLowerCase() : null;
 }
@@ -118,8 +118,7 @@ function detectAssessmentPeriod(term, todayStr) {
   const progress = elapsedMs / totalMs;
   const weekNo = Math.min(totalWeeks, Math.max(1, Math.floor(elapsedMs / (7 * 86400000)) + 1));
   let period, periodLabel;
-  if (progress < 1/3) { period = 'opener'; periodLabel = 'Opener'; }
-  else if (progress < 2/3) { period = 'midterm'; periodLabel = 'Midterm'; }
+  if (progress < 1/2) { period = 'midterm'; periodLabel = 'Midterm'; }
   else { period = 'endterm'; periodLabel = 'Endterm'; }
   return { period, period_label:periodLabel, week_no:weekNo, total_weeks:totalWeeks, progress_percent:Math.round(progress * 100) };
 }
@@ -529,9 +528,9 @@ function gradeCodeFromPercent(p) {
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SHARED ANALYTICS HELPERS (mobile Home dashboard) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const ASSESSMENT_SEQUENCE = ['opener', 'midterm', 'endterm'];
-const ASSESSMENT_SHORT = { opener: 'Op', midterm: 'Mid', endterm: 'End' };
-const ASSESSMENT_FULL = { opener: 'Opener', midterm: 'Midterm', endterm: 'Endterm' };
+const ASSESSMENT_SEQUENCE = ['midterm', 'endterm'];
+const ASSESSMENT_SHORT = { midterm: 'Mid', endterm: 'End' };
+const ASSESSMENT_FULL = { midterm: 'Midterm', endterm: 'Endterm' };
 
 function bandRank(code) {
   return { EE: 4, ME: 3, AE: 2, BE: 1 }[code] || 0;
@@ -597,9 +596,9 @@ router.get('/teaching-analytics', (req, res) => {
 
   const livePeriod = (() => {
     const t = termForDate(db, today);
-    if (!t) return 'opener';
+    if (!t) return 'midterm';
     const det = detectAssessmentPeriod(t, today);
-    return VALID_ASSESSMENT_TYPES.has(det.period) ? det.period : 'opener';
+    return VALID_ASSESSMENT_TYPES.has(det.period) ? det.period : 'midterm';
   })();
   const assessment = validAssessmentType(req.query.assessment_type) || livePeriod;
 
@@ -701,7 +700,7 @@ router.get('/home', (req, res) => {
       || allTerms[allTerms.length - 1];
   }
   const detected = detectAssessmentPeriod(selTerm, today);
-  const livePeriod = ASSESSMENT_SEQUENCE.includes(detected.period) ? detected.period : 'opener';
+  const livePeriod = ASSESSMENT_SEQUENCE.includes(detected.period) ? detected.period : 'midterm';
   let selAssessment = validAssessmentType(req.query.assessment_type) || livePeriod;
 
   let selWindowIndex = windows.findIndex((w) => w.term_id === selTerm.id && w.assessment === selAssessment);
@@ -1121,12 +1120,12 @@ router.get('/teaching', (req, res) => {
   `).all(teacherId);
 
   const term = termForDate(db, today);
-  let currentAssessment = 'opener';
+  let currentAssessment = 'midterm';
   let currentTerm = null;
   if (term) {
     currentTerm = { id: term.id, name: term.name };
     const det = detectAssessmentPeriod(term, today);
-    if (det.period === 'opener' || det.period === 'midterm' || det.period === 'endterm') {
+    if (det.period === 'midterm' || det.period === 'endterm') {
       currentAssessment = det.period;
     }
   }
@@ -1491,7 +1490,7 @@ router.get('/report-readiness', (req, res) => {
     if (!term) return res.status(400).json({ success:false, message:'No term available' });
   }
   const detected = detectAssessmentPeriod(term, todayStr());
-  const fallbackAssessment = ['opener','midterm','endterm'].includes(detected.period) ? detected.period : 'opener';
+  const fallbackAssessment = ['midterm','endterm'].includes(detected.period) ? detected.period : 'midterm';
   const assessment = validAssessmentType(req.query.assessment_type) || fallbackAssessment;
 
   const subjectsTotal = db.prepare('SELECT COUNT(*) c FROM class_subjects WHERE class_id=?').get(cls.id).c;
@@ -1559,7 +1558,7 @@ router.get('/report-card', (req, res) => {
     if (!term) return res.status(400).json({ success:false, message:'No term available' });
   }
   const detected = detectAssessmentPeriod(term, todayStr());
-  const fallbackAssessment = ['opener','midterm','endterm'].includes(detected.period) ? detected.period : 'opener';
+  const fallbackAssessment = ['midterm','endterm'].includes(detected.period) ? detected.period : 'midterm';
   const assessment = validAssessmentType(req.query.assessment_type) || fallbackAssessment;
 
   const subjects = db.prepare(`
@@ -1725,7 +1724,7 @@ router.get('/report-cards', (req, res) => {
     if (!term) return res.status(400).json({ success:false, message:'No term available' });
   }
   const detected = detectAssessmentPeriod(term, todayStr());
-  const fallbackAssessment = ['opener','midterm','endterm'].includes(detected.period) ? detected.period : 'opener';
+  const fallbackAssessment = ['midterm','endterm'].includes(detected.period) ? detected.period : 'midterm';
   const assessment = validAssessmentType(req.query.assessment_type) || fallbackAssessment;
 
   const classLearners = db.prepare(`
@@ -1912,11 +1911,10 @@ router.get('/broadsheet', (req, res) => {
   const rows = learners.map((l) => {
     const subjectScores = subjects.map((s) => {
       const scores = (aggregate[l.id] && aggregate[l.id][s.id]) || {};
-      const opener = scores.opener ?? null;
       const midterm = scores.midterm ?? null;
       const endterm = scores.endterm ?? null;
       const average = broadsheetSubjectAverage(scores);
-      return { subject_id:s.id, opener, midterm, endterm, average, cbc:broadsheetCbcLevel(average) };
+      return { subject_id:s.id, midterm, endterm, average, cbc:broadsheetCbcLevel(average) };
     });
     const entered = subjectScores.filter((sub) => sub.average !== null);
     const overallAverage = broadsheetAverageNumbers(entered.map((sub) => sub.average));

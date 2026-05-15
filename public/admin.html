@@ -180,7 +180,6 @@ body{font-family:'Poppins',sans-serif;background:var(--gray);color:var(--text);d
 .term-chip i{font-size:11px;}
 .period-chip{font-weight:700;letter-spacing:.4px;font-size:12px;text-transform:uppercase;}
 .period-chip i{font-size:11px;}
-.period-chip[data-period="opener"]{background:rgba(255,193,7,0.16);color:#9a6700;border:1px solid rgba(255,193,7,0.4);}
 .period-chip[data-period="midterm"]{background:rgba(245,158,11,0.16);color:#9a4d0c;border:1px solid rgba(245,158,11,0.4);}
 .period-chip[data-period="endterm"]{background:rgba(229,62,62,0.13);color:#9b2c2c;border:1px solid rgba(229,62,62,0.4);}
 .period-chip[data-period="pre-term"],.period-chip[data-period="break"]{background:#f1f5f9;color:var(--muted);border:1px solid var(--border);}
@@ -1028,7 +1027,7 @@ body.broadsheet-open{overflow:hidden;}
     <div class="section" id="section-assessments">
       <div class="page-header"><h2><span><i class="fas fa-clipboard-list"></i></span> Assessment Setup</h2></div>
       <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--muted);">
-        Each <strong>Assessment</strong> (Opener / Midterm / Endterm) is a container of components — Exam, CATs, Practical, etc. Configure them per Class &amp; Subject. Marks and skills are entered into these components.
+        Each <strong>Assessment</strong> (Midterm / Endterm) is a container of components — Exam, CATs, Practical, etc. Configure them per Class &amp; Subject. Marks and skills are entered into these components.
       </div>
       <div class="filter-bar">
         <div class="filter-group"><label>Class</label><select id="ac-class" onchange="onACClassChange()"></select></div>
@@ -1120,7 +1119,6 @@ body.broadsheet-open{overflow:hidden;}
           <label>Broadsheet Type</label>
           <select id="bs-type">
             <option value="term">Full Term</option>
-            <option value="opener">Opener Only</option>
             <option value="midterm">Midterm Only</option>
             <option value="endterm">Endterm Only</option>
           </select>
@@ -1360,8 +1358,8 @@ async function loadCurrentPeriod(){
       if(chip && text){
         chip.dataset.period = r.period || '';
         chip.style.display = 'flex';
-        if(['opener','midterm','endterm'].includes(r.period)){
-          text.textContent = `${r.period_label} · Week ${r.week_no}/${r.total_weeks}`;
+        if(['midterm','endterm'].includes(r.period)){
+          text.textContent = `Week ${r.week_no}/${r.total_weeks}`;
           chip.title = `${r.session_name||''} · ${r.term?.term_name||''} · ${r.progress_percent}% through term (auto-detected from term dates)`;
         } else if(r.period === 'pre-term'){
           text.textContent = `${r.term?.term_name||'Term'} · starts ${r.term?.start_date||''}`;
@@ -1379,7 +1377,7 @@ async function loadCurrentPeriod(){
   const termEl = document.getElementById('ov-term-line');
   if (termEl) {
     if (currentPeriod?.term) {
-      termEl.textContent = `${currentPeriod.term.term_name} · ${currentPeriod.period_label}${currentPeriod.week_no > 0 ? ' · Week '+currentPeriod.week_no+'/'+currentPeriod.total_weeks : ''}`;
+      termEl.textContent = `${currentPeriod.term.term_name}${currentPeriod.week_no > 0 ? ' · Week '+currentPeriod.week_no+'/'+currentPeriod.total_weeks : ''}`;
     } else {
       termEl.textContent = 'No active term';
     }
@@ -1497,7 +1495,6 @@ function toggleSidebar() {
 const sectionTitles = { overview:'Dashboard', learners:'Learners', teachers:'Teachers', parents:'Parents', notifications:'Notifications', academics:'Academics', classroom:'Classroom', sessions:'Sessions & Terms', attendance:'Attendance', assessments:'Assessment Setup', marks:'Marks Entry', skills:'Skills Entry', analysis:'Performance Analysis', broadsheet:'Class Broadsheet', 'rpt-card':'Learner Report Card', 'rpt-champions':'Subject Champions', 'rpt-subject-bs':'Subject Broadsheet', 'rpt-comments':'Comments & Signatures', profile:'Profile & Admins' };
 const REPORT_SECTIONS = ['rpt-card','broadsheet','rpt-champions','rpt-subject-bs','rpt-comments'];
 const ASSESSMENT_OPTIONS = [
-  { value:'opener',  label:'Opener'  },
   { value:'midterm', label:'Midterm' },
   { value:'endterm', label:'Endterm' }
 ];
@@ -3178,7 +3175,7 @@ async function logout(){
 }
 
 // ══════════ GRADING HELPERS ══════════
-const EXAM_MAX = { opener:100, midterm:100, endterm:100 };
+const EXAM_MAX = { midterm:100, endterm:100 };
 const CBC_LEVELS = [
   { code:'EE1', descriptor:'Exceeding Expectations', points:8, min:90, label:'Exceptional' },
   { code:'EE2', descriptor:'Exceeding Expectations', points:7, min:75, label:'Very Good' },
@@ -4748,7 +4745,7 @@ async function loadAnalysis() {
         <div class="analysis-card-body">
           ${cls.improving.map((r,i) => `<div class="rank-row">
             <div class="rank-num rank-other">${i+1}</div>
-            <div class="rank-info"><div class="rank-name">${esc(r.name)}</div><div class="rank-meta">Opener avg ${r.opener_average}% to latest avg ${r.latest_average}%</div></div>
+            <div class="rank-info"><div class="rank-name">${esc(r.name)}</div><div class="rank-meta">Midterm avg ${r.midterm_average}% to latest avg ${r.latest_average}%</div></div>
             <div class="rank-score">+${r.improvement}</div>
           </div>`).join('')}
         </div>
@@ -4794,7 +4791,6 @@ async function initBroadsheet() {
 }
 const BROADSHEET_TYPES = {
   term:{ label:'Full Term', title:'Full Term Broadsheet' },
-  opener:{ label:'Opener Only', title:'Opener Broadsheet' },
   midterm:{ label:'Midterm Only', title:'Midterm Broadsheet' },
   endterm:{ label:'Endterm Only', title:'Endterm Broadsheet' }
 };
@@ -6637,7 +6633,6 @@ function reportTemplateResultTitle(state, assessment){
   const raw = String(state?.settings?.result_title || '').trim();
   const generic = !raw || /^end\s+of\s+term\s+report\s+card$/i.test(raw);
   if(!generic) return raw;
-  if(assessment === 'opener') return 'OPENER REPORT CARD';
   if(assessment === 'midterm') return 'MIDTERM REPORT CARD';
   return 'END OF TERM REPORT CARD';
 }
@@ -7229,7 +7224,7 @@ function classroomGoTo(target){
     }
     // 2. Pre-select the auto-detected assessment period (skips on attendance — no period there)
     const assEl = document.getElementById(assessMap[target]);
-    if(assEl && currentPeriod && ['opener','midterm','endterm'].includes(currentPeriod.period)){
+    if(assEl && currentPeriod && ['midterm','endterm'].includes(currentPeriod.period)){
       assEl.value = currentPeriod.period;
       assEl.dispatchEvent(new Event('change'));
     }

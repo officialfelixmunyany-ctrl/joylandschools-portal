@@ -49,7 +49,6 @@ function reportRendererGlobals(){
   window.commentBankCache = window.commentBankCache || { class_teacher:[], headteacher:[], director:[] };
   window.signaturesCache = window.signaturesCache || { class_teacher:'', headteacher:'', director:'' };
   window.ASSESSMENT_OPTIONS = window.ASSESSMENT_OPTIONS || [
-    { value:'opener', label:'Opener' },
     { value:'midterm', label:'Midterm' },
     { value:'endterm', label:'Endterm' }
   ];
@@ -1337,7 +1336,6 @@ function reportTemplateResultTitle(state, assessment){
   const raw = String(state?.settings?.result_title || '').trim();
   const generic = !raw || /^end\s+of\s+term\s+report\s+card$/i.test(raw);
   if(!generic) return raw;
-  if(assessment === 'opener') return 'OPENER REPORT CARD';
   if(assessment === 'midterm') return 'MIDTERM REPORT CARD';
   return 'END OF TERM REPORT CARD';
 }
@@ -1475,7 +1473,6 @@ window.DarajaReportPreview = {
     window.commentBankCache = data.commentBank || window.commentBankCache || { class_teacher:[], headteacher:[], director:[] };
     window.signaturesCache = data.signatures || window.signaturesCache || { class_teacher:'', headteacher:'', director:'' };
     window.ASSESSMENT_OPTIONS = data.assessments || window.ASSESSMENT_OPTIONS || [
-      { value:'opener', label:'Opener' },
       { value:'midterm', label:'Midterm' },
       { value:'endterm', label:'Endterm' }
     ];

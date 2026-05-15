@@ -1036,7 +1036,7 @@ const api = {
 };
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-const ASSESSMENT_LABELS = { opener:'Opener', midterm:'Midterm', endterm:'Endterm' };
+const ASSESSMENT_LABELS = { midterm:'Midterm', endterm:'Endterm' };
 function marksBandFromPercent(percent){
   if(percent === null || percent === undefined || percent === '' || !Number.isFinite(Number(percent))) return { code:'-', cls:'none', label:'Pending' };
   const p = Number(percent);
@@ -2095,7 +2095,7 @@ function routeAttendanceClass({ resolve, to }){
    ════════════════════════════════════════════════════════════════════ */
 async function routeMarks({ resolve }){
   let rows = [];
-  let assessment = state.dashboard?.current_period?.period || 'opener';
+  let assessment = state.dashboard?.current_period?.period || 'midterm';
   let termName = state.dashboard?.current_period?.term_name || '';
   try{
     const data = await api.get('/api/teacher/teaching');
@@ -2127,7 +2127,7 @@ async function routeMarks({ resolve }){
   const complete = rows.filter(r => r.status === 'done').length;
   const total = rows.length;
   const percent = total ? Math.round((complete / total) * 100) : 0;
-  const label = ASSESSMENT_LABELS[assessment] || 'Opener';
+  const label = ASSESSMENT_LABELS[assessment] || 'Midterm';
   resolve({
     content: `
       <div class="page" data-name="marks-home">
@@ -2170,7 +2170,7 @@ function marksEntryUrl(row, assessment){
   const classId = row.classId ?? row.class_id;
   const subjectId = row.subjectId ?? row.subject_id;
   if(classId == null || subjectId == null) return '';
-  return `/marks/${encodeURIComponent(classId)}/${encodeURIComponent(subjectId)}/?assessment=${encodeURIComponent(assessment || 'opener')}`;
+  return `/marks/${encodeURIComponent(classId)}/${encodeURIComponent(subjectId)}/?assessment=${encodeURIComponent(assessment || 'midterm')}`;
 }
 
 function marksGo(url){
@@ -2275,7 +2275,6 @@ async function routeReports({ resolve }){
   const subjects = state.subjectClasses || [];
   const period = state.dashboard?.current_period || {};
   const termName = period.term_name || (state.dashboard?.terms || []).slice(-1)[0]?.term_name || '';
-  const periodLabel = period.period_label || '';
   const classMeta = classes.length === 1
     ? (classes[0].name || ('Grade ' + classes[0].grade_level))
     : `${classes.length} class${classes.length === 1 ? '' : 'es'}`;
@@ -2293,7 +2292,7 @@ async function routeReports({ resolve }){
             <div class="rep-hub-context">
               <i class="fas fa-calendar-check"></i>
               <div>
-                <div class="t">${esc([termName, periodLabel].filter(Boolean).join(' · ') || 'Current term')}</div>
+                <div class="t">${esc(termName || 'Current term')}</div>
                 <div class="s">Reports below reflect this assessment window</div>
               </div>
             </div>
@@ -2395,7 +2394,7 @@ function reportFilterBar(classId, learnerId, assessment, termId){
 
 // Still used by the Skills & Comments screens (they repurpose it via .replaceAll).
 // Reports screens use reportFilterBar instead.
-function reportAssessmentTabs(classId, learnerId, active='opener', termId=''){
+function reportAssessmentTabs(classId, learnerId, active='midterm', termId=''){
   return `<div class="assessment-tabs">
     ${Object.entries(ASSESSMENT_LABELS).map(([key,label]) => {
       const suffix = termId ? `&term_id=${encodeURIComponent(termId)}` : '';
@@ -2412,7 +2411,7 @@ async function routeReportLearners({ resolve, to }){
     try{ setTeacherDashboardState(await api.get('/api/teacher/dashboard')); }catch(_){}
   }
   const classId = to.params.classId;
-  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'opener';
+  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'midterm';
   const termId = reportTermIdFromRoute(to);
   const rootId = `report-learners-${reportDomKey(classId, assessment, termId)}`;
   const cls = (state.classes || []).find(c => String(c.id) === String(classId));
@@ -2444,7 +2443,7 @@ async function routeReportPreview({ resolve, to }){
   }
   const classId = to.params.classId;
   const learnerId = to.params.learnerId;
-  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'opener';
+  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'midterm';
   const termId = reportTermIdFromRoute(to);
   const rootId = `report-preview-${reportDomKey(classId, learnerId, assessment, termId)}`;
   resolve({
@@ -2467,7 +2466,7 @@ async function routeReportPreview({ resolve, to }){
   setTimeout(() => loadReportPreview(classId, learnerId, assessment, termId), 0);
 }
 
-async function loadReportLearners(classId, assessment='opener', termId=''){
+async function loadReportLearners(classId, assessment='midterm', termId=''){
   const rootId = `report-learners-${reportDomKey(classId, assessment, termId)}`;
   const root = document.querySelector(`.page-current #${rootId}`) || document.getElementById(rootId);
   const loadKey = `${assessment}:${termId || ''}`;
@@ -2571,13 +2570,13 @@ function repBuildReports(){
   const n = sel.size;
   if(!n || !ctx.classId) return;
   app.dialog.confirm(`Build ${n} report card${n===1?'':'s'}?`, 'Reports', () => {
-    const q = new URLSearchParams({ ids: Array.from(sel).join(','), assessment: ctx.assessment || 'opener' });
+    const q = new URLSearchParams({ ids: Array.from(sel).join(','), assessment: ctx.assessment || 'midterm' });
     if(ctx.termId) q.set('term_id', ctx.termId);
     navTab('#view-reports', `/reports/class/${ctx.classId}/cards/?${q.toString()}`);
   });
 }
 
-async function loadReportPreview(classId, learnerId, assessment='opener', termId=''){
+async function loadReportPreview(classId, learnerId, assessment='midterm', termId=''){
   const root = document.getElementById(`report-preview-${reportDomKey(classId, learnerId, assessment, termId)}`);
   const loadKey = `${assessment}:${termId || ''}`;
   if(!root || root.dataset.loaded === loadKey) return;
@@ -2627,7 +2626,7 @@ async function routeReportBatch({ resolve, to }){
     try{ setTeacherDashboardState(await api.get('/api/teacher/dashboard')); }catch(_){}
   }
   const classId = to.params.classId;
-  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'opener';
+  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'midterm';
   const termId = reportTermIdFromRoute(to);
   const ids = String(to.query?.ids || '');
   const rootId = `report-batch-${reportDomKey(classId, ids, assessment, termId)}`;
@@ -2648,7 +2647,7 @@ async function routeReportBatch({ resolve, to }){
   setTimeout(() => loadReportBatch(classId, ids, assessment, termId), 0);
 }
 
-async function loadReportBatch(classId, ids, assessment='opener', termId=''){
+async function loadReportBatch(classId, ids, assessment='midterm', termId=''){
   const root = document.getElementById(`report-batch-${reportDomKey(classId, ids, assessment, termId)}`);
   if(!root || root.dataset.loaded) return;
   root.dataset.loaded = '1';
@@ -2817,7 +2816,7 @@ async function renderAdminReportPreviewSheet(report){
     state:stateTemplate,
     classId,
     termId,
-    assessment:report.assessment_type || 'opener',
+    assessment:report.assessment_type || 'midterm',
     learners:renderLearners,
     subjects:report.subjects || [],
     grouped:groupPreviewMarks(report.all_marks || []),
@@ -2836,7 +2835,8 @@ async function renderAdminReportPreviewSheet(report){
    MORE TAB — profile, settings, logout
    ════════════════════════════════════════════════════════════════════ */
 function classActionPickerContent({ title, subtitle, icon, actionLabel, actionName }){
-  const assessment = state.dashboard?.current_period?.period || 'opener';
+  const detectedAssessment = state.dashboard?.current_period?.period || 'midterm';
+  const assessment = ASSESSMENT_LABELS[detectedAssessment] ? detectedAssessment : 'midterm';
   return `
     <div class="page" data-name="${actionName}-picker">
       <div class="navbar">
@@ -2896,7 +2896,7 @@ function routeComments({ resolve }){
 
 function routeSkillsEntry({ resolve, to }){
   const classId = to.params.classId;
-  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'opener';
+  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'midterm';
   const cls = (state.classes || []).find(c => String(c.id) === String(classId));
   const title = cls ? (cls.name || ('Grade '+cls.grade_level)) : 'Skills';
   resolve({
@@ -2917,7 +2917,7 @@ function routeSkillsEntry({ resolve, to }){
   setTimeout(() => loadSkillsEntry(classId, assessment), 0);
 }
 
-async function loadSkillsEntry(classId, assessment='opener'){
+async function loadSkillsEntry(classId, assessment='midterm'){
   const root = document.getElementById(`skills-work-${classId}`);
   if(!root) return;
   try{
@@ -3018,7 +3018,7 @@ async function saveSkills(){
 
 function routeCommentsEntry({ resolve, to }){
   const classId = to.params.classId;
-  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'opener';
+  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'midterm';
   const cls = (state.classes || []).find(c => String(c.id) === String(classId));
   const title = cls ? (cls.name || ('Grade '+cls.grade_level)) : 'Comments';
   resolve({
@@ -3039,7 +3039,7 @@ function routeCommentsEntry({ resolve, to }){
   setTimeout(() => loadCommentsEntry(classId, assessment), 0);
 }
 
-async function loadCommentsEntry(classId, assessment='opener'){
+async function loadCommentsEntry(classId, assessment='midterm'){
   const root = document.getElementById(`comments-work-${classId}`);
   if(!root) return;
   try{
@@ -3857,7 +3857,7 @@ function monthShort(value){ return dateObj(value).toLocaleDateString(undefined, 
 routeMarksEntry = function({ resolve, to }){
   const classId = to.params.classId;
   const subjectId = to.params.subjectId;
-  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'opener';
+  const assessment = ASSESSMENT_LABELS[to.query?.assessment] ? to.query.assessment : 'midterm';
   const item = (state.subjectClasses||[]).find(s=>String(s.class_id)===String(classId) && String(s.subject_id)===String(subjectId)) || {};
   resolve({
     content: `<div class="page" data-name="marks-entry"><div class="navbar"><div class="navbar-bg"></div><div class="navbar-inner">
@@ -3870,7 +3870,7 @@ routeMarksEntry = function({ resolve, to }){
   setTimeout(() => loadMarksEntry(classId, subjectId, item, assessment), 0);
 };
 
-async function loadMarksEntry(classId, subjectId, item={}, assessment='opener'){
+async function loadMarksEntry(classId, subjectId, item={}, assessment='midterm'){
   const root = document.getElementById(`marks-work-${classId}-${subjectId}`);
   if(!root) return;
   root.innerHTML = `<div class="empty-card"><i class="fas fa-spinner fa-spin"></i><p>Loading marks...</p></div>`;

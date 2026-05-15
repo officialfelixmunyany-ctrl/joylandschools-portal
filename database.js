@@ -176,7 +176,7 @@ function initDatabase() {
       class_id INTEGER NOT NULL,
       subject_id INTEGER NOT NULL,
       term_id INTEGER NOT NULL,
-      assessment_type TEXT NOT NULL CHECK(assessment_type IN ('opener','midterm','endterm')),
+      assessment_type TEXT NOT NULL CHECK(assessment_type IN ('midterm','endterm')),
       component_key TEXT NOT NULL DEFAULT 'exam',
       score REAL,
       created_by INTEGER,
@@ -193,7 +193,7 @@ function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       class_id INTEGER NOT NULL,
       subject_id INTEGER NOT NULL,
-      assessment_type TEXT NOT NULL CHECK(assessment_type IN ('opener','midterm','endterm')),
+      assessment_type TEXT NOT NULL CHECK(assessment_type IN ('midterm','endterm')),
       component_key TEXT NOT NULL,
       component_name TEXT NOT NULL,
       max_score REAL NOT NULL DEFAULT 100,
@@ -215,7 +215,7 @@ function initDatabase() {
       learner_id INTEGER NOT NULL,
       class_id INTEGER NOT NULL,
       term_id INTEGER NOT NULL,
-      assessment_type TEXT NOT NULL DEFAULT 'endterm' CHECK(assessment_type IN ('opener','midterm','endterm')),
+      assessment_type TEXT NOT NULL DEFAULT 'endterm' CHECK(assessment_type IN ('midterm','endterm')),
       category_key TEXT NOT NULL,
       item_key TEXT NOT NULL,
       rating INTEGER,
@@ -246,7 +246,7 @@ function initDatabase() {
       learner_id INTEGER NOT NULL,
       class_id INTEGER,
       term_id INTEGER,
-      assessment_type TEXT NOT NULL CHECK(assessment_type IN ('opener','midterm','endterm')),
+      assessment_type TEXT NOT NULL CHECK(assessment_type IN ('midterm','endterm')),
       role TEXT NOT NULL CHECK(role IN ('class_teacher','headteacher','director')),
       comment_text TEXT,
       created_by INTEGER,
@@ -399,7 +399,7 @@ function migrateMarksAndSkills(db) {
           class_id INTEGER NOT NULL,
           subject_id INTEGER NOT NULL,
           term_id INTEGER NOT NULL,
-          assessment_type TEXT NOT NULL CHECK(assessment_type IN ('opener','midterm','endterm')),
+          assessment_type TEXT NOT NULL CHECK(assessment_type IN ('midterm','endterm')),
           component_key TEXT NOT NULL DEFAULT 'exam',
           score REAL,
           created_by INTEGER,
@@ -434,7 +434,7 @@ function migrateMarksAndSkills(db) {
           learner_id INTEGER NOT NULL,
           class_id INTEGER NOT NULL,
           term_id INTEGER NOT NULL,
-          assessment_type TEXT NOT NULL DEFAULT 'endterm' CHECK(assessment_type IN ('opener','midterm','endterm')),
+          assessment_type TEXT NOT NULL DEFAULT 'endterm' CHECK(assessment_type IN ('midterm','endterm')),
           category_key TEXT NOT NULL,
           item_key TEXT NOT NULL,
           rating INTEGER,
@@ -503,7 +503,7 @@ function seedDefaultReportComments(db) {
 }
 
 function seedDefaultAssessmentComponents(db) {
-  // Seed a default 'exam' component (max 100) for every (class, subject) across all 3 assessment types
+  // Seed a default 'exam' component (max 100) for every (class, subject) across Joyland's assessment types
   // so existing class-subject pairs aren't empty when admin opens the Assessments page.
   const pairs = db.prepare('SELECT class_id, subject_id FROM class_subjects').all();
   if (!pairs.length) return;
@@ -512,7 +512,7 @@ function seedDefaultAssessmentComponents(db) {
       (class_id, subject_id, assessment_type, component_key, component_name, max_score, sort_order)
     VALUES (?, ?, ?, 'exam', 'Exam', 100, 0)
   `);
-  ['opener', 'midterm', 'endterm'].forEach((at) => {
+  ['midterm', 'endterm'].forEach((at) => {
     pairs.forEach((p) => insert.run(p.class_id, p.subject_id, at));
   });
 }

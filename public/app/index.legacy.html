@@ -2394,7 +2394,7 @@ async function pf_changePassword(){
 // Two-step flow:
 //   goto('marks')                                   â†’ subject picker (class+subject)
 //   goto('marks',{class_id,subject_id,class_name,subject_name,assessment_type?}) â†’ entry grid
-const ASSESSMENT_LABELS = { opener:'Opener', midterm:'Midterm', endterm:'Endterm' };
+const ASSESSMENT_LABELS = { midterm:'Midterm', endterm:'Endterm' };
 
 async function renderMarksScreen(params={}){
   // Tapping a subject card with no subject_id (fallback path) â†’ bail with a clear message
@@ -2421,12 +2421,12 @@ async function renderMarksSubjectPicker(){
   root.innerHTML = screenHeader('Enter Marks', 'Pick a subject')
     + `<div class="content"><div class="empty"><i class="fas fa-spinner fa-spin"></i><p>Loadingâ€¦</p></div></div>`;
   // Prefer the dedicated teaching endpoint if it exists; fall back to dashboard payload
-  let teaching = null, currentTerm = null, currentAssessment = 'opener';
+  let teaching = null, currentTerm = null, currentAssessment = 'midterm';
   const t = await api('GET','/api/teacher/teaching');
   if(t.success){
     teaching = t.data?.teaching || [];
     currentTerm = t.data?.current_term || null;
-    currentAssessment = t.data?.current_assessment || 'opener';
+    currentAssessment = t.data?.current_assessment || 'midterm';
   } else {
     const r = await api('GET','/api/teacher/dashboard');
     teaching = (r.data?.subject_classes || []).map(s => ({
@@ -2434,9 +2434,9 @@ async function renderMarksSubjectPicker(){
       subject_id:s.subject_id, subject_name:s.subject_name, subject_code:s.subject_code,
       enrollment_count:0
     }));
-    if(r.data?.current_period){ currentAssessment = r.data.current_period.period || 'opener'; }
+    if(r.data?.current_period){ currentAssessment = r.data.current_period.period || 'midterm'; }
   }
-  const assessLabel = ASSESSMENT_LABELS[currentAssessment] || 'Opener';
+  const assessLabel = ASSESSMENT_LABELS[currentAssessment] || 'Midterm';
   const sub = currentTerm ? `${currentTerm.name} Â· ${assessLabel}` : assessLabel;
   if(!teaching.length){
     root.innerHTML = screenHeader('Enter Marks', sub) + `
@@ -2477,7 +2477,7 @@ function markParams(params){
 
 async function renderMarksEntry(params){
   const { class_id, class_name, subject_id, subject_name, subject_code } = params;
-  const assessment = params.assessment_type || 'opener';
+  const assessment = params.assessment_type || 'midterm';
   const subLine = `${esc(class_name||'')} Â· ${esc(ASSESSMENT_LABELS[assessment] || assessment)}`;
   const root = document.getElementById('dashboard-root');
   root.innerHTML = screenHeader(subject_name || 'Marks', '')
@@ -2485,7 +2485,6 @@ async function renderMarksEntry(params){
         <div class="mk-context">
           <div class="mk-context-name">${esc(class_name||'')}${subject_code?` Â· ${esc(subject_code)}`:''}</div>
           <div class="mk-assess-tabs">
-            <button class="mk-assess-btn ${assessment==='opener'?'active':''}" onclick="mk_switchAssessment('opener')">Opener</button>
             <button class="mk-assess-btn ${assessment==='midterm'?'active':''}" onclick="mk_switchAssessment('midterm')">Midterm</button>
             <button class="mk-assess-btn ${assessment==='endterm'?'active':''}" onclick="mk_switchAssessment('endterm')">Endterm</button>
           </div>
@@ -2761,7 +2760,8 @@ async function renderSkillsClassPicker(){
   const classes = r.success ? (r.data?.my_classes || []) : [];
   const period  = r.success ? r.data?.current_period : null;
   const sub = period ? `${period.term_name} Â· ${period.period_label}` : 'CBC values & attributes';
-  const assessment = period?.period || 'opener';
+  const rawAssessment = period?.period || 'midterm';
+  const assessment = ASSESSMENT_LABELS[rawAssessment] ? rawAssessment : 'midterm';
   root.innerHTML = screenHeader('Rate Skills', sub) + `
     <div class="content">
       <div class="screen-section-title">My Classes</div>
@@ -2779,14 +2779,13 @@ async function renderSkillsClassPicker(){
 
 async function renderSkillsEntry(params){
   const { class_id, class_name } = params;
-  const assessment = params.assessment_type || 'opener';
+  const assessment = params.assessment_type || 'midterm';
   const root = document.getElementById('dashboard-root');
   root.innerHTML = screenHeader('Skills', class_name || 'Class') + `
     <div class="content">
       <div class="mk-context">
         <div class="mk-context-name">${esc(class_name||'')}</div>
         <div class="mk-assess-tabs">
-          <button class="mk-assess-btn ${assessment==='opener'?'active':''}" onclick="sk_switchAssessment('opener')">Opener</button>
           <button class="mk-assess-btn ${assessment==='midterm'?'active':''}" onclick="sk_switchAssessment('midterm')">Midterm</button>
           <button class="mk-assess-btn ${assessment==='endterm'?'active':''}" onclick="sk_switchAssessment('endterm')">Endterm</button>
         </div>
@@ -2976,7 +2975,8 @@ async function renderCommentsClassPicker(){
   const classes = r.success ? (r.data?.my_classes || []) : [];
   const period  = r.success ? r.data?.current_period : null;
   const sub = period ? `${period.term_name} Â· ${period.period_label}` : 'Per-learner remarks';
-  const assessment = period?.period || 'opener';
+  const rawAssessment = period?.period || 'midterm';
+  const assessment = ASSESSMENT_LABELS[rawAssessment] ? rawAssessment : 'midterm';
   root.innerHTML = screenHeader('My Comments', sub) + `
     <div class="content">
       <div class="screen-section-title">My Classes</div>
@@ -2994,14 +2994,13 @@ async function renderCommentsClassPicker(){
 
 async function renderCommentsEntry(params){
   const { class_id, class_name } = params;
-  const assessment = params.assessment_type || 'opener';
+  const assessment = params.assessment_type || 'midterm';
   const root = document.getElementById('dashboard-root');
   root.innerHTML = screenHeader('Comments', class_name || 'Class') + `
     <div class="content">
       <div class="mk-context">
         <div class="mk-context-name">${esc(class_name||'')}</div>
         <div class="mk-assess-tabs">
-          <button class="mk-assess-btn ${assessment==='opener'?'active':''}" onclick="cm_switchAssessment('opener')">Opener</button>
           <button class="mk-assess-btn ${assessment==='midterm'?'active':''}" onclick="cm_switchAssessment('midterm')">Midterm</button>
           <button class="mk-assess-btn ${assessment==='endterm'?'active':''}" onclick="cm_switchAssessment('endterm')">Endterm</button>
         </div>
@@ -3146,7 +3145,7 @@ async function renderReportsScreen(params={}){
     const learners = r.data?.learners || [];
     const cls = r.data?.class || { name:params.class_name || '' };
     root.innerHTML = screenHeader('Report Cards', cls.name || 'Pick learner') + `<div class="content">
-      <div class="learner-filter-row"><button class="${assessment===''?'active':''}" onclick="goto('reports',{class_id:${classId}})">Current</button><button class="${assessment==='opener'?'active':''}" onclick="goto('reports',{class_id:${classId},assessment_type:'opener'})">Opener</button><button class="${assessment==='midterm'?'active':''}" onclick="goto('reports',{class_id:${classId},assessment_type:'midterm'})">Midterm</button><button class="${assessment==='endterm'?'active':''}" onclick="goto('reports',{class_id:${classId},assessment_type:'endterm'})">Endterm</button></div>
+      <div class="learner-filter-row"><button class="${assessment===''?'active':''}" onclick="goto('reports',{class_id:${classId}})">Current</button><button class="${assessment==='midterm'?'active':''}" onclick="goto('reports',{class_id:${classId},assessment_type:'midterm'})">Midterm</button><button class="${assessment==='endterm'?'active':''}" onclick="goto('reports',{class_id:${classId},assessment_type:'endterm'})">Endterm</button></div>
       <div class="class-list">${learners.length ? learners.map(l => `<button class="class-card-btn" style="border-left-color:#ed8936;" onclick="goto('reports',{class_id:${classId},learner_id:${Number(l.id)},assessment_type:'${esc(assessment)}'})"><div class="ck"><div class="cn">${esc(l.name)}</div><div class="cm"><i class="fas fa-id-card"></i> ${esc(l.admission_no || l.user_id || '-')}</div></div><i class="fas fa-chevron-right chev"></i></button>`).join('') : `<div class="empty"><i class="fas fa-users"></i><p>No active learners in this class.</p></div>`}</div>
     </div>`;
     return;
@@ -3194,7 +3193,6 @@ function learnerPhoto(profile){
 
 function learnerAssessmentTabs(screen, active){
   const items = [
-    ['opener','Opener'],
     ['midterm','Midterm'],
     ['endterm','Endterm']
   ];
@@ -3229,7 +3227,7 @@ async function renderLearnerDashboard(){
   const d = r.data || {};
   const profile = d.profile || {};
   const att = d.attendance_summary || {};
-  const assessment = d.current_assessment || 'opener';
+  const assessment = d.current_assessment || 'midterm';
   const termName = d.current_term?.name || 'Current term';
   const attendancePct = att.pct != null ? att.pct : 0;
 
@@ -3331,7 +3329,7 @@ async function renderLearnerMarks(params={}){
     return;
   }
   const d = r.data || {};
-  const active = d.assessment_type || requested || 'opener';
+  const active = d.assessment_type || requested || 'midterm';
   const subjects = d.subjects || [];
   const overall = d.overall_percent;
   root.innerHTML = screenHeader('My Marks', `${d.term?.name || 'Term'} - ${capitalize(active)}`)
@@ -3415,7 +3413,7 @@ async function renderLearnerSkills(params={}){
     return;
   }
   const d = r.data || {};
-  const active = d.assessment_type || requested || 'opener';
+  const active = d.assessment_type || requested || 'midterm';
   const labels = d.rating_labels || [];
   const ratingValues = d.ratings || [5,4,3,2,1];
   root.innerHTML = screenHeader('My Skills', `${d.term?.name || 'Term'} - ${capitalize(active)}`)
@@ -3445,7 +3443,7 @@ async function renderLearnerComments(params={}){
     return;
   }
   const d = r.data || {};
-  const active = d.assessment_type || requested || 'opener';
+  const active = d.assessment_type || requested || 'midterm';
   root.innerHTML = screenHeader('My Comments', `${d.term?.name || 'Term'} - ${capitalize(active)}`)
     + `<div class="content">
       ${learnerAssessmentTabs('learnerComments', active)}
@@ -3489,7 +3487,7 @@ async function renderLearnerProfile(){
     </div>`;
 }
 function parentAssessmentTabs(screen, active, learnerId){
-  const items = [['opener','Opener'], ['midterm','Midterm'], ['endterm','Endterm']];
+  const items = [['midterm','Midterm'], ['endterm','Endterm']];
   return `<div class="learner-filter-row">${items.map(([key,label]) =>
     `<button class="${active===key?'active':''}" onclick="goto('${screen}',{learner_id:${Number(learnerId)},assessment_type:'${key}'})">${label}</button>`
   ).join('')}</div>`;
@@ -3612,7 +3610,7 @@ async function renderParentMarks(params={}){
     return;
   }
   const d = r.data || {};
-  const active = d.assessment_type || requested || 'opener';
+  const active = d.assessment_type || requested || 'midterm';
   const subjects = d.subjects || [];
   const overall = d.overall_percent;
   root.innerHTML = screenHeader('Marks', `${d.term?.name || 'Term'} - ${capitalize(active)}`)
@@ -3670,7 +3668,7 @@ async function renderParentSkills(params={}){
     return;
   }
   const d = r.data || {};
-  const active = d.assessment_type || requested || 'opener';
+  const active = d.assessment_type || requested || 'midterm';
   const labels = d.rating_labels || [];
   const ratingValues = d.ratings || [5,4,3,2,1];
   root.innerHTML = screenHeader('Skills', `${d.term?.name || 'Term'} - ${capitalize(active)}`)
@@ -3694,7 +3692,7 @@ async function renderParentComments(params={}){
     return;
   }
   const d = r.data || {};
-  const active = d.assessment_type || requested || 'opener';
+  const active = d.assessment_type || requested || 'midterm';
   root.innerHTML = screenHeader('Comments', `${d.term?.name || 'Term'} - ${capitalize(active)}`)
     + `<div class="content">
       ${parentAssessmentTabs('parentComments', active, learnerId)}

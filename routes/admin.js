@@ -179,8 +179,8 @@ function teacherIdOrNull(db, value) {
   return id;
 }
 
-const ASSESSMENT_TYPES = ['opener', 'midterm', 'endterm'];
-// Legacy aliases (kept temporarily so old code paths don't break before they are rewritten below)
+const ASSESSMENT_TYPES = ['midterm', 'endterm'];
+// Assessment windows used by marks, skills, reports, and analytics.
 const EXAM_ORDER = ASSESSMENT_TYPES;
 const COMPONENT_KEY_RE = /^[a-z0-9_]+$/;
 
@@ -398,13 +398,9 @@ router.get('/stats', (req, res) => {
 });
 
 // ─── CURRENT ASSESSMENT PERIOD ─────────────────────────────────
-// Kenya CBC convention: a 13-week term contains three assessment windows.
-// Opener exam falls in the early weeks, Midterm around the middle, Endterm near the end.
-// Auto-detection: split the term proportionally into thirds based on today's date.
-//   • term progress 0%–33%   → Opener
-//   • term progress 33%–66%  → Midterm
-//   • term progress 66%–100% → Endterm
-// This matches the typical Kenyan CBC schedule (week 4-5 / 8-9 / 12-13 exam weeks).
+// Joyland uses two assessment windows inside each term: Midterm and Endterm.
+// Auto-detection splits the term proportionally in half based on today's date.
+// First half of the term maps to Midterm; second half maps to Endterm.
 function detectAssessmentPeriod(term, todayStr) {
   const start = new Date(term.start_date);
   const end   = new Date(term.end_date);
@@ -421,9 +417,8 @@ function detectAssessmentPeriod(term, todayStr) {
   const progress = elapsedMs / totalMs;
   const weekNo   = Math.min(totalWeeks, Math.max(1, Math.floor(elapsedMs / (7 * 86400000)) + 1));
   let period, periodLabel;
-  if      (progress < 1/3) { period = 'opener';  periodLabel = 'Opener';  }
-  else if (progress < 2/3) { period = 'midterm'; periodLabel = 'Midterm'; }
-  else                     { period = 'endterm'; periodLabel = 'Endterm'; }
+  if (progress < 1/2) { period = 'midterm'; periodLabel = 'Midterm'; }
+  else                { period = 'endterm'; periodLabel = 'Endterm'; }
   return { period, period_label:periodLabel, week_no:weekNo, total_weeks:totalWeeks, progress_percent:Math.round(progress*100) };
 }
 
@@ -1453,11 +1448,10 @@ router.get('/marks/broadsheet', (req, res) => {
   const rows = learners.map(l => {
     const subjectScores = subjects.map(s => {
       const scores = (aggregate[l.id] && aggregate[l.id][s.id]) || {};
-      const opener = scores.opener ?? null;
       const midterm = scores.midterm ?? null;
       const endterm = scores.endterm ?? null;
       const average = subjectAverage(scores);
-      return { subject_id:s.id, opener, midterm, endterm, average, cbc:cbcLevel(average) };
+      return { subject_id:s.id, midterm, endterm, average, cbc:cbcLevel(average) };
     });
     const enteredSubjects = subjectScores.filter(subject => subject.average !== null);
     const overallAverage = averageNumbers(enteredSubjects.map(subject => subject.average));
@@ -1496,17 +1490,17 @@ router.get('/marks/analysis', (req, res) => {
     const needingSupport = [...ranked].filter(l => l.average < 41).sort((a,b) => a.average - b.average).slice(0,10);
     const improving = learners.map(l => {
       const subjectMap = learnerSubjectScores[l.id] || {};
-      const openerScores = [];
+      const midtermScores = [];
       const latestScores = [];
       Object.values(subjectMap).forEach(scores => {
-        if (scores.opener !== null && scores.opener !== undefined) openerScores.push(scores.opener);
-        const latest = scores.endterm ?? scores.midterm ?? null;
+        if (scores.midterm !== null && scores.midterm !== undefined) midtermScores.push(scores.midterm);
+        const latest = scores.endterm ?? null;
         if (latest !== null && latest !== undefined) latestScores.push(latest);
       });
-      const openerAverage = averageNumbers(openerScores);
+      const midtermAverage = averageNumbers(midtermScores);
       const latestAverage = averageNumbers(latestScores);
-      if (openerAverage === null || latestAverage === null) return null;
-      return { ...l, opener_average:openerAverage, latest_average:latestAverage, improvement:Math.round((latestAverage - openerAverage) * 100) / 100 };
+      if (midtermAverage === null || latestAverage === null) return null;
+      return { ...l, midterm_average:midtermAverage, latest_average:latestAverage, improvement:Math.round((latestAverage - midtermAverage) * 100) / 100 };
     }).filter(Boolean).filter(l => l.improvement > 0).sort((a,b) => b.improvement - a.improvement).slice(0,10);
     const subjectAverages = subjects.map(s => {
       const perLearner = aggregateMarksByAssessment(allMarks.filter(m => m.subject_id === s.id));
