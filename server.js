@@ -178,9 +178,7 @@ app.get(/^\/app(\/|$)/, (req, res, next) => {
     return next();
   }
   noStore(res);
-  const role = req.session.user?.role;
-  const fileName = role && role !== 'teacher' ? 'index.legacy.html' : 'index.html';
-  res.sendFile(path.join(PUBLIC_DIR, 'app', fileName));
+  res.sendFile(path.join(PUBLIC_DIR, 'app', 'next.html'));
 });
 
 // Guard the admin shell (HTML, CSS, JS, shared assets) before the static handler.

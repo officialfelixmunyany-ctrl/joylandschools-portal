@@ -20,8 +20,8 @@
   const nav = [
     { label: 'Workspace', items: [
       { key:'overview',      href:'/admin/overview.html',     icon:'fa-chart-pie',   name:'Overview' },
-      { key:'people',        href:'/admin/people.html',       icon:'fa-users',       name:'People',     count:'256', countKey:'people' },
-      { key:'classes',       href:'/admin/classes.html',      icon:'fa-chalkboard',  name:'Classes',    count:'8', countKey:'classes' },
+      { key:'people',        href:'/admin/people.html',       icon:'fa-users',       name:'People',     countKey:'people' },
+      { key:'classes',       href:'/admin/classes.html',      icon:'fa-chalkboard',  name:'Classes',    countKey:'classes' },
       { key:'subjects',      href:'/admin/subjects.html',     icon:'fa-book',        name:'Subjects' }
     ]},
     { label: 'Academic', items: [
@@ -58,7 +58,9 @@
       html += `<div class="nav-section"><div class="nav-label">${group.label}</div>`;
       group.items.forEach(it=>{
         const active = it.key === activePage ? ' active' : '';
-        const count = it.count ? `<span class="nav-count" ${it.countKey ? `data-count-key="${it.countKey}"` : ''}>${it.count}</span>` : '';
+        const count = it.countKey
+          ? `<span class="nav-count is-loading" data-count-key="${it.countKey}">—</span>`
+          : (it.count ? `<span class="nav-count">${it.count}</span>` : '');
         html += `<a class="nav-item${active}" href="${it.href}"><i class="fas ${it.icon}"></i><span>${it.name}</span>${count}</a>`;
       });
       html += `</div>`;
@@ -259,7 +261,10 @@
       ));
       const values = { people, classes:Number(stats.classes || 0) };
       Object.entries(values).forEach(([key,value]) => {
-        document.querySelectorAll(`.nav-count[data-count-key="${key}"]`).forEach(el => { el.textContent = value; });
+        document.querySelectorAll(`.nav-count[data-count-key="${key}"]`).forEach(el => {
+          el.textContent = value;
+          el.classList.remove('is-loading');
+        });
       });
       return values;
     }catch(err){

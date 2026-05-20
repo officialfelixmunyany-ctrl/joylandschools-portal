@@ -55,7 +55,8 @@ button{font-family:inherit;}
 .nav-item.active{background:rgba(201,151,50,.10);color:#fff;}
 .nav-item.active i{color:var(--gold);}
 .nav-item.active::before{content:'';position:absolute;left:-12px;top:8px;bottom:8px;width:2px;background:var(--gold);border-radius:0 2px 2px 0;}
-.nav-count{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--side-ink-2);font-weight:600;}
+.nav-count{margin-left:auto;min-width:3ch;text-align:right;font-family:var(--mono);font-size:10px;color:var(--side-ink-2);font-weight:600;font-variant-numeric:tabular-nums;}
+.nav-count.is-loading{opacity:.35;}
 .side-foot{margin-top:auto;padding:14px 16px;border-top:1px solid var(--side-line);display:flex;align-items:center;gap:10px;}
 .side-foot .ava{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--d1),var(--d2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;}
 .side-foot .who{flex:1;min-width:0;}
