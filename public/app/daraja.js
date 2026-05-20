@@ -229,6 +229,7 @@ function renderLogin(){
   const screen = Router._ensureTabScreen();
   screen.classList.add('active');
   const school = state.school || {};
+  let loginMode = 'password';
   screen.innerHTML = `
     <div class="scroll no-nav" style="display:flex;flex-direction:column;">
       <div class="appbar"><button class="appbar-btn" onclick="renderPublicHome()"><i class="fas fa-arrow-left"></i></button>
@@ -241,21 +242,54 @@ function renderLogin(){
           <p class="muted" style="font-size:var(--t-sm);margin-top:4px;">${esc(school.school_motto || 'Welcome back')}</p>
         </div>
         <form id="login-form">
+          <div class="seg" style="margin-bottom:var(--s4);">
+            <button type="button" class="on" data-login-mode="password"><i class="fas fa-lock"></i> Password</button>
+            <button type="button" data-login-mode="temp"><i class="fas fa-key"></i> Temporary Code</button>
+          </div>
           <div class="field"><label>Admission / ID / Phone</label>
             <input class="input" id="li-id" autocomplete="username" placeholder="e.g. JS110" required></div>
-          <div class="field"><label>Password</label>
-            <input class="input" id="li-pw" type="password" autocomplete="current-password" placeholder="Your password" required></div>
+          <div class="field"><label id="li-secret-label">Password</label>
+            <input class="input" id="li-secret" type="password" autocomplete="current-password" placeholder="Your password" required></div>
           <button class="btn primary block mt2" id="li-btn" type="submit"><i class="fas fa-arrow-right-to-bracket"></i> Sign In</button>
         </form>
-        <p class="center muted mt5" style="font-size:var(--t-xs);">Forgot your password? Ask the school office.</p>
+        <p class="center muted mt5" id="li-help" style="font-size:var(--t-xs);">Forgot your password? Ask the school office.</p>
       </div>
     </div>`;
+  const setLoginMode = (mode) => {
+    loginMode = mode;
+    $$('#login-form [data-login-mode]', screen).forEach(btn => btn.classList.toggle('on', btn.dataset.loginMode === mode));
+    const label = $('#li-secret-label', screen);
+    const input = $('#li-secret', screen);
+    const help = $('#li-help', screen);
+    if (mode === 'temp') {
+      label.textContent = 'Temporary Code';
+      input.type = 'text';
+      input.autocomplete = 'one-time-code';
+      input.placeholder = 'Enter temporary code';
+      help.textContent = 'Use the code given by the school office. You can change your password after signing in.';
+    } else {
+      label.textContent = 'Password';
+      input.type = 'password';
+      input.autocomplete = 'current-password';
+      input.placeholder = 'Your password';
+      help.textContent = 'Forgot your password? Ask the school office.';
+    }
+    input.value = '';
+    input.focus();
+  };
+  $$('#login-form [data-login-mode]', screen).forEach(btn => {
+    btn.addEventListener('click', () => setLoginMode(btn.dataset.loginMode));
+  });
   $('#login-form', screen).addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = $('#li-btn', screen); btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner spin"></i> Signing in…';
+    btn.innerHTML = '<i class="fas fa-spinner spin"></i> Signing in...';
     try {
-      const r = await api.post('/api/auth/login', { identifier: $('#li-id', screen).value.trim(), password: $('#li-pw', screen).value });
+      const identifier = $('#li-id', screen).value.trim();
+      const secret = $('#li-secret', screen).value.trim();
+      const r = loginMode === 'temp'
+        ? await api.post('/api/auth/temp-login', { identifier, temp_code: secret })
+        : await api.post('/api/auth/login', { identifier, password: secret });
       const me = (await api.get('/api/auth/me')).user || { role: r.role, name: r.name };
       state.me = me;
       routeByRole(me.role);
