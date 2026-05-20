@@ -7,7 +7,7 @@ const { todayInSchoolTime } = require('../lib/dates');
 const { resolveSchoolDay } = require('../lib/schoolDays');
 const router  = express.Router();
 
-// Same template directory used by routes/admin.js â€” read-only access from here.
+// Same template directory used by routes/admin.js — read-only access from here.
 const TEMPLATE_DIR = path.join(__dirname, '..', 'data', 'templates');
 function teacherTemplatePath(name) {
   const slug = String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 80);
@@ -37,7 +37,7 @@ function performanceTargetAverage(db) {
   return Math.max(0, Math.min(100, Math.round(value * 10) / 10));
 }
 
-// CBC defaults â€” used when no class template is set, or when the template has no skills config.
+// CBC defaults — used when no class template is set, or when the template has no skills config.
 const DEFAULT_SKILLS = {
   affective: ['Punctuality', 'Attentiveness', 'Neatness', 'Honesty', 'Politeness'],
   psychomotor: ['Handwriting', 'Drawing', 'Sports', 'Crafts', 'Verbal Fluency'],
@@ -747,9 +747,9 @@ router.get('/attendance/summary', (req, res) => {
   res.json({ success:true, data:{ term:{ id:term.id, name:term.name }, summary:rows } });
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ENTER MARKS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════ ENTER MARKS ═══════════════
 // Privilege rule: teachers can READ components and READ/WRITE marks for subjects they teach.
-// Teachers CANNOT create/edit/delete components â€” that's admin-only via routes/admin.js.
+// Teachers CANNOT create/edit/delete components — that's admin-only via routes/admin.js.
 
 function gradeCodeFromPercent(p) {
   if (p == null) return null;
@@ -761,7 +761,7 @@ function gradeCodeFromPercent(p) {
   return 'BE';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SHARED ANALYTICS HELPERS (mobile Home dashboard) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════ SHARED ANALYTICS HELPERS (mobile Home dashboard) ═══════════════
 const ASSESSMENT_SEQUENCE = ['midterm', 'endterm'];
 const ASSESSMENT_SHORT = { midterm: 'Mid', endterm: 'End' };
 const ASSESSMENT_FULL = { midterm: 'Midterm', endterm: 'Endterm' };
@@ -889,7 +889,7 @@ router.get('/teaching-analytics', (req, res) => {
   });
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MOBILE HOME DASHBOARD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════ MOBILE HOME DASHBOARD ═══════════════
 // One round-trip powering the segmented Home (Today / Performance / Learners).
 // Everything is scoped to the subjects/classes this teacher actually owns.
 // Query params: term_id, assessment_type, class_id (all optional).
@@ -898,7 +898,7 @@ router.get('/home', (req, res) => {
   const teacherId = req.session.user.id;
   const today = todayStr();
 
-  // â”€â”€ Chronological list of every assessment window across all terms â”€â”€
+  // ── Chronological list of every assessment window across all terms ──
   const allTerms = db.prepare(`
     SELECT t.id, t.term_name, t.term_number, t.start_date, t.end_date, s.year AS session_year
     FROM terms t
@@ -933,7 +933,7 @@ router.get('/home', (req, res) => {
     });
   });
 
-  // â”€â”€ Resolve the selected term + assessment â”€â”€
+  // ── Resolve the selected term + assessment ──
   let selTerm = req.query.term_id
     ? allTerms.find((t) => String(t.id) === String(req.query.term_id))
     : null;
@@ -971,7 +971,7 @@ router.get('/home', (req, res) => {
   const prev2Window = selWindowIndex > 1 ? windows[selWindowIndex - 2] : null;
   const targetAverage = performanceTargetAverage(db);
 
-  // â”€â”€ Teacher's subject assignments + homerooms â”€â”€
+  // ── Teacher's subject assignments + homerooms ──
   const assignments = db.prepare(`
     SELECT c.id AS class_id, c.name AS class_name, c.grade_level,
       s.id AS subject_id, s.name AS subject_name, s.code AS subject_code
@@ -1001,7 +1001,7 @@ router.get('/home', (req, res) => {
   homerooms.forEach((h) => classMap.set(h.id, h.name));
   const filterClasses = [...classMap.entries()].map(([id, name]) => ({ id, name }));
 
-  // â”€â”€ small caches â”€â”€
+  // ── small caches ──
   const enrollCache = {};
   function enrollment(className) {
     if (enrollCache[className] == null) {
@@ -1022,7 +1022,7 @@ router.get('/home', (req, res) => {
     return String(name || '?').split(/\s+/).map((x) => x[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
   }
 
-  // â”€â”€ Per-subject percents for the SELECTED window (active learners only) â”€â”€
+  // ── Per-subject percents for the SELECTED window (active learners only) ──
   const perSubject = filteredAssignments.map((a) => {
     const activeIds = activeLearnerIdsForClass(db, a.class_name);
     const raw = subjectLearnerPercents(db, a.class_id, a.subject_id, selTerm.id, selAssessment);
@@ -1033,7 +1033,7 @@ router.get('/home', (req, res) => {
     return { ...a, activeIds, percents, vals: Object.values(percents) };
   });
 
-  // â”€â”€ PERFORMANCE: distribution table â”€â”€
+  // ── PERFORMANCE: distribution table ──
   const distribution = {
     subjects: perSubject.map((s) => {
       const bands = { EE: 0, ME: 0, AE: 0, BE: 0 };
@@ -1053,7 +1053,7 @@ router.get('/home', (req, res) => {
     })()
   };
 
-  // â”€â”€ PERFORMANCE: trend (last 4 windows ending at selected) â”€â”€
+  // ── PERFORMANCE: trend (last 4 windows ending at selected) ──
   const trendSlice = windows.slice(Math.max(0, selWindowIndex - 3), selWindowIndex + 1);
   const trend = {
     labels: trendSlice.map((w) => w.label),
@@ -1075,7 +1075,7 @@ router.get('/home', (req, res) => {
     })
   };
 
-  // â”€â”€ PERFORMANCE: class vs school target â”€â”€
+  // ── PERFORMANCE: class vs school target ──
   const classVsSchool = perSubject.map((s) => {
     const you = meanOf(s.vals);
     return {
@@ -1087,7 +1087,7 @@ router.get('/home', (req, res) => {
     };
   });
 
-  // â”€â”€ LEARNERS: subject champions (top 3 per subject) â”€â”€
+  // ── LEARNERS: subject champions (top 3 per subject) ──
   const champions = perSubject.map((s) => {
     const top = Object.entries(s.percents)
       .map(([lid, pct]) => ({ learner_id: Number(lid), score: pct }))
@@ -1100,7 +1100,7 @@ router.get('/home', (req, res) => {
     };
   }).filter((c) => c.top.length);
 
-  // â”€â”€ LEARNERS: watchlist (rule-based flags) + band-movement counters â”€â”€
+  // ── LEARNERS: watchlist (rule-based flags) + band-movement counters ──
   const SEV = { high: 2, mid: 1 };
   const flagsByLearner = {};
   let bandMovesUp = 0;
@@ -1192,7 +1192,7 @@ router.get('/home', (req, res) => {
     .sort((a, b) => SEV[b.severity] - SEV[a.severity] || a.name.localeCompare(b.name))
     .slice(0, 8);
 
-  // â”€â”€ TODAY: marking progress (every assignment, current assessment) â”€â”€
+  // ── TODAY: marking progress (every assignment, current assessment) ──
   const markingSubjects = assignments.map((a) => {
     const { count } = subjectComponentTotals(db, a.class_id, a.subject_id, selAssessment);
     const total = enrollment(a.class_name);
@@ -1216,7 +1216,7 @@ router.get('/home', (req, res) => {
     subjects: markingSubjects.map((s) => ({ subject_name: s.subject_name, class_name: s.class_name, done: s.done, configured: s.configured }))
   };
 
-  // â”€â”€ TODAY: pending tasks â”€â”€
+  // ── TODAY: pending tasks ──
   const pendingTasks = [];
   const todayMarked = todayAttendanceMap(db, homerooms.map((h) => h.id), today);
   homerooms.forEach((h) => {
@@ -1241,7 +1241,7 @@ router.get('/home', (req, res) => {
   });
   const pendingTasksCapped = pendingTasks.slice(0, 6);
 
-  // â”€â”€ HERO METRICS â”€â”€
+  // ── HERO METRICS ──
   const myMean = meanOf(perSubject.flatMap((s) => s.vals));
   const prevMean = prevWindow
     ? meanOf(perSubject.flatMap((s) => Object.values(
@@ -1272,7 +1272,7 @@ router.get('/home', (req, res) => {
     pending: { value: pendingTasks.length }
   };
 
-  // â”€â”€ TODAY: quick insights (derived) â”€â”€
+  // ── TODAY: quick insights (derived) ──
   const insights = [];
   const drops = trend.subjects
     .map((s) => {
@@ -1472,7 +1472,7 @@ router.post('/marks', (req, res) => {
   `).all(cls.id, subjectId, assessment);
   const compMap = new Map(compRows.map((row) => [row.component_key, Number(row.max_score)]));
   if (!compMap.size) {
-    return res.status(400).json({ success:false, message:'No components configured for this assessment â€” ask admin to set them up' });
+    return res.status(400).json({ success:false, message:'No components configured for this assessment — ask admin to set them up' });
   }
 
   const learnerIds = activeLearnerIdsForClass(db, cls.name);
@@ -1527,7 +1527,7 @@ router.post('/marks', (req, res) => {
   }
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RATE SKILLS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════ RATE SKILLS ═══════════════
 // Privilege: only class teachers (`classes.class_teacher_id`) rate skills for their class.
 // Skill structure (categories + items + rating scale) comes from the class's saved template;
 // falls back to CBC defaults when the template has no custom skills config.
@@ -1644,7 +1644,7 @@ router.post('/skills', (req, res) => {
   }
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MY COMMENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════ MY COMMENTS ═══════════════
 // Privilege: class teacher writes ONLY the class_teacher comment for learners in their class.
 // Headteacher / director comments are written elsewhere (admin or a separate role app).
 // The bank suggestion endpoint helps the teacher pre-fill from score-banded defaults.
@@ -1728,7 +1728,7 @@ router.post('/comments', (req, res) => {
   }
 });
 
-// Score-banded comment suggestions from the bank â€” used by the mobile app to pre-fill drafts
+// Score-banded comment suggestions from the bank — used by the mobile app to pre-fill drafts
 router.get('/comments/suggestions', (req, res) => {
   const db = getDB();
   const rows = db.prepare(`
@@ -2107,7 +2107,7 @@ router.get('/report-cards', (req, res) => {
   });
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CLASS BROADSHEET â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════ CLASS BROADSHEET ═══════════════
 // Mirrors routes/admin.js GET /marks/broadsheet exactly so the teacher app's
 // broadsheet renders identically to the admin one - same aggregation, same CBC scale.
 const BROADSHEET_CBC_LEVELS = [
