@@ -735,96 +735,411 @@ const ParentApp = {
   }
 };
 /* ═══════════════════════════════════════════════════════════════════════
-   TEACHER APP — Home, Attendance (mark), Marks (enter), Reports, More
+   TEACHER APP — "command center": Today · Classes · Gradebook · More
    ═══════════════════════════════════════════════════════════════════════ */
-const ATT = { P:['present','Present','ok'], A:['absent','Absent','be'], L:['late','Late','warn'] };
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function tmin(t){ if (t == null) return null; const p = String(t).split(':'); return Number(p[0]) * 60 + Number(p[1] || 0); }
+function tlabel(t){ if (!t) return ''; const [h, mi] = String(t).split(':').map(Number); const ap = h < 12 ? 'am' : 'pm'; const hh = h % 12 || 12; return hh + ':' + String(mi || 0).padStart(2, '0') + ap; }
 
 const TeacherApp = {
+  _ctx: { assessment:'midterm', termId:null },
+
   start(){
     Router.setTabs([
-      { id:'home',       label:'Home',       icon:'fa-house',          render:m => TeacherApp.home(m) },
-      { id:'attendance', label:'Attendance', icon:'fa-clipboard-check', render:m => TeacherApp.attendance(m) },
-      { id:'marks',      label:'Marks',      icon:'fa-pen-to-square',  render:m => TeacherApp.marks(m) },
-      { id:'reports',    label:'Reports',    icon:'fa-file-lines',     render:m => TeacherApp.reports(m) },
-      { id:'more',       label:'More',       icon:'fa-ellipsis',       render:m => TeacherApp.more(m) }
+      { id:'today',     label:'Today',     icon:'fa-bolt',           render:m => TeacherApp.today(m) },
+      { id:'classes',   label:'Classes',   icon:'fa-users-rectangle', render:m => TeacherApp.classes(m) },
+      { id:'gradebook', label:'Gradebook', icon:'fa-table-cells',    render:m => TeacherApp.gradebook(m) },
+      { id:'more',      label:'More',      icon:'fa-ellipsis',       render:m => TeacherApp.more(m) }
     ]);
   },
 
-  /* ── Home ── */
-  async home(m){
-    m.innerHTML = loadingScroll();
-    let h, teach;
-    try { [h, teach] = await Promise.all([api.get('/api/teacher/home'), api.get('/api/teacher/teaching').catch(() => ({ teaching:[] }))]); }
-    catch(e){ if (e.auth) return doLogout(); m.innerHTML = appbar({ title:'Home' }) + `<div class="scroll">${errorState(e.message, 'Router.go(\'home\')')}</div>`; return; }
-    if (h.empty){ m.innerHTML = appbar({ title:'Home' }) + `<div class="scroll">${emptyState('fa-chalkboard-user', 'No classes yet', h.message || 'No classes assigned to you.')}</div>`; return; }
+  thead(ctxLine, title){
     const me = state.me || {};
-    const mt = h.metrics || {};
-    const ctx = h.context || {};
-    const hour = new Date().getHours();
-    const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    const teaching = teach.teaching || [];
-
-    m.innerHTML = `
-      <div class="hero">
-        <div class="row-between"><div class="hero-eyebrow">${esc(ctx.term?.name || 'Term')} · ${esc(ctx.assessment_label || '')}</div>
-          <button class="appbar-btn" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none;" onclick="TeacherApp.notifications()"><i class="fas fa-bell"></i></button></div>
-        <div class="hero-greet">${greet},<br><em>${esc(firstName(me.name) || 'Teacher')}.</em></div>
-        <div class="hero-sub">${teaching.length} class${teaching.length === 1 ? '' : 'es'} · ${esc(ctx.calendar?.term_name ? 'Week ' + (ctx.calendar.week_no || '—') : 'this term')}</div>
-      </div>
-      <div class="scroll pad"><div class="lift stack-gap">
-        <div class="metrics">
-          <div class="metric"><span class="ic green"><i class="fas fa-chart-line"></i></span>
-            <span class="val">${mt.my_mean?.value != null ? pct(mt.my_mean.value) : '—'}</span><span class="lbl">My mean</span></div>
-          <div class="metric"><span class="ic blue"><i class="fas fa-user-check"></i></span>
-            <span class="val">${mt.attendance?.value != null ? mt.attendance.value + '%' : '—'}</span><span class="lbl">Attendance</span></div>
-          <div class="metric"><span class="ic gold"><i class="fas fa-ranking-star"></i></span>
-            <span class="val">${mt.rank?.value ? '#' + mt.rank.value : '—'}</span><span class="lbl">Rank${mt.rank?.total ? ' of ' + mt.rank.total : ''}</span></div>
-          <div class="metric"><span class="ic rose"><i class="fas fa-list-check"></i></span>
-            <span class="val">${num(mt.pending?.value)}</span><span class="lbl">Pending tasks</span></div>
-        </div>
-
-        ${(h.insights || []).length ? `<div class="card"><div class="card-hd"><h3>Insights</h3></div>
-          <div class="stack-gap" style="gap:10px;">${h.insights.slice(0, 4).map(i => `
-            <div class="flex gap3" style="align-items:flex-start;">
-              <span class="ic ${i.type === 'good' || i.type === 'up' ? 'green' : i.type === 'warn' ? 'gold' : 'blue'}" style="width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;font-size:12px;">
-                <i class="fas fa-${i.icon === 'down' ? 'arrow-trend-down' : i.icon === 'up' ? 'arrow-trend-up' : i.icon === 'star' ? 'star' : i.icon === 'arrow-up' ? 'arrow-up' : 'circle-info'}"></i></span>
-              <div style="font-size:var(--t-sm);color:var(--ink-2);line-height:1.5;">${i.text}</div></div>`).join('')}</div></div>` : ''}
-
-        <div class="card"><div class="card-hd"><h3>My classes</h3><a class="link" onclick="Router.go('marks')">Enter marks</a></div>
-          <div class="rows">${teaching.length ? teaching.map(t => `
-            <button class="row" style="width:100%;text-align:left;" onclick="TeacherApp.openMarks(${t.class_id},${t.subject_id},'${esc(t.class_name)}','${esc(t.subject_name)}')">
-              <div class="ava ava-sm lead" style="${avaColor(t.class_name)}">${esc((t.subject_code || t.subject_name || '?').slice(0, 2).toUpperCase())}</div>
-              <div class="body"><div class="title">${esc(t.class_name)} · ${esc(t.subject_name)}</div>
-                <div class="meta">${num(t.enrollment_count)} learners</div></div>
-              <i class="fas fa-chevron-right chev"></i></button>`).join('') : '<div class="muted" style="font-size:var(--t-sm);padding:8px 2px;">No subject classes assigned.</div>'}
-          </div></div>
-      </div></div>`;
+    return `<div class="tbar"><div class="top">
+        <div><div class="ctx">${esc(ctxLine)}</div><h1>${esc(title)}</h1></div>
+        <button class="bell" onclick="TeacherApp.notifications()"><i class="fas fa-bell"></i><span class="dot"></span></button>
+      </div><div id="thead-extra"></div></div>`;
   },
 
-  /* ── Attendance ── */
-  async attendance(m){
-    m.innerHTML = appbar({ title:'Attendance' }) + loadingScroll();
-    const today = new Date().toISOString().slice(0, 10);
-    let ov;
-    try { ov = await api.get('/api/teacher/attendance/overview?date=' + today); }
-    catch(e){ if (e.auth) return doLogout(); m.innerHTML = appbar({ title:'Attendance' }) + `<div class="scroll">${errorState(e.message, 'Router.go(\'attendance\')')}</div>`; return; }
-    const classes = ov.classes || [];
-    m.innerHTML = appbar({ title:'Attendance' }) + `<div class="scroll pad stack-gap">
-      <div class="card flat row-between"><div><div class="muted" style="font-size:var(--t-xs);text-transform:uppercase;letter-spacing:.05em;">Today</div>
-        <div style="font-weight:700;">${esc(fmtDate(today))}</div></div>
-        <div class="center"><div style="font-weight:800;font-size:var(--t-xl);">${ov.pct != null ? ov.pct + '%' : '—'}</div>
-          <div class="muted" style="font-size:var(--t-xs);">${num(ov.marked_count)}/${num(ov.total_classes)} marked</div></div></div>
-      ${!classes.length ? emptyState('fa-clipboard-check', ov.can_mark === false ? 'Not a school day' : 'No homeroom class', 'Attendance is for class teachers. You have no homeroom class to mark.') :
-        classes.map(c => `<button class="card" style="width:100%;text-align:left;display:block;" onclick="TeacherApp.roll(${c.id},'${esc(c.name)}','${today}')">
-          <div class="row" style="border:none;padding:0;">
-            <div class="ava ava-md lead" style="${avaColor(c.name)}">${esc(c.name.replace(/[^0-9]/g, '') || initials(c.name))}</div>
-            <div class="body"><div class="title">${esc(c.name)}</div>
-              <div class="meta">${num(c.learner_count)} learners${c.marked ? ' · ' + c.present + ' present, ' + c.absent + ' absent' : ''}</div></div>
-            <span class="badge ${c.marked ? 'ok' : 'warn'}">${c.marked ? 'Marked' : 'Pending'}</span></div>
-        </button>`).join('')}
+  /* ════ TODAY ════ */
+  async today(m){
+    m.innerHTML = `<div class="tbar"><div class="top"><div><div class="ctx skel" style="width:120px;height:12px;"></div><div class="skel" style="width:170px;height:22px;margin-top:8px;"></div></div></div></div>${loadingScroll()}`;
+    const todayISO = new Date().toISOString().slice(0, 10);
+    let home, tt, ov, analytics;
+    try {
+      [home, tt, ov, analytics] = await Promise.all([
+        api.get('/api/teacher/home'),
+        api.get('/api/teacher/timetable').catch(() => ({ slots:[], periods:[] })),
+        api.get('/api/teacher/attendance/overview?date=' + todayISO).catch(() => ({ classes:[] })),
+        api.get('/api/teacher/teaching-analytics').catch(() => ({ subjects:[] }))
+      ]);
+    } catch(e){ if (e.auth) return doLogout(); m.innerHTML = TeacherApp.thead('Today', 'Daraja') + `<div class="scroll">${errorState(e.message, 'Router.go(\'today\')')}</div>`; return; }
+    if (home.empty){ m.innerHTML = TeacherApp.thead('Today', 'Daraja') + `<div class="scroll">${emptyState('fa-chalkboard-user', 'No classes yet', home.message || 'No classes assigned to you.')}</div>`; return; }
+
+    const ctx = home.context || {};
+    TeacherApp._ctx = { assessment: analytics.current_assessment || ctx.assessment || 'midterm', termId: (analytics.current_term || ctx.term || {}).id || null };
+    const now = new Date();
+    const dateLine = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+    const weekStr = ctx.calendar?.week_no ? `Week ${ctx.calendar.week_no}` : '';
+    const ctxLine = [dateLine, weekStr, ctx.term?.name].filter(Boolean).join(' · ');
+
+    // today's lessons
+    const dow = now.getDay();
+    const periods = tt.periods || [];
+    const pById = {}; periods.forEach(p => { pById[Number(p.period_no)] = p; });
+    const todaySlots = (tt.slots || []).filter(s => Number(s.day_of_week) === dow)
+      .map(s => { const p = pById[Number(s.period_no)] || {}; return { ...s, start:p.start_time || p.start, end:p.end_time || p.end }; })
+      .sort((a, b) => (tmin(a.start) ?? a.period_no * 100) - (tmin(b.start) ?? b.period_no * 100));
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    let nowSlot = null, nextSlot = null;
+    todaySlots.forEach(s => {
+      const st = tmin(s.start), en = tmin(s.end);
+      if (st != null && en != null && nowMin >= st && nowMin < en) nowSlot = s;
+    });
+    nextSlot = todaySlots.find(s => { const st = tmin(s.start); return st != null && st > nowMin; }) || null;
+
+    // work queue
+    const queue = [];
+    (ov.classes || []).filter(c => !c.marked).forEach(c => queue.push({ ic:'fa-user-check', title:`Mark ${c.name} attendance`, meta:`${c.learner_count} learners · today`, onclick:`TeacherApp.roll(${c.id},'${esc(c.name)}','${todayISO}')` }));
+    (analytics.subjects || []).forEach(sj => {
+      if (sj.components_configured && sj.learners_marked < (sj.enrollment_count || 0)) {
+        queue.push({ ic:'fa-pen', title:`${sj.subject_name} · ${sj.class_name} marks`, meta:`${sj.learners_marked}/${sj.enrollment_count} entered`, onclick:`TeacherApp.marksGrid(${sj.class_id},${sj.subject_id},'${esc(sj.class_name)}','${esc(sj.subject_name)}')` });
+      }
+    });
+
+    m.innerHTML = TeacherApp.thead(ctxLine, 'Good ' + (now.getHours() < 12 ? 'morning' : now.getHours() < 17 ? 'afternoon' : 'evening') + ', ' + esc(firstName(state.me?.name) || 'Teacher'))
+      .replace('<div id="thead-extra"></div>', `<div class="nownext">
+        <div class="nn is-now"><div class="k">NOW</div>
+          <div class="v">${nowSlot ? esc(nowSlot.subject_name) : 'Free'}</div>
+          <div class="m">${nowSlot ? esc(nowSlot.class_name) + ' · ' + tlabel(nowSlot.start) : 'No lesson now'}</div></div>
+        <div class="nn is-next"><div class="k">NEXT</div>
+          <div class="v">${nextSlot ? esc(nextSlot.subject_name) : '—'}</div>
+          <div class="m">${nextSlot ? esc(nextSlot.class_name) + ' · ' + tlabel(nextSlot.start) : 'Nothing later today'}</div></div>
+      </div>`)
+      + `<div class="scroll pad stack-gap">
+        ${queue.length ? `<div class="section-label">Work queue · ${queue.length}</div>
+          <div class="stack-gap" style="gap:8px;">${queue.slice(0, 6).map(q => `
+            <button class="queue-item" onclick="${q.onclick}"><span class="qic"><i class="fas ${q.ic}"></i></span>
+              <div class="body"><div class="title">${q.title}</div><div class="meta">${q.meta}</div></div>
+              <i class="fas fa-chevron-right chev"></i></button>`).join('')}</div>`
+          : `<div class="queue-item ok"><span class="qic"><i class="fas fa-check"></i></span><div class="body"><div class="title">All caught up</div><div class="meta">No attendance or marks pending right now.</div></div></div>`}
+
+        <div class="section-label">Today's lessons</div>
+        ${todaySlots.length ? `<div class="card">${todaySlots.map(s => `
+          <div class="tl-item ${s === nowSlot ? 'now' : ''}"><div class="tl-time">${s.start ? tlabel(s.start) : 'P' + s.period_no}</div>
+            <div class="tl-body"><div class="tl-card"><div class="s">${esc(s.subject_name)}</div><div class="c">${esc(s.class_name)}${s.is_substitution ? ' · cover' : ''}</div></div></div></div>`).join('')}</div>`
+          : (dow === 0 || dow === 6) ? emptyState('fa-mug-hot', 'Weekend', 'No lessons scheduled today.') : emptyState('fa-calendar-day', 'No lessons today', 'Nothing on your timetable for today.')}
+      </div>`;
+  },
+
+  /* ════ CLASSES ════ */
+  async classes(m){
+    m.innerHTML = TeacherApp.thead('Your classes', 'Classes') + loadingScroll();
+    let teach, ov;
+    try { [teach, ov] = await Promise.all([api.get('/api/teacher/teaching'), api.get('/api/teacher/attendance/overview?date=' + new Date().toISOString().slice(0, 10)).catch(() => ({ classes:[] }))]); }
+    catch(e){ if (e.auth) return doLogout(); m.innerHTML = TeacherApp.thead('Your classes', 'Classes') + `<div class="scroll">${errorState(e.message, 'Router.go(\'classes\')')}</div>`; return; }
+    TeacherApp._ctx.assessment = teach.current_assessment || TeacherApp._ctx.assessment;
+    TeacherApp._ctx.termId = teach.current_term?.id || TeacherApp._ctx.termId;
+    const homerooms = new Set((ov.classes || []).map(c => c.id));
+    // distinct classes from teaching, mark homeroom
+    const seen = {}; const list = [];
+    (teach.teaching || []).forEach(t => {
+      if (!seen[t.class_id]){ seen[t.class_id] = { id:t.class_id, name:t.class_name, count:t.enrollment_count, subjects:[], homeroom:homerooms.has(t.class_id) }; list.push(seen[t.class_id]); }
+      seen[t.class_id].subjects.push({ id:t.subject_id, name:t.subject_name });
+    });
+    (ov.classes || []).forEach(c => { if (!seen[c.id]){ seen[c.id] = { id:c.id, name:c.name, count:c.learner_count, subjects:[], homeroom:true }; list.push(seen[c.id]); } });
+
+    m.innerHTML = TeacherApp.thead('Your classes', 'Classes') + `<div class="scroll pad stack-gap">
+      ${list.length ? list.map(c => `<button class="card" style="width:100%;text-align:left;display:block;" onclick="TeacherApp.classDetail(${c.id},'${esc(c.name)}',${c.homeroom},${c.subjects[0] ? c.subjects[0].id : 'null'})">
+        <div class="row" style="border:none;padding:0;">
+          <div class="ava ava-md lead" style="${avaColor(c.name)}">${esc(c.name.replace(/[^0-9]/g, '') || initials(c.name))}</div>
+          <div class="body"><div class="title">${esc(c.name)} ${c.homeroom ? '<span class="badge ok" style="margin-left:4px;">Class teacher</span>' : ''}</div>
+            <div class="meta">${num(c.count)} learners${c.subjects.length ? ' · ' + c.subjects.map(s => esc(s.name)).join(', ') : ''}</div></div>
+          <i class="fas fa-chevron-right chev"></i></div></button>`).join('')
+        : emptyState('fa-users-rectangle', 'No classes', 'You have no classes assigned.')}
     </div>`;
   },
 
+  async _roster(classId, subjectId){
+    try { const r = await api.get('/api/teacher/classes/' + classId + '/learners'); if (r.learners) return r.learners; } catch(e){}
+    if (subjectId){ try { const mk = await api.get(`/api/teacher/marks?class_id=${classId}&subject_id=${subjectId}&assessment_type=${TeacherApp._ctx.assessment}`); if (Array.isArray(mk.learners)) return mk.learners; } catch(e){} }
+    return null;
+  },
+
+  classDetail(classId, className, homeroom, subjectId){
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:className, back:true }) + loadingScroll();
+      const roster = await TeacherApp._roster(classId, subjectId);
+      const actions = homeroom ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;">
+          <button class="btn ghost sm" onclick="TeacherApp.roll(${classId},'${esc(className)}','${new Date().toISOString().slice(0, 10)}')"><i class="fas fa-user-check"></i> Attendance</button>
+          <button class="btn ghost sm" onclick="TeacherApp.rateSkills(${classId},'${esc(className)}')"><i class="fas fa-star"></i> Skills</button>
+          <button class="btn ghost sm" onclick="TeacherApp.writeComments(${classId},'${esc(className)}')"><i class="fas fa-comment-dots"></i> Comments</button>
+          <button class="btn ghost sm" onclick="TeacherApp.classReport(${classId},'${esc(className)}')"><i class="fas fa-file-lines"></i> Reports</button>
+        </div>` : '';
+      s.innerHTML = appbar({ title:className, back:true }) + `<div class="scroll pad stack-gap">
+        ${actions}
+        <div class="section-label">${roster ? roster.length + ' learners' : 'Learners'}</div>
+        ${roster && roster.length ? `<div class="stud-grid">${roster.map(l => `
+          <button class="stud" onclick="TeacherApp.studentProfile(${classId},'${esc(className)}',${l.id},'${esc(l.name)}','${esc(l.admission_no || '')}',${homeroom})">
+            <div class="ava ava-md" style="${avaColor(l.name)}">${initials(l.name)}</div>
+            <div class="nm">${esc(l.name)}</div></button>`).join('')}</div>`
+          : emptyState('fa-users', 'Roster unavailable', homeroom ? 'No active learners in this class.' : 'The class roster is managed by the class teacher.')}
+      </div>`;
+    });
+  },
+
+  studentProfile(classId, className, learnerId, name, adm, homeroom){
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:name, back:true }) + loadingScroll();
+      const head = `<div class="card" style="display:flex;align-items:center;gap:14px;">
+        <div class="ava ava-lg lead" style="${avaColor(name)}">${initials(name)}</div>
+        <div class="body"><div style="font-weight:800;font-size:var(--t-lg);">${esc(name)}</div>
+          <div class="muted" style="font-size:var(--t-sm);">${esc(className)} · Adm ${esc(adm || '—')}</div></div></div>`;
+      if (!homeroom){
+        s.innerHTML = appbar({ title:name, back:true }) + `<div class="scroll pad stack-gap">${head}
+          ${emptyState('fa-lock', 'Class-teacher view', 'Full performance, skills and comments for a learner are available to their class teacher.')}</div>`;
+        return;
+      }
+      const a = TeacherApp._ctx.assessment;
+      let bs, comments, skills, skillsCfg;
+      try { [bs, comments, skills, skillsCfg] = await Promise.all([
+        api.get('/api/teacher/broadsheet?class_id=' + classId).catch(() => null),
+        api.get(`/api/teacher/comments?class_id=${classId}&assessment_type=${a}`).catch(() => null),
+        api.get(`/api/teacher/skills?class_id=${classId}&assessment_type=${a}`).catch(() => null),
+        api.get(`/api/teacher/skills/config?class_id=${classId}&assessment_type=${a}`).catch(() => null)
+      ]); } catch(e){}
+      const row = bs ? (bs.learners || []).find(r => r.id === learnerId) : null;
+      const subjects = bs ? bs.subjects || [] : [];
+      const comment = comments ? (comments.entries || {})[learnerId] || '' : '';
+      const sk = skills ? (skills.entries || {})[learnerId] || {} : {};
+
+      let perfHTML = emptyState('fa-chart-simple', 'No marks yet', 'No marks recorded for this learner this term.');
+      if (row && row.subject_count > 0){
+        const [oc, , ol] = bandFor(row.average || 0);
+        perfHTML = `<div class="card"><div class="card-hd"><h3>Performance</h3>
+            <span class="badge ${oc}">${row.average == null ? '—' : Number(row.average).toFixed(1) + '% · ' + ol}</span></div>
+          <div class="rows">${subjects.map((sub, i) => { const v = row.subjects?.[i]?.average; const [c, ab] = bandFor(v || 0);
+            return `<div class="row"><div class="body title" style="font-weight:500;">${esc(sub.name)}</div>
+              <div class="trail">${v == null ? '<span class="muted">—</span>' : `<span class="mono" style="font-weight:700;">${Math.round(v)}%</span><span class="badge ${c}">${ab}</span>`}</div></div>`; }).join('')}</div>
+          ${row.position ? `<div class="muted center" style="font-size:var(--t-sm);margin-top:10px;">Class position <b style="color:var(--ink);">${row.position}</b></div>` : ''}</div>`;
+      }
+
+      const cats = skillsCfg ? skillsCfg.categories || [] : [];
+      const skillsHTML = cats.length ? `<div class="card"><div class="card-hd"><h3>Skills</h3>
+          <a class="link" onclick="TeacherApp.rateSkills(${classId},'${esc(className)}')">Rate</a></div>
+        ${cats.map(cat => `<div style="margin-bottom:10px;"><div class="muted" style="font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">${esc(cat.label)}</div>
+          <div class="rows">${cat.items.map(it => { const rv = sk[cat.key]?.[it.key];
+            return `<div class="row" style="padding:6px 2px;"><div class="body title" style="font-weight:500;font-size:var(--t-sm);">${esc(it.label)}</div>
+              <div class="trail">${rv ? '<span class="mono" style="font-weight:700;color:var(--brand-600);">' + rv + '/' + (skillsCfg.ratings?.[0] || 5) + '</span>' : '<span class="muted">—</span>'}</div></div>`; }).join('')}</div></div>`).join('')}</div>` : '';
+
+      s.innerHTML = appbar({ title:name, back:true }) + `<div class="scroll pad stack-gap">
+        ${head}${perfHTML}${skillsHTML}
+        <div class="card"><div class="card-hd"><h3>Class teacher comment</h3></div>
+          <textarea class="input" id="sp-comment" placeholder="Write a comment for ${esc(firstName(name))}…" maxlength="1000">${esc(comment)}</textarea>
+          <button class="btn primary block mt3" id="sp-save"><i class="fas fa-floppy-disk"></i> Save comment</button></div>
+      </div>`;
+      $('#sp-save', s).addEventListener('click', async () => {
+        const btn = $('#sp-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        try {
+          await api.post('/api/teacher/comments', { class_id:classId, assessment_type:a, term_id:TeacherApp._ctx.termId, entries:[{ learner_id:learnerId, comment_text:$('#sp-comment', s).value }] });
+          UI.toast('Comment saved', 'ok'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save comment';
+        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save comment'; }
+      });
+    });
+  },
+
+  /* ── Skills rating (class teacher) ── */
+  rateSkills(classId, className){
+    const a = TeacherApp._ctx.assessment;
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:'Skills · ' + className, back:true }) + loadingScroll();
+      let cfg, skills, roster;
+      try { [cfg, skills, roster] = await Promise.all([
+        api.get(`/api/teacher/skills/config?class_id=${classId}&assessment_type=${a}`),
+        api.get(`/api/teacher/skills?class_id=${classId}&assessment_type=${a}`),
+        TeacherApp._roster(classId, null)
+      ]); } catch(e){ s.innerHTML = appbar({ title:'Skills', back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
+      const cats = cfg.categories || []; const ratings = cfg.ratings || [5,4,3,2,1];
+      const entries = skills.entries || {};
+      const items = cats.flatMap(c => c.items.map(it => ({ catKey:c.key, catLabel:c.label, itemKey:it.key, itemLabel:it.label })));
+      const sel = {}; (roster || []).forEach(l => { items.forEach(it => { sel[l.id + '|' + it.catKey + '|' + it.itemKey] = entries[l.id]?.[it.catKey]?.[it.itemKey] ?? null; }); });
+      TeacherApp._skillSel = sel;
+      s.innerHTML = appbar({ title:'Skills · ' + className, back:true }) + `<div class="scroll pad" style="padding-bottom:88px;">
+        <div class="muted" style="font-size:var(--t-sm);margin-bottom:12px;">Tap a rating for each learner. ${ratings[0]} = best.</div>
+        ${(roster || []).map(l => `<div class="card" style="margin-bottom:12px;"><div class="row" style="border:none;padding:0 0 8px;">
+          <div class="ava ava-sm lead" style="${avaColor(l.name)}">${initials(l.name)}</div>
+          <div class="body title">${esc(l.name)}</div></div>
+          ${items.map(it => `<div style="margin-bottom:8px;"><div class="muted" style="font-size:var(--t-xs);margin-bottom:4px;">${esc(it.itemLabel)}</div>
+            <div class="rate-row" data-key="${l.id}|${it.catKey}|${it.itemKey}">
+              ${ratings.map(r => `<button data-r="${r}" class="${sel[l.id + '|' + it.catKey + '|' + it.itemKey] == r ? 'on' : ''}">${r}</button>`).join('')}
+            </div></div>`).join('')}</div>`).join('') || emptyState('fa-users', 'No learners', '')}
+      </div>
+      <button class="btn primary" id="sk-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save skills</button>`;
+      $$('.rate-row', s).forEach(rr => rr.addEventListener('click', (e) => {
+        const b = e.target.closest('button[data-r]'); if (!b) return;
+        TeacherApp._skillSel[rr.dataset.key] = Number(b.dataset.r);
+        $$('button', rr).forEach(x => x.classList.toggle('on', x === b));
+      }));
+      $('#sk-save', s).addEventListener('click', async () => {
+        const btn = $('#sk-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const ent = Object.entries(TeacherApp._skillSel).filter(([, v]) => v != null).map(([k, v]) => { const [lid, ck, ik] = k.split('|'); return { learner_id:Number(lid), category_key:ck, item_key:ik, rating:v }; });
+        try { await api.post('/api/teacher/skills', { class_id:classId, assessment_type:a, term_id:TeacherApp._ctx.termId, entries:ent }); UI.toast('Skills saved', 'ok'); Router.pop(); }
+        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save skills'; }
+      });
+    });
+  },
+
+  /* ── Comments (class teacher) with suggestion bank ── */
+  writeComments(classId, className){
+    const a = TeacherApp._ctx.assessment;
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:'Comments · ' + className, back:true }) + loadingScroll();
+      let cm, sug, roster, bs;
+      try { [cm, sug, roster, bs] = await Promise.all([
+        api.get(`/api/teacher/comments?class_id=${classId}&assessment_type=${a}`),
+        api.get('/api/teacher/comments/suggestions').catch(() => ({ bands:[] })),
+        TeacherApp._roster(classId, null),
+        api.get('/api/teacher/broadsheet?class_id=' + classId).catch(() => null)
+      ]); } catch(e){ s.innerHTML = appbar({ title:'Comments', back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
+      const entries = cm.entries || {};
+      const bands = sug.bands || [];
+      const avgBy = {}; if (bs) (bs.learners || []).forEach(r => { avgBy[r.id] = r.average; });
+      TeacherApp._sugBands = bands; TeacherApp._avgBy = avgBy;
+      s.innerHTML = appbar({ title:'Comments · ' + className, back:true }) + `<div class="scroll pad" style="padding-bottom:88px;">
+        <div class="muted" style="font-size:var(--t-sm);margin-bottom:12px;">Class-teacher remark for each learner. Tap <i class="fas fa-wand-magic-sparkles"></i> to suggest from the bank.</div>
+        ${(roster || []).map(l => `<div class="card" style="margin-bottom:12px;"><div class="row" style="border:none;padding:0 0 8px;">
+          <div class="ava ava-sm lead" style="${avaColor(l.name)}">${initials(l.name)}</div>
+          <div class="body title">${esc(l.name)}</div>
+          ${bands.length ? `<button class="appbar-btn" style="width:34px;height:34px;font-size:13px;" onclick="TeacherApp.suggestComment(${l.id})"><i class="fas fa-wand-magic-sparkles"></i></button>` : ''}</div>
+          <textarea class="input cm-in" data-lid="${l.id}" maxlength="1000" placeholder="Comment…">${esc(entries[l.id] || '')}</textarea></div>`).join('') || emptyState('fa-users', 'No learners', '')}
+      </div>
+      <button class="btn primary" id="cm-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save comments</button>`;
+      $('#cm-save', s).addEventListener('click', async () => {
+        const btn = $('#cm-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const ent = $$('.cm-in', s).map(t => ({ learner_id:Number(t.dataset.lid), comment_text:t.value }));
+        try { await api.post('/api/teacher/comments', { class_id:classId, assessment_type:a, term_id:TeacherApp._ctx.termId, entries:ent }); UI.toast('Comments saved', 'ok'); Router.pop(); }
+        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save comments'; }
+      });
+    });
+  },
+  suggestComment(lid){
+    const s = Router.stack[Router.stack.length - 1]; if (!s) return;
+    const avg = TeacherApp._avgBy[lid];
+    const band = (TeacherApp._sugBands || []).find(b => avg != null && avg <= b.max_score && avg >= b.min_score) || (TeacherApp._sugBands || [])[0];
+    if (!band){ UI.toast('No suggestions available', 'warn'); return; }
+    const ta = $(`.cm-in[data-lid="${lid}"]`, s); if (ta){ ta.value = band.comment_text; ta.focus(); }
+  },
+
+  /* ════ GRADEBOOK ════ */
+  async gradebook(m){
+    m.innerHTML = TeacherApp.thead('Marks & analytics', 'Gradebook') + loadingScroll();
+    let an;
+    try { an = await api.get('/api/teacher/teaching-analytics?assessment_type=' + TeacherApp._ctx.assessment); }
+    catch(e){ if (e.auth) return doLogout(); m.innerHTML = TeacherApp.thead('Marks & analytics', 'Gradebook') + `<div class="scroll">${errorState(e.message, 'Router.go(\'gradebook\')')}</div>`; return; }
+    if (an.current_assessment) TeacherApp._ctx.assessment = an.current_assessment;
+    if (an.current_term) TeacherApp._ctx.termId = an.current_term.id;
+    const subs = an.subjects || [];
+    m.innerHTML = TeacherApp.thead((an.current_term?.name || '') + ' · ' + (an.current_assessment === 'endterm' ? 'End term' : 'Midterm'), 'Gradebook')
+      .replace('<div id="thead-extra"></div>', '')
+      + `<div class="scroll pad stack-gap">
+      ${subs.length ? subs.map(sj => {
+        const marked = sj.enrollment_count ? Math.round((sj.learners_marked / sj.enrollment_count) * 100) : 0;
+        const [bc] = bandFor(sj.mean_percent || 0);
+        return `<button class="card" style="width:100%;text-align:left;display:block;" onclick="TeacherApp.subjectDetail(${sj.class_id},${sj.subject_id},'${esc(sj.class_name)}','${esc(sj.subject_name)}')">
+          <div class="row-between" style="margin-bottom:10px;"><div><div class="title" style="font-weight:700;">${esc(sj.subject_name)}</div>
+            <div class="meta muted" style="font-size:var(--t-sm);">${esc(sj.class_name)}</div></div>
+            <div class="center">${sj.mean_percent != null ? `<span class="badge ${bc}" style="font-size:var(--t-sm);">${pct(sj.mean_percent)}</span>` : '<span class="muted" style="font-size:var(--t-sm);">no marks</span>'}</div></div>
+          <div class="bar"><span style="width:${marked}%;"></span></div>
+          <div class="muted" style="font-size:var(--t-xs);margin-top:6px;">${sj.learners_marked}/${num(sj.enrollment_count)} learners entered${sj.components_configured ? '' : ' · components not set up'}</div>
+        </button>`;
+      }).join('') : emptyState('fa-table-cells', 'No subjects', 'You have no subjects to grade.')}
+    </div>`;
+  },
+
+  subjectDetail(classId, subjectId, className, subjectName){
+    const a = TeacherApp._ctx.assessment;
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:subjectName, back:true }) + loadingScroll();
+      let comps, marks;
+      const q = `class_id=${classId}&subject_id=${subjectId}&assessment_type=${a}`;
+      try { [comps, marks] = await Promise.all([api.get('/api/teacher/assessment-components?' + q), api.get('/api/teacher/marks?' + q)]); }
+      catch(e){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
+      const components = comps.components || [];
+      const maxTotal = components.reduce((sum, c) => sum + Number(c.max_score || 0), 0);
+      const entries = marks.entries || {};
+      // compute percents + distribution
+      const percents = [];
+      Object.values(entries).forEach(byKey => {
+        const tot = components.reduce((sum, c) => sum + (byKey[c.component_key] != null ? Number(byKey[c.component_key]) : 0), 0);
+        const any = components.some(c => byKey[c.component_key] != null);
+        if (any && maxTotal) percents.push((tot / maxTotal) * 100);
+      });
+      const dist = { ee:0, me:0, ae:0, be:0 };
+      percents.forEach(p => { dist[bandFor(p)[0]]++; });
+      const n = percents.length || 1;
+      const mean = percents.length ? percents.reduce((x, y) => x + y, 0) / percents.length : null;
+      const sorted = [...percents].sort((x, y) => y - x);
+      s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll pad stack-gap">
+        <div class="card"><div class="row-between"><div><div class="muted" style="font-size:var(--t-xs);text-transform:uppercase;letter-spacing:.05em;">${esc(className)} · class mean</div>
+          <div style="font-size:var(--t-2xl);font-weight:800;letter-spacing:-.02em;">${mean == null ? '—' : pct(mean)}</div></div>
+          <div class="center"><div class="muted" style="font-size:var(--t-xs);">marked</div><div style="font-weight:700;font-size:var(--t-lg);">${percents.length}</div></div></div>
+          ${percents.length ? `<div class="dist-bar"><span class="ee" style="width:${dist.ee / n * 100}%"></span><span class="me" style="width:${dist.me / n * 100}%"></span><span class="ae" style="width:${dist.ae / n * 100}%"></span><span class="be" style="width:${dist.be / n * 100}%"></span></div>
+          <div class="dist-legend"><span><i style="background:#22c55e"></i>EE ${dist.ee}</span><span><i style="background:#3b82f6"></i>ME ${dist.me}</span><span><i style="background:var(--gold-500)"></i>AE ${dist.ae}</span><span><i style="background:#ef4444"></i>BE ${dist.be}</span></div>` : ''}</div>
+        ${percents.length ? `<div class="card" style="display:flex;gap:10px;text-align:center;">
+          <div style="flex:1;"><div class="muted" style="font-size:var(--t-xs);">Highest</div><div style="font-weight:800;font-size:var(--t-lg);color:var(--brand-600);">${pct(sorted[0])}</div></div>
+          <div style="flex:1;border-left:1px solid var(--line);border-right:1px solid var(--line);"><div class="muted" style="font-size:var(--t-xs);">Lowest</div><div style="font-weight:800;font-size:var(--t-lg);color:var(--danger);">${pct(sorted[sorted.length - 1])}</div></div>
+          <div style="flex:1;"><div class="muted" style="font-size:var(--t-xs);">At risk</div><div style="font-weight:800;font-size:var(--t-lg);">${dist.be + dist.ae}</div></div></div>` : ''}
+        <button class="btn primary block" onclick="TeacherApp.marksGrid(${classId},${subjectId},'${esc(className)}','${esc(subjectName)}')"><i class="fas fa-pen-to-square"></i> ${percents.length ? 'Edit' : 'Enter'} marks</button>
+      </div>`;
+    });
+  },
+
+  /* ── Marks grid (entry) ── */
+  marksGrid(classId, subjectId, className, subjectName){
+    const assessment = TeacherApp._ctx.assessment || 'midterm';
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:subjectName, back:true }) + loadingScroll();
+      let comps, marks;
+      const q = `class_id=${classId}&subject_id=${subjectId}&assessment_type=${assessment}`;
+      try { [comps, marks] = await Promise.all([api.get('/api/teacher/assessment-components?' + q), api.get('/api/teacher/marks?' + q)]); }
+      catch(e){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
+      const components = comps.components || [];
+      const entries = marks.entries || {};
+      const termId = marks.term?.id || TeacherApp._ctx.termId;
+      if (!components.length){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('fa-sliders', 'No components set up', 'Ask the admin to configure assessment components for this subject before entering marks.')}</div>`; return; }
+      let list = Array.isArray(marks.learners) ? marks.learners : null;
+      if (!list){ try { list = (await api.get('/api/teacher/classes/' + classId + '/learners')).learners; } catch(e){ list = null; } }
+      if (!list){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('fa-user-lock', 'Roster unavailable', 'The class roster needs a backend update for subject teachers.')}</div>`; return; }
+      const colW = components.length > 2 ? 64 : 84;
+      s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll pad" style="padding-bottom:90px;">
+        <div class="seg" id="mk-assess" style="margin-bottom:14px;">
+          <button data-a="midterm" class="${assessment === 'midterm' ? 'on' : ''}">Midterm</button>
+          <button data-a="endterm" class="${assessment === 'endterm' ? 'on' : ''}">End term</button></div>
+        <div class="muted" style="font-size:var(--t-sm);margin-bottom:10px;">${esc(className)} · ${list.length} learners</div>
+        <div class="card" style="padding:10px 12px;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:var(--t-sm);min-width:${180 + components.length * (colW + 8)}px;">
+            <thead><tr><th style="text-align:left;padding:6px 4px;font-size:var(--t-xs);color:var(--ink-3);text-transform:uppercase;">Learner</th>
+              ${components.map(c => `<th style="padding:6px 2px;font-size:10px;color:var(--ink-3);text-align:center;">${esc(c.component_name)}<br><span class="muted" style="font-weight:400;">/${num(c.max_score)}</span></th>`).join('')}</tr></thead>
+            <tbody>${list.map(l => `<tr style="border-top:1px solid var(--line-2);">
+              <td style="padding:8px 4px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.name)}</td>
+              ${components.map(c => `<td style="padding:5px 2px;text-align:center;"><input class="mk-in" data-lid="${l.id}" data-key="${esc(c.component_key)}" data-max="${c.max_score}" inputmode="numeric"
+                value="${entries[l.id]?.[c.component_key] != null ? entries[l.id][c.component_key] : ''}"
+                style="width:${colW}px;height:40px;text-align:center;border:1.5px solid var(--line);border-radius:10px;font-size:var(--t-md);font-weight:600;background:var(--surface);"></td>`).join('')}
+            </tr>`).join('')}</tbody></table></div></div>
+        <button class="btn primary" id="mk-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save marks</button>`;
+      $$('#mk-assess button', s).forEach(b => b.addEventListener('click', () => { TeacherApp._ctx.assessment = b.dataset.a; Router.pop(); TeacherApp.marksGrid(classId, subjectId, className, subjectName); }));
+      $$('.mk-in', s).forEach(inp => inp.addEventListener('input', () => { const max = Number(inp.dataset.max); if (inp.value !== '' && Number(inp.value) > max) inp.value = max; if (Number(inp.value) < 0) inp.value = 0; }));
+      $('#mk-save', s).addEventListener('click', async () => {
+        const btn = $('#mk-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const ent = $$('.mk-in', s).map(inp => ({ learner_id:Number(inp.dataset.lid), component_key:inp.dataset.key, score:inp.value === '' ? '' : Number(inp.value) }));
+        try { await api.post('/api/teacher/marks', { class_id:classId, subject_id:subjectId, assessment_type:TeacherApp._ctx.assessment, term_id:termId, entries:ent }); UI.toast('Marks saved', 'ok'); Router.pop(); }
+        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save marks'; }
+      });
+    });
+  },
+
+  /* ── Attendance roll (reached from Today queue & class detail) ── */
   async roll(classId, className, date){
     Router.push(async (s) => {
       s.innerHTML = appbar({ title:'Mark · ' + className, back:true }) + loadingScroll();
@@ -868,7 +1183,7 @@ const TeacherApp = {
         try {
           const payload = { class_id: classId, date, entries: Object.entries(TeacherApp._roll.sel).map(([learner_id, status]) => ({ learner_id: Number(learner_id), status })) };
           await api.post('/api/teacher/attendance', payload);
-          UI.toast('Attendance saved', 'ok'); Router.pop(); Router.go('attendance');
+          UI.toast('Attendance saved', 'ok'); Router.pop(); Router.go('today');
         } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save attendance'; }
       });
     });
@@ -880,111 +1195,6 @@ const TeacherApp = {
     $$('#roll-rows .seg', s).forEach(seg => $$('button', seg).forEach(b => b.classList.toggle('on', b.dataset.s === status)));
     const vals = Object.values(TeacherApp._roll.sel);
     $('#roll-counts', s).textContent = `${vals.filter(v => v === 'P').length} present · ${vals.filter(v => v === 'A').length} absent · ${vals.filter(v => v === 'L').length} late`;
-  },
-
-  /* ── Marks ── */
-  async marks(m){
-    m.innerHTML = appbar({ title:'Marks' }) + loadingScroll();
-    let teach;
-    try { teach = await api.get('/api/teacher/teaching'); }
-    catch(e){ if (e.auth) return doLogout(); m.innerHTML = appbar({ title:'Marks' }) + `<div class="scroll">${errorState(e.message, 'Router.go(\'marks\')')}</div>`; return; }
-    const teaching = teach.teaching || [];
-    TeacherApp._ctx = { assessment: teach.current_assessment || 'midterm', termId: teach.current_term?.id || null };
-    m.innerHTML = appbar({ title:'Enter Marks' }) + `<div class="scroll pad stack-gap">
-      ${teaching.length ? `<div class="card" style="padding:6px 12px;"><div class="rows">
-        ${teaching.map(t => `<button class="row" style="width:100%;text-align:left;" onclick="TeacherApp.openMarks(${t.class_id},${t.subject_id},'${esc(t.class_name)}','${esc(t.subject_name)}')">
-          <div class="ava ava-sm lead" style="${avaColor(t.subject_name)}">${esc((t.subject_code || t.subject_name).slice(0, 2).toUpperCase())}</div>
-          <div class="body"><div class="title">${esc(t.subject_name)}</div><div class="meta">${esc(t.class_name)} · ${num(t.enrollment_count)} learners</div></div>
-          <i class="fas fa-chevron-right chev"></i></button>`).join('')}
-      </div></div>` : emptyState('fa-pen-to-square', 'No subjects assigned', 'You have no subject classes to mark.')}
-    </div>`;
-  },
-
-  openMarks(classId, subjectId, className, subjectName){
-    const assessment = (TeacherApp._ctx && TeacherApp._ctx.assessment) || 'midterm';
-    Router.push(async (s) => {
-      s.innerHTML = appbar({ title:subjectName, back:true }) + loadingScroll();
-      let comps, marks;
-      const q = `class_id=${classId}&subject_id=${subjectId}&assessment_type=${assessment}`;
-      try {
-        [comps, marks] = await Promise.all([
-          api.get('/api/teacher/assessment-components?' + q),
-          api.get('/api/teacher/marks?' + q)
-        ]);
-      } catch(e){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
-      const components = comps.components || [];
-      const entries = marks.entries || {};
-      const termId = marks.term?.id || (TeacherApp._ctx && TeacherApp._ctx.termId);
-      if (!components.length){
-        s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('fa-sliders', 'No components set up', 'Ask the admin to configure assessment components for this subject before entering marks.')}</div>`;
-        return;
-      }
-      // Roster: prefer the marks response (subject-scoped); fall back to homeroom roster.
-      let list = Array.isArray(marks.learners) ? marks.learners : null;
-      if (!list){ try { list = (await api.get('/api/teacher/classes/' + classId + '/learners')).learners; } catch(e){ list = null; } }
-      if (!list){
-        s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('fa-user-lock', 'Roster unavailable', 'The class roster for subject teachers needs a backend update (see Codex prompt). Class teachers can already enter marks.')}</div>`;
-        return;
-      }
-      const colW = components.length > 2 ? 64 : 84;
-      s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll pad" style="padding-bottom:90px;">
-        <div class="seg" id="mk-assess" style="margin-bottom:14px;">
-          <button data-a="midterm" class="${assessment === 'midterm' ? 'on' : ''}">Midterm</button>
-          <button data-a="endterm" class="${assessment === 'endterm' ? 'on' : ''}">End term</button></div>
-        <div class="muted" style="font-size:var(--t-sm);margin-bottom:10px;">${esc(className)} · ${list.length} learners · enter scores below</div>
-        <div class="card" style="padding:10px 12px;overflow-x:auto;">
-          <table style="width:100%;border-collapse:collapse;font-size:var(--t-sm);min-width:${180 + components.length * (colW + 8)}px;">
-            <thead><tr><th style="text-align:left;padding:6px 4px;font-size:var(--t-xs);color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;">Learner</th>
-              ${components.map(c => `<th style="padding:6px 2px;font-size:10px;color:var(--ink-3);text-align:center;">${esc(c.component_name)}<br><span class="muted" style="font-weight:400;">/${num(c.max_score)}</span></th>`).join('')}</tr></thead>
-            <tbody>${list.map(l => `<tr data-lid="${l.id}" style="border-top:1px solid var(--line-2);">
-              <td style="padding:8px 4px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.name)}</td>
-              ${components.map(c => `<td style="padding:5px 2px;text-align:center;">
-                <input class="mk-in" data-lid="${l.id}" data-key="${esc(c.component_key)}" data-max="${c.max_score}" inputmode="numeric"
-                  value="${entries[l.id]?.[c.component_key] != null ? entries[l.id][c.component_key] : ''}"
-                  style="width:${colW}px;height:40px;text-align:center;border:1.5px solid var(--line);border-radius:10px;font-size:var(--t-md);font-weight:600;background:var(--surface);"></td>`).join('')}
-            </tr>`).join('')}</tbody>
-          </table>
-        </div></div>
-        <button class="btn primary" id="mk-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save marks</button>`;
-
-      $$('#mk-assess button', s).forEach(b => b.addEventListener('click', () => {
-        if (TeacherApp._ctx) TeacherApp._ctx.assessment = b.dataset.a;
-        Router.pop(); TeacherApp.openMarks(classId, subjectId, className, subjectName);
-      }));
-      // clamp inputs to max
-      $$('.mk-in', s).forEach(inp => inp.addEventListener('input', () => {
-        const max = Number(inp.dataset.max);
-        if (inp.value !== '' && Number(inp.value) > max) inp.value = max;
-        if (Number(inp.value) < 0) inp.value = 0;
-      }));
-      $('#mk-save', s).addEventListener('click', async () => {
-        const btn = $('#mk-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
-        const payloadEntries = $$('.mk-in', s).map(inp => ({ learner_id: Number(inp.dataset.lid), component_key: inp.dataset.key, score: inp.value === '' ? '' : Number(inp.value) }));
-        try {
-          await api.post('/api/teacher/marks', { class_id: classId, subject_id: subjectId, assessment_type: (TeacherApp._ctx && TeacherApp._ctx.assessment) || assessment, term_id: termId, entries: payloadEntries });
-          UI.toast('Marks saved', 'ok'); Router.pop();
-        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save marks'; }
-      });
-    });
-  },
-
-  /* ── Reports (homeroom classes only — readiness/broadsheet are class-teacher scoped) ── */
-  async reports(m){
-    m.innerHTML = appbar({ title:'Reports' }) + loadingScroll();
-    let ov;
-    const today = new Date().toISOString().slice(0, 10);
-    try { ov = await api.get('/api/teacher/attendance/overview?date=' + today); }
-    catch(e){ if (e.auth) return doLogout(); m.innerHTML = appbar({ title:'Reports' }) + `<div class="scroll">${errorState(e.message, 'Router.go(\'reports\')')}</div>`; return; }
-    const classes = (ov.classes || []).map(c => ({ id: c.id, name: c.name }));
-    m.innerHTML = appbar({ title:'Reports' }) + `<div class="scroll pad stack-gap">
-      <div class="muted" style="font-size:var(--t-sm);">Report readiness and broadsheets for your class.</div>
-      ${classes.length ? `<div class="card" style="padding:6px 12px;"><div class="rows">
-        ${classes.map(c => `<button class="row" style="width:100%;text-align:left;" onclick="TeacherApp.classReport(${c.id},'${esc(c.name)}')">
-          <div class="ava ava-sm lead" style="${avaColor(c.name)}">${esc(c.name.replace(/[^0-9]/g, '') || initials(c.name))}</div>
-          <div class="body"><div class="title">${esc(c.name)}</div><div class="meta">Readiness · broadsheet</div></div>
-          <i class="fas fa-chevron-right chev"></i></button>`).join('')}
-      </div></div>` : emptyState('fa-file-lines', 'For class teachers', 'Report readiness and broadsheets are available to class teachers. You are not assigned a homeroom class.')}
-    </div>`;
   },
 
   classReport(classId, className){
@@ -1038,13 +1248,15 @@ const TeacherApp = {
 
   notifications(){ Router.push(async (s) => { s.innerHTML = appbar({ title:'Notifications', back:true }) + `<div class="scroll">${emptyState('fa-bell', 'No notifications', 'School announcements will appear here.')}</div>`; }); },
 
-  /* ── More ── */
+  /* ════ MORE ════ */
   async more(m){
     const me = state.me || {};
     let prof = {};
     try { prof = await api.get('/api/teacher/me'); } catch(e){}
     const school = state.school || {};
-    m.innerHTML = appbar({ title:'More' }) + `<div class="scroll pad stack-gap">
+    m.innerHTML = TeacherApp.thead('Settings & tools', 'More')
+      .replace('<div id="thead-extra"></div>', '')
+      + `<div class="scroll pad stack-gap">
       <div class="card" style="display:flex;align-items:center;gap:14px;">
         <div class="ava ava-lg lead" style="${avaColor(prof.name || me.name)}">${initials(prof.name || me.name)}</div>
         <div class="body"><div style="font-weight:800;font-size:var(--t-lg);">${esc(prof.name || me.name || 'Teacher')}</div>
@@ -1052,12 +1264,108 @@ const TeacherApp = {
       </div>
       <div class="card" style="padding:6px 16px;"><div class="rows">
         ${moreRow('fa-calendar-day', 'My timetable', "TeacherApp.timetable()")}
+        ${moreRow('fa-calendar-plus', 'Book a lesson slot', "TeacherApp.booking()")}
+        ${moreRow('fa-right-left', 'My cover duties', "TeacherApp.cover()")}
+        ${moreRow('fa-file-lines', 'Reports & broadsheets', "TeacherApp.reportsList()")}
+        ${moreRow('fa-bell', 'Notifications', "TeacherApp.notifications()")}
+      </div></div>
+      <div class="card" style="padding:6px 16px;"><div class="rows">
         ${moreRow('fa-key', 'Change password', "TeacherApp.changePassword()")}
         ${moreRow('fa-circle-info', 'About Daraja', "LearnerApp.about()")}
         ${moreRow('fa-arrow-right-from-bracket', 'Sign out', "doLogout()", 'var(--danger)')}
       </div></div>
       <div class="center muted" style="font-size:var(--t-xs);">${esc(school.school_name || 'Daraja')} · v3.0</div>
     </div>`;
+  },
+
+  reportsList(){
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:'Reports', back:true }) + loadingScroll();
+      let ov;
+      try { ov = await api.get('/api/teacher/attendance/overview?date=' + new Date().toISOString().slice(0, 10)); }
+      catch(e){ s.innerHTML = appbar({ title:'Reports', back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
+      const classes = (ov.classes || []).map(c => ({ id:c.id, name:c.name }));
+      s.innerHTML = appbar({ title:'Reports', back:true }) + `<div class="scroll pad stack-gap">
+        <div class="muted" style="font-size:var(--t-sm);">Report readiness & broadsheet for your class.</div>
+        ${classes.length ? `<div class="card" style="padding:6px 12px;"><div class="rows">${classes.map(c => `
+          <button class="row" style="width:100%;text-align:left;" onclick="TeacherApp.classReport(${c.id},'${esc(c.name)}')">
+            <div class="ava ava-sm lead" style="${avaColor(c.name)}">${esc(c.name.replace(/[^0-9]/g, '') || initials(c.name))}</div>
+            <div class="body"><div class="title">${esc(c.name)}</div><div class="meta">Readiness · broadsheet</div></div>
+            <i class="fas fa-chevron-right chev"></i></button>`).join('')}</div></div>`
+          : emptyState('fa-file-lines', 'For class teachers', 'Reports are available to class teachers.')}
+      </div>`;
+    });
+  },
+
+  async cover(){
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:'Cover duties', back:true }) + loadingScroll();
+      let t;
+      try { t = await api.get('/api/teacher/timetable'); }
+      catch(e){ s.innerHTML = appbar({ title:'Cover duties', back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
+      const covers = t.covers || [];
+      s.innerHTML = appbar({ title:'Cover duties', back:true }) + `<div class="scroll pad stack-gap">
+        ${covers.length ? `<div class="muted" style="font-size:var(--t-sm);">You are covering these lessons today.</div>
+          <div class="card" style="padding:6px 12px;"><div class="rows">${covers.map(c => `
+            <div class="row"><div class="ava ava-sm lead" style="${avaColor(c.subject_name)}"><i class="fas fa-right-left" style="font-size:12px;"></i></div>
+              <div class="body"><div class="title">${esc(c.subject_name)} · ${esc(c.class_name)}</div>
+                <div class="meta">Period ${c.period_no}${c.original_teacher_name ? ' · for ' + esc(c.original_teacher_name) : ''}</div></div></div>`).join('')}</div></div>`
+          : emptyState('fa-mug-hot', 'No cover today', 'You have no substitution duties scheduled for today.')}
+      </div>`;
+    });
+  },
+
+  booking(){
+    Router.push(async (s) => {
+      s.innerHTML = appbar({ title:'Book a slot', back:true }) + loadingScroll();
+      let fs, mine;
+      try { [fs, mine] = await Promise.all([api.get('/api/teacher/timetable/free-slots'), api.get('/api/teacher/bookings').catch(() => [])]); }
+      catch(e){ s.innerHTML = appbar({ title:'Book a slot', back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; return; }
+      const myBookings = Array.isArray(mine) ? mine : (mine.data || []);
+      const classes = (fs.classes || []).filter(c => (c.free_slots || []).length);
+      const subjects = fs.subjects || [];
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const stBadge = st => st === 'approved' ? 'ok' : st === 'rejected' || st === 'cancelled' ? 'be' : 'warn';
+      s.innerHTML = appbar({ title:'Book a slot', back:true }) + `<div class="scroll pad stack-gap">
+        ${myBookings.length ? `<div class="section-label">My requests</div>
+          <div class="card" style="padding:6px 12px;"><div class="rows">${myBookings.map(b => `
+            <div class="row"><div class="body"><div class="title">${esc(b.subject_name)} · ${esc(b.class_name)}</div>
+              <div class="meta">${esc(b.date)} · period ${b.period_no}</div></div>
+              <div class="trail"><span class="badge ${stBadge(b.status)}">${esc(b.status)}</span>
+                ${b.status === 'pending' ? `<button class="appbar-btn" style="width:32px;height:32px;font-size:12px;" onclick="TeacherApp.cancelBooking(${b.id})"><i class="fas fa-xmark"></i></button>` : ''}</div></div>`).join('')}</div></div>` : ''}
+        <div class="section-label">Request a free slot</div>
+        ${classes.length ? `<div class="card stack-gap">
+          <div class="field"><label>Class</label><select class="input" id="bk-class"><option value="">— pick a class —</option>
+            ${classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+          <div class="field"><label>Free slot</label><select class="input" id="bk-slot" disabled><option value="">— pick a class first —</option></select></div>
+          <div class="field"><label>Subject</label><select class="input" id="bk-subject">
+            ${subjects.map(sub => `<option value="${sub.id}">${esc(sub.name)}</option>`).join('')}</select></div>
+          <div class="field"><label>Date</label><input class="input" id="bk-date" type="date" value="${todayISO}" min="${todayISO}"></div>
+          <div class="field"><label>Reason (optional)</label><input class="input" id="bk-reason" placeholder="e.g. extra revision lesson"></div>
+          <button class="btn primary block" id="bk-submit"><i class="fas fa-paper-plane"></i> Request slot</button>
+        </div>` : emptyState('fa-calendar-xmark', 'No free slots', 'There are no free slots available to book right now.')}
+      </div>`;
+      const slotsByClass = {}; classes.forEach(c => { slotsByClass[c.id] = c.free_slots || []; });
+      const clsSel = $('#bk-class', s), slotSel = $('#bk-slot', s);
+      if (clsSel) clsSel.addEventListener('change', () => {
+        const list = slotsByClass[clsSel.value] || [];
+        slotSel.disabled = !list.length;
+        slotSel.innerHTML = list.length ? list.map((sl, i) => `<option value="${i}">${DOW[sl.day_of_week]} · Period ${sl.period_no}</option>`).join('') : '<option value="">No free slots</option>';
+      });
+      if ($('#bk-submit', s)) $('#bk-submit', s).addEventListener('click', async () => {
+        const cid = clsSel.value; const list = slotsByClass[cid] || []; const sl = list[Number(slotSel.value)];
+        if (!cid || !sl) return UI.toast('Pick a class and free slot', 'warn');
+        const btn = $('#bk-submit', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Requesting…';
+        try {
+          await api.post('/api/teacher/bookings', { class_id:Number(cid), subject_id:Number($('#bk-subject', s).value), day_of_week:sl.day_of_week, period_no:sl.period_no, date:$('#bk-date', s).value, reason:$('#bk-reason', s).value });
+          UI.toast('Booking requested', 'ok'); Router.pop(); TeacherApp.booking();
+        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Request slot'; }
+      });
+    });
+  },
+  async cancelBooking(id){
+    try { await api.req('DELETE', '/api/teacher/bookings/' + id); UI.toast('Booking cancelled', 'ok'); Router.pop(); TeacherApp.booking(); }
+    catch(e){ UI.toast(e.message, 'danger'); }
   },
 
   async timetable(){
