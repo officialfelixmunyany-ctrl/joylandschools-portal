@@ -4,9 +4,9 @@ const bcrypt  = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { getDB, calculateSchoolDays } = require('../database');
-const { todayInSchoolTime } = require('../lib/dates');
-const { resolveSchoolDay } = require('../lib/schoolDays');
+const { getDB, calculateSchoolDays } = require('../../database');
+const { todayInSchoolTime } = require('../../lib/dates');
+const { resolveSchoolDay } = require('../../lib/schoolDays');
 const router  = express.Router();
 
 function requireAdmin(req, res, next) {
@@ -67,9 +67,9 @@ function optionalId(value) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-const UPLOAD_ROOT = path.join(__dirname, '..', 'public', 'uploads', 'learners');
-const SCHOOL_UPLOAD_ROOT = path.join(__dirname, '..', 'public', 'uploads', 'school');
-const RESOURCE_UPLOAD_ROOT = path.join(__dirname, '..', 'public', 'uploads', 'resources');
+const UPLOAD_ROOT = path.join(__dirname, '..', '..', 'public', 'uploads', 'learners');
+const SCHOOL_UPLOAD_ROOT = path.join(__dirname, '..', '..', 'public', 'uploads', 'school');
+const RESOURCE_UPLOAD_ROOT = path.join(__dirname, '..', '..', 'public', 'uploads', 'resources');
 const IMAGE_TYPES = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -122,7 +122,7 @@ function publicUploadPath(folder, fileName) {
 
 function deletePublicUpload(filePath) {
   if (!filePath || !filePath.startsWith('/uploads/learners/')) return;
-  const absolutePath = path.join(__dirname, '..', 'public', filePath.replace(/^\/+/, ''));
+  const absolutePath = path.join(__dirname, '..', '..', 'public', filePath.replace(/^\/+/, ''));
   const resolved = path.resolve(absolutePath);
   const root = path.resolve(UPLOAD_ROOT);
   if (!resolved.startsWith(root)) return;
@@ -727,7 +727,7 @@ router.delete('/resources/:id', (req, res) => {
   const existing = db.prepare('SELECT file_path FROM resources WHERE id=?').get(id);
   if (!existing) return res.status(404).json({ success:false, message:'Resource not found' });
   if (existing.file_path && existing.file_path.startsWith('/uploads/resources/')) {
-    try { fs.unlinkSync(path.join(__dirname, '..', 'public', existing.file_path.replace(/^\/+/, ''))); } catch {}
+    try { fs.unlinkSync(path.join(__dirname, '..', '..', 'public', existing.file_path.replace(/^\/+/, ''))); } catch {}
   }
   db.prepare('DELETE FROM resources WHERE id=?').run(id);
   res.json({ success:true, message:'Resource deleted' });
@@ -742,7 +742,7 @@ router.post('/resources/:id/file', (req, res) => {
   try {
     const saved = saveResourceFile(id, req.body || {});
     if (existing.file_path && existing.file_path.startsWith('/uploads/resources/')) {
-      try { fs.unlinkSync(path.join(__dirname, '..', 'public', existing.file_path.replace(/^\/+/, ''))); } catch {}
+      try { fs.unlinkSync(path.join(__dirname, '..', '..', 'public', existing.file_path.replace(/^\/+/, ''))); } catch {}
     }
     db.prepare('UPDATE resources SET file_path=?, updated_at=datetime(\'now\') WHERE id=?').run(saved.file_path, id);
     res.json({ success:true, data:saved, message:'File uploaded' });
@@ -816,7 +816,7 @@ router.get('/integrations', (req, res) => {
   ]});
 });
 
-const BACKUP_ROOT = path.join(__dirname, '..', 'data', 'backups');
+const BACKUP_ROOT = path.join(__dirname, '..', '..', 'data', 'backups');
 function backupRows() {
   fs.mkdirSync(BACKUP_ROOT, { recursive:true });
   return fs.readdirSync(BACKUP_ROOT)
@@ -836,13 +836,13 @@ router.get('/backups', (req, res) => {
 router.post('/backups', (req, res) => {
   fs.mkdirSync(BACKUP_ROOT, { recursive:true });
   const name = `joyland-${new Date().toISOString().replace(/[:.]/g, '-')}.db`;
-  fs.copyFileSync(path.join(__dirname, '..', 'data', 'joyland.db'), path.join(BACKUP_ROOT, name));
+  fs.copyFileSync(path.join(__dirname, '..', '..', 'data', 'joyland.db'), path.join(BACKUP_ROOT, name));
   res.json({ success:true, data:backupRows()[0], message:'Backup created' });
 });
 
 // ─── REPORT COMMENT BANK + SIGNATURES ─────────────────────────
 const COMMENT_ROLES = ['class_teacher','headteacher','director'];
-const SIGNATURE_UPLOAD_ROOT = path.join(__dirname, '..', 'public', 'uploads', 'signatures');
+const SIGNATURE_UPLOAD_ROOT = path.join(__dirname, '..', '..', 'public', 'uploads', 'signatures');
 
 function isValidCommentRole(value) { return COMMENT_ROLES.includes(String(value||'').toLowerCase()); }
 
@@ -1015,7 +1015,7 @@ router.post('/signature/:role', async (req, res) => {
     // Remove old file
     const oldPath = db.prepare("SELECT value FROM school_settings WHERE key=?").get(`signature_${role}`)?.value;
     if (oldPath && oldPath.startsWith('/uploads/signatures/')) {
-      try { fs.unlinkSync(path.join(__dirname, '..', 'public', oldPath.replace(/^\/+/, ''))); } catch {}
+      try { fs.unlinkSync(path.join(__dirname, '..', '..', 'public', oldPath.replace(/^\/+/, ''))); } catch {}
     }
     saveSchoolSetting(db, `signature_${role}`, publicPath);
     res.json({ success:true, file_path:publicPath, mime_type:mime, message:'Signature uploaded' });
@@ -1031,7 +1031,7 @@ router.delete('/signature/:role', (req, res) => {
   const key = `signature_${role}`;
   const oldPath = db.prepare("SELECT value FROM school_settings WHERE key=?").get(key)?.value;
   if (oldPath && oldPath.startsWith('/uploads/signatures/')) {
-    try { fs.unlinkSync(path.join(__dirname, '..', 'public', oldPath.replace(/^\/+/, ''))); } catch {}
+    try { fs.unlinkSync(path.join(__dirname, '..', '..', 'public', oldPath.replace(/^\/+/, ''))); } catch {}
   }
   saveSchoolSetting(db, key, '');
   res.json({ success:true, message:'Signature removed' });
@@ -3382,7 +3382,7 @@ router.get('/marks/analysis', (req, res) => {
 });
 
 // ══════════ TEMPLATE EDITOR ══════════
-const TEMPLATE_DIR = path.join(__dirname, '..', 'data', 'templates');
+const TEMPLATE_DIR = path.join(__dirname, '..', '..', 'data', 'templates');
 
 function ensureTemplateDir() {
   if (!fs.existsSync(TEMPLATE_DIR)) fs.mkdirSync(TEMPLATE_DIR, { recursive: true });
