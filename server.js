@@ -4,6 +4,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { initDatabase } = require('./database');
+const { resolveSessionSecret, securityHeaders, loginRateLimiter } = require('./lib/security');
+const { createSessionStore } = require('./lib/session-store');
 
 const authRoutes = require('./routes/auth');
 const publicRoutes = require('./routes/public');
@@ -16,7 +18,17 @@ const notificationRoutes = require('./routes/notifications');
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
+const IS_PROD = process.env.NODE_ENV === 'production';
 app.set('etag', false);
+
+// Trust the reverse proxy in production so secure cookies and req.ip work
+// correctly behind it. TRUST_PROXY can override (e.g. a hop count or 'false').
+if (process.env.TRUST_PROXY !== undefined) {
+  const tp = process.env.TRUST_PROXY;
+  app.set('trust proxy', tp === 'true' ? true : tp === 'false' ? false : (Number.isNaN(Number(tp)) ? tp : Number(tp)));
+} else if (IS_PROD) {
+  app.set('trust proxy', 1);
+}
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const liveClients = new Set();
@@ -126,13 +138,24 @@ function startDevRefreshWatcher() {
   }
 }
 
+app.use(securityHeaders());
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+
+const SESSION_MAX_AGE = 8 * 60 * 60 * 1000;
 app.use(session({
-  secret: 'joyland-schools-2026-secure',
+  name: 'joyland.sid',
+  secret: resolveSessionSecret(),
+  store: createSessionStore(session),
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 8 * 60 * 60 * 1000 }
+  rolling: true,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: IS_PROD,
+    maxAge: SESSION_MAX_AGE
+  }
 }));
 
 app.get('/api/events', (req, res) => {
@@ -202,6 +225,9 @@ app.use(express.static(PUBLIC_DIR, {
 }));
 
 app.use('/api', publicRoutes);
+const loginLimiter = loginRateLimiter();
+app.use('/api/auth/login', loginLimiter);
+app.use('/api/auth/temp-login', loginLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', liveSyncMutationMiddleware('admin'), adminRoutes);
 app.use('/api/teacher', teacherRoutes);
