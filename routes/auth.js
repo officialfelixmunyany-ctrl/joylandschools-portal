@@ -24,7 +24,8 @@ router.post('/login', (req, res) => {
 
   const role = user.role;
   rememberRoleSession(req, { id:user.id, user_id:user.user_id, name:user.name, role, original_role:user.role, is_admin:user.is_admin });
-  res.json({ success:true, role, name:user.name, redirect:`/${role}` });
+  const redirect = role === 'admin' ? '/admin/overview.html' : '/app/';
+  res.json({ success:true, role, name:user.name, redirect });
 });
 
 router.post('/temp-login', (req, res) => {
@@ -46,7 +47,8 @@ router.post('/temp-login', (req, res) => {
 
   const role = user.role;
   rememberRoleSession(req, { id:user.id, user_id:user.user_id, name:user.name, role, original_role:user.role, is_admin:user.is_admin, must_change_password:true });
-  res.json({ success:true, role, name:user.name, must_change_password:true, redirect:`/${role}` });
+  const redirect = role === 'admin' ? '/admin/overview.html' : '/app/';
+  res.json({ success:true, role, name:user.name, must_change_password:true, redirect });
 });
 
 router.post('/logout', (req, res) => { req.session.destroy(); res.json({ success:true }); });

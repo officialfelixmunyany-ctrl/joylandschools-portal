@@ -126,11 +126,6 @@ function startDevRefreshWatcher() {
   }
 }
 
-app.get(['/app/v2', '/app/v2/'], (req, res) => {
-  noStore(res);
-  res.redirect(302, '/app/');
-});
-
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(session({
@@ -178,7 +173,7 @@ app.get(/^\/app(\/|$)/, (req, res, next) => {
     return next();
   }
   noStore(res);
-  res.sendFile(path.join(PUBLIC_DIR, 'app', 'next.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'app', 'index.html'));
 });
 
 // Guard the admin shell (HTML, CSS, JS, shared assets) before the static handler.
@@ -222,8 +217,7 @@ function guardPage(role) {
     if (!roleUser) return res.redirect('/');
     req.session.user = roleUser;
     if (role === 'admin') return res.redirect('/admin/overview.html');
-    if (role === 'teacher') return sendNoStoreHtml(res, 'teacher.html');
-    if (role === 'learner') return sendNoStoreHtml(res, 'learner.html');
+    if (role === 'teacher' || role === 'learner' || role === 'parent') return res.redirect('/app/');
     res.redirect('/');
   };
 }
@@ -242,6 +236,7 @@ app.get('/admin', guardPage('admin'));
 app.get('/template-editor', serveTemplateEditor);
 app.get('/teacher', guardPage('teacher'));
 app.get('/learner', guardPage('learner'));
+app.get('/parent', guardPage('parent'));
 
 initDatabase();
 startDevRefreshWatcher();
