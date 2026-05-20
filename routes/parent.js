@@ -324,6 +324,50 @@ router.get('/children', (req, res) => {
   res.json({ success:true, data:{ children } });
 });
 
+router.get('/timetable', (req, res) => {
+  const db = getDB();
+  const learner = requireLinkedLearner(req, res, db, req.query.child_id || req.query.childId);
+  if (!learner) return;
+  const settings = db.prepare('SELECT visible_to_parents FROM timetable_settings WHERE id=1').get();
+  if (settings && Number(settings.visible_to_parents) === 0) {
+    return res.json({ success:false, message:'Timetable not yet shared with parents' });
+  }
+  const cls = classForLearner(db, learner);
+  if (!cls) return res.json({ success:false, message:'Class not found' });
+  const active = db.prepare("SELECT id FROM timetable_generations WHERE status='active' ORDER BY id DESC LIMIT 1").get();
+  if (!active) return res.json({ success:true, data:{ slots:[], periods:[], class_name:learner.class_name } });
+  const slots = db.prepare(`
+    SELECT ts.id, ts.day_of_week, ts.period_no,
+           sub.name AS subject_name, u.name AS teacher_name
+    FROM timetable_slots ts
+    JOIN subjects sub ON sub.id=ts.subject_id
+    LEFT JOIN users u ON u.id=ts.teacher_id
+    WHERE ts.generation_id=? AND ts.class_id=?
+    ORDER BY ts.day_of_week, ts.period_no
+  `).all(active.id, cls.id);
+  const today = todayInSchoolTime();
+  const covers = db.prepare(`
+    SELECT sa.slot_id, u.name AS substitute_name, ou.name AS original_name
+    FROM substitution_assignments sa
+    LEFT JOIN users u ON u.id=sa.substitute_teacher_id
+    LEFT JOIN users ou ON ou.id=sa.original_teacher_id
+    WHERE sa.date=?
+  `).all(today);
+  const coverMap = new Map(covers.map(c => [Number(c.slot_id), c]));
+  slots.forEach(slot => {
+    const cover = coverMap.get(Number(slot.id));
+    if (!cover || !cover.substitute_name) return;
+    slot.original_teacher_name = slot.teacher_name;
+    slot.teacher_name = cover.substitute_name + ' (cover)';
+    slot.is_substitution = 1;
+  });
+  const periods = db.prepare('SELECT * FROM bell_periods WHERE schedule_id=1 ORDER BY period_no').all().map(p => ({
+    ...p,
+    active_days:(() => { try { return JSON.parse(p.active_days || '[]'); } catch { return []; } })()
+  }));
+  res.json({ success:true, data:{ slots, periods, today, class_name:learner.class_name } });
+});
+
 router.get('/children/:learnerId/summary', (req, res) => {
   const db = getDB();
   const learner = requireLinkedLearner(req, res, db, req.params.learnerId);
@@ -357,6 +401,26 @@ router.get('/children/:learnerId/comments', (req, res) => {
   const learner = requireLinkedLearner(req, res, db, req.params.learnerId);
   if (!learner) return;
   res.json({ success:true, data:learnerComments(db, learner, req.query) });
+});
+
+router.get('/notifications', (req, res) => {
+  const db = getDB();
+  const rows = db.prepare(`
+    SELECT n.id, n.title, n.body, n.created_at, nr.read_at
+    FROM notification_recipients nr
+    JOIN notifications n ON n.id=nr.notification_id
+    WHERE nr.user_role='parent' AND nr.user_id=?
+    ORDER BY datetime(n.created_at) DESC, n.id DESC
+    LIMIT 100
+  `).all(req.session.user.id);
+  const items = rows.map(row => ({
+    id:row.id,
+    title:row.title,
+    body:row.body,
+    created_at:row.created_at,
+    read:!!row.read_at
+  }));
+  res.json({ success:true, data:{ items } });
 });
 
 module.exports = router;

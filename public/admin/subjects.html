@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Subjects · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.subj-tile{display:block;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;text-decoration:none;color:inherit;transition:.15s var(--ease);cursor:pointer;}
+.subj-tile:hover{box-shadow:var(--sh-2);transform:translateY(-2px);border-color:var(--ink-4);}
+.subj-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.subj-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0;}
+.subj-info{flex:1;}
+.subj-name{font-family:var(--display);font-weight:600;font-size:15px;color:var(--ink);letter-spacing:-.012em;line-height:1.2;}
+.subj-tagline{font-size:11px;color:var(--ink-3);margin-top:3px;font-weight:500;}
+.subj-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:10px;border-top:1px solid var(--line-2);}
+.sm-cell{text-align:center;}
+.sm-v{font-family:var(--display);font-weight:600;font-size:16px;color:var(--ink);letter-spacing:-.014em;line-height:1;}
+.sm-l{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+</style>
+</head>
+<body data-page="subjects" data-title="Subjects">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Subjects"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">CBC curriculum · 9 subjects</div>
+        <h1 class="h1">Subjects <em>· catalogue</em></h1>
+        <div class="h-sub">All learning areas across Joyland. Click any subject to view its strands, assessments and class-by-class performance.</div>
+      </div>
+      <button class="btn btn-primary" id="addSubjectBtn"><i class="fas fa-plus"></i>Add subject</button>
+    </div>
+
+    <div class="filter-row">
+      <div class="input-wrap"><i class="fas fa-search"></i><input class="input input-search" placeholder="Search subject…"/></div>
+      <select class="input" id="levelFilter"><option value="">All levels</option><option>Senior</option><option>Junior</option><option>Upper Primary</option><option>Lower Primary</option></select>
+    </div>
+
+    <div class="subj-grid" id="subjGrid"></div>
+
+  </div>
+</div>
+
+<div class="shroud" id="shroud"></div>
+
+<!-- ═══ Add subject slide-over ═══ -->
+<aside class="slide" id="addSubjectSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">Add a subject</div>
+      <div class="slide-sub">New learning area · saved to the live database</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field"><label class="field-label">Subject name</label><input class="input" id="sName" placeholder="e.g. Home Science"/></div>
+    <div class="field">
+      <label class="field-label">Level</label>
+      <select class="input" id="sLevel">
+        <option value="">Any level (taught across school)</option>
+        <option>Lower Primary</option>
+        <option>Upper Primary</option>
+        <option>Junior</option>
+        <option>Senior</option>
+      </select>
+    </div>
+    <div class="field"><label class="field-label">Description (optional)</label><textarea class="input" id="sDesc" style="min-height:80px;line-height:1.5;" placeholder="Strands, learning outcomes…"></textarea></div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct">Live save · Joyland database</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="sSave"><i class="fas fa-check"></i>Create subject</button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') + '%' : '-';
+async function api(path, opts={}){ const r=await fetch(path,{credentials:'include',...opts}); const j=await r.json().catch(()=>({})); if(!r.ok||j.success===false) throw new Error(j.message||'Request failed'); return j.data!==undefined?j.data:j; }
+
+const grid = document.getElementById('subjGrid');
+const icons = ['fa-book','fa-language','fa-square-root-variable','fa-flask','fa-globe-africa','fa-bible','fa-seedling','fa-palette','fa-tools'];
+const cols = [['#3b82f6','#2563eb'],['#8b5cf6','#7c3aed'],['#f43f5e','#dc2626'],['#10b981','#059669'],['#f59e0b','#d97706'],['#06b6d4','#0e7490'],['#14b8a6','#0f766e'],['#ec4899','#be185d'],['#4a504e','#1a1d1c']];
+async function loadSubjects(){
+  grid.innerHTML = '<div class="subj-tile">Loading subjects...</div>';
+  try{
+    const [subjects, analysis, teachers] = await Promise.all([api(API + '/subjects'), api(API + '/marks/analysis'), api(API + '/teachers')]);
+    const meanByName = new Map();
+    (analysis.classes||[]).forEach(c => (c.subject_averages||[]).forEach(s => { const k=s.name; const a=meanByName.get(k)||[]; a.push(Number(s.average||0)); meanByName.set(k,a); }));
+    grid.innerHTML = subjects.map((s,i) => {
+      const a = meanByName.get(s.name) || [];
+      const mean = a.length ? a.reduce((x,y) => x+y, 0) / a.length : null;
+      const col = cols[i % cols.length];
+      const teacherCount = teachers.filter(t => (t.subject || '').toLowerCase().includes((s.name || '').toLowerCase())).length;
+      const tagline = s.level
+        ? esc(s.level)
+        : (s.class_count ? ('Taught in ' + s.class_count + ' class' + (s.class_count === 1 ? '' : 'es')) : 'Not assigned yet');
+      return '<a class="subj-tile" href="/admin/subject.html?id=' + s.id + '">' +
+        '<div class="subj-h">' +
+          '<div class="subj-icon" style="background:linear-gradient(135deg,' + col[0] + ',' + col[1] + ');"><i class="fas ' + icons[i % icons.length] + '"></i></div>' +
+          '<div class="subj-info"><div class="subj-name">' + esc(s.name) + '</div><div class="subj-tagline">' + tagline + '</div></div>' +
+        '</div>' +
+        '<div class="subj-mini">' +
+          '<div class="sm-cell"><div class="sm-v">' + (s.class_count || 0) + '</div><div class="sm-l">Classes</div></div>' +
+          '<div class="sm-cell"><div class="sm-v">' + teacherCount + '</div><div class="sm-l">Teachers</div></div>' +
+          '<div class="sm-cell"><div class="sm-v">' + pct(mean) + '</div><div class="sm-l">Mean</div></div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+  }catch(err){ Joy.toast("Couldn't load subjects", {type:'danger'}); console.error(err); }
+}
+function applyFilters(){
+  const q = (document.querySelector('.input-search')?.value || '').toLowerCase();
+  const lvl = (document.getElementById('levelFilter')?.value || '').toLowerCase();
+  document.querySelectorAll('.subj-tile').forEach(t => {
+    const tx = t.textContent.toLowerCase();
+    const lv = (t.dataset.level || '').toLowerCase();
+    const okQ = !q || tx.includes(q);
+    const okL = !lvl || lv.includes(lvl) || lv === '';
+    t.style.display = okQ && okL ? '' : 'none';
+  });
+}
+document.querySelector('.input-search')?.addEventListener('input', applyFilters);
+document.getElementById('levelFilter')?.addEventListener('change', applyFilters);
+
+/* ── Add subject ── */
+document.getElementById('addSubjectBtn')?.addEventListener('click', () => {
+  document.getElementById('sName').value = '';
+  document.getElementById('sLevel').value = '';
+  document.getElementById('sDesc').value = '';
+  Joy.openSlide('addSubjectSlide');
+  setTimeout(() => document.getElementById('sName').focus(), 100);
+});
+document.getElementById('sSave')?.addEventListener('click', async () => {
+  const name  = document.getElementById('sName').value.trim();
+  const level = document.getElementById('sLevel').value;
+  const desc  = document.getElementById('sDesc').value.trim();
+  if(!name){ Joy.toast('Subject name is required', { type:'warn' }); return; }
+  const btn = document.getElementById('sSave');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try {
+    /* Backend auto-generates a unique internal code from the name */
+    await api(API + '/subjects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, level: level || null, description: desc || null })
+    });
+    Joy.closeSlide();
+    Joy.toast('Subject "' + name + '" created');
+    loadSubjects();
+  } catch(e){
+    Joy.toast(e.message || "Couldn't save subject", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Create subject';
+  }
+});
+
+loadSubjects();
+</script>
+</body>
+</html>
+

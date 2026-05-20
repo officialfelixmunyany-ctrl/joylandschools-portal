@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Settings · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.settings-layout{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start;}
+.s-rail{position:sticky;top:80px;display:flex;flex-direction:column;gap:2px;}
+.s-rail-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:var(--ink-2);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;}
+.s-rail-item:hover{background:var(--surface-2);color:var(--ink);}
+.s-rail-item.on{background:var(--ink);color:#fff;}
+.s-rail-item i{width:14px;color:inherit;font-size:11px;}
+
+.s-section{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:14px;box-shadow:var(--sh-1);}
+.s-section h3{font-family:var(--display);font-weight:600;font-size:18px;color:var(--ink);letter-spacing:-.015em;margin-bottom:4px;}
+.s-section .desc{font-size:12.5px;color:var(--ink-3);margin-bottom:16px;line-height:1.5;}
+
+.s-row{display:grid;grid-template-columns:1fr 320px;gap:24px;padding:14px 0;border-bottom:1px solid var(--line-2);align-items:center;}
+.s-row:last-child{border-bottom:none;}
+.s-row .lbl{font-size:13px;color:var(--ink);font-weight:600;}
+.s-row .help{font-size:11.5px;color:var(--ink-3);margin-top:3px;}
+
+.switch{width:36px;height:20px;background:var(--surface-3);border-radius:10px;cursor:pointer;position:relative;transition:.2s var(--ease);}
+.switch::after{content:'';position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.15);transition:.2s var(--ease);}
+.switch.on{background:var(--ink);}
+.switch.on::after{left:18px;}
+</style>
+</head>
+<body data-page="settings" data-title="Settings">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Settings"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Joyland Schools · admin preferences</div>
+        <h1 class="h1">Settings</h1>
+        <div class="h-sub">School profile, grading scheme, notification defaults, billing, integrations.</div>
+      </div>
+    </div>
+
+    <div class="settings-layout">
+      <div class="s-rail">
+        <a class="s-rail-item on"><i class="fas fa-school"></i>School profile</a>
+        <a class="s-rail-item"><i class="fas fa-graduation-cap"></i>Grading scheme</a>
+        <a class="s-rail-item"><i class="fas fa-bullhorn"></i>Notifications</a>
+        <a class="s-rail-item"><i class="fas fa-users-gear"></i>Roles &amp; permissions</a>
+        <a class="s-rail-item"><i class="fas fa-credit-card"></i>Billing &amp; SMS</a>
+        <a class="s-rail-item"><i class="fas fa-plug"></i>Integrations</a>
+        <a class="s-rail-item"><i class="fas fa-shield-halved"></i>Security</a>
+        <a class="s-rail-item"><i class="fas fa-database"></i>Data &amp; backup</a>
+      </div>
+
+      <div>
+        <div class="s-section">
+          <h3>School profile</h3>
+          <div class="desc">Basic information shown on report cards, parent invitations and the school portal.</div>
+
+          <div class="s-row">
+            <div><div class="lbl">School name</div><div class="help">Appears on report card headers and letters home</div></div>
+            <input class="input" value="Joyland Schools"/>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Motto</div><div class="help">Short, on the masthead under the name</div></div>
+            <input class="input" value="Learning with Joy. Leading with Purpose."/>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Postal address</div><div class="help">For official correspondence</div></div>
+            <input class="input" value="P.O. Box 4892 · 00100 Nairobi"/>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Main phone</div><div class="help">Used as the SMS sender ID when permitted</div></div>
+            <input class="input" value="+254 712 000 000"/>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Logo</div><div class="help">PNG or SVG · 256×256 minimum</div></div>
+            <button class="btn"><i class="fas fa-upload"></i>Upload logo</button>
+          </div>
+        </div>
+
+        <div class="s-section">
+          <h3>Identity &amp; theme</h3>
+          <div class="desc">Brand color used on parent portal, learner app and report headers.</div>
+
+          <div class="s-row">
+            <div><div class="lbl">Primary color</div><div class="help">Joyland green by default</div></div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <div style="width:30px;height:30px;border-radius:7px;background:#1B5E20;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);"></div>
+              <input class="input mono" style="max-width:120px;" value="#1B5E20"/>
+            </div>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Accent / celebration</div><div class="help">Used on gold moments and badges</div></div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <div style="width:30px;height:30px;border-radius:7px;background:#C99732;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);"></div>
+              <input class="input mono" style="max-width:120px;" value="#C99732"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="s-section">
+          <h3>Defaults</h3>
+          <div class="desc">Pre-fill choices to save teachers clicks.</div>
+
+          <div class="s-row">
+            <div><div class="lbl">Auto-save mark entry</div><div class="help">Saves drafts as teachers type</div></div>
+            <div style="display:flex;justify-content:flex-end;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Show CBC band in mark sheets</div><div class="help">EE / ME / AE / BE next to each score</div></div>
+            <div style="display:flex;justify-content:flex-end;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Send parent SMS on absence</div><div class="help">Automatic same-day notification</div></div>
+            <div style="display:flex;justify-content:flex-end;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Allow teachers to publish marks</div><div class="help">Otherwise only admins can release</div></div>
+            <div style="display:flex;justify-content:flex-end;"><div class="switch" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+          <button class="btn">Discard</button>
+          <button class="btn btn-primary" onclick="Joy.toast('Settings saved')"><i class="far fa-save"></i>Save changes</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="shroud" id="shroud"></div>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API='/api/admin';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,opts={}){const r=await fetch(path,{credentials:'include',...opts});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.message||'Request failed');return j.data!==undefined?j.data:j;}
+const names=['profile','grading','notifications','roles','billing','integrations','security','data'];let settings={}, roles=[], perms=[], backups=[];
+function sw(id,on){return '<div class="switch '+(on?'on':'')+'" data-key="'+id+'"></div>';}
+function row(lbl,help,control){return '<div class="s-row"><div><div class="lbl">'+lbl+'</div><div class="help">'+help+'</div></div>'+control+'</div>';}
+function val(k,d=''){return settings[k]??d;} function bool(k){return String(val(k,'0'))==='1'||val(k)===true;}
+function panels(){let bands={EE:75,ME:60,AE:50,BE:0};try{bands=JSON.parse(val('band_thresholds_json','{}'));}catch{}
+ const profile='<div class="s-section" data-section="profile"><h3>School profile</h3><div class="desc">Basic information shown on report cards, parent invitations and the school portal.</div>'+row('School name','Appears on report card headers','<input class="input" data-key="school_name" value="'+esc(val('school_name'))+'"/>')+row('Motto','Short, on the masthead','<input class="input" data-key="school_motto" value="'+esc(val('school_motto'))+'"/>')+row('Postal address','For official correspondence','<input class="input" data-key="school_address" value="'+esc(val('school_address'))+'"/>')+row('Main phone','Used in official communications','<input class="input" data-key="school_phone" value="'+esc(val('school_phone'))+'"/>')+row('Theme color','Report and portal accent','<input class="input mono" data-key="theme_color" value="'+esc(val('theme_color','#1B5E20'))+'"/>')+'<button class="btn btn-primary save-section" data-save="profile"><i class="far fa-save"></i>Save profile</button></div>';
+ const grading='<div class="s-section" data-section="grading" hidden><h3>Grading scheme</h3><div class="desc">CBC band thresholds and mark publishing defaults.</div>'+['EE','ME','AE','BE'].map(b=>row(b+' threshold','Minimum percentage for '+b,'<input class="input mono band-input" data-band="'+b+'" type="number" value="'+(bands[b]??0)+'"/>')).join('')+row('Show CBC band in mark sheets','EE / ME / AE / BE next to each score',sw('show_band_in_marks',bool('show_band_in_marks')))+row('Allow teachers to publish marks','Otherwise only admins can release',sw('teacher_publish_marks',bool('teacher_publish_marks')))+'<button class="btn btn-primary save-section" data-save="grading"><i class="far fa-save"></i>Save grading</button></div>';
+ const notif='<div class="s-section" data-section="notifications" hidden><h3>Notifications</h3><div class="desc">Defaults for teacher workflows and parent communication.</div>'+row('Auto-save mark entry','Saves drafts as teachers type',sw('auto_save_marks',bool('auto_save_marks')))+row('SMS on absence','Automatic same-day notification',sw('sms_on_absence',bool('sms_on_absence')))+row('SMS sender ID','Registered sender name','<input class="input" data-key="sms_sender_id" value="'+esc(val('sms_sender_id','JOYLAND'))+'"/>')+row('Default channels','Used for new broadcasts','<div style="display:flex;gap:8px;flex-wrap:wrap;">'+['in-app','sms','email','whatsapp'].map(c=>'<label class="chip"><input type="checkbox" class="default-channel" value="'+c+'" '+((val('default_channels_json','[]').includes(c))?'checked':'')+'> '+c+'</label>').join('')+'</div>')+'<button class="btn btn-primary save-section" data-save="notifications"><i class="far fa-save"></i>Save notifications</button></div>';
+ const roleTable='<table class="tbl"><thead><tr><th>Role</th>'+perms.map(p=>'<th class="c">'+esc(p.replace(/_/g,' '))+'</th>').join('')+'</tr></thead><tbody>'+roles.map(r=>'<tr data-role="'+r.id+'"><td><b>'+esc(r.name)+'</b></td>'+perms.map(p=>'<td class="c"><div class="switch perm '+((r.permissions||[]).includes(p)?'on':'')+'" data-perm="'+p+'"></div></td>').join('')+'</tr>').join('')+'</tbody></table>';
+ const rolePanel='<div class="s-section" data-section="roles" hidden><h3>Roles & permissions</h3><div class="desc">Control what each account type can do.</div>'+roleTable+'<button class="btn btn-primary save-section" data-save="roles"><i class="far fa-save"></i>Save permissions</button></div>';
+ const billing='<div class="s-section" data-section="billing" hidden><h3>Billing & SMS</h3><div class="desc">SMS balance and cost controls.</div><div class="stat-card"><div class="stat-label">SMS balance</div><div class="stat-value" id="smsBalance">-</div><div class="stat-delta flat">Cost per SMS is loaded live</div></div><button class="btn btn-primary"><i class="fas fa-credit-card"></i>Top up</button></div>';
+ const integrations='<div class="s-section" data-section="integrations" hidden><h3>Integrations</h3><div class="desc">Connected delivery and payment providers.</div><div id="integrationsList"></div></div>';
+ const security='<div class="s-section" data-section="security" hidden><h3>Security</h3><div class="desc">Authentication defaults.</div>'+row('Password min length','Minimum characters','<input class="input" type="number" data-key="password_min_length" value="'+esc(val('password_min_length','8'))+'"/>')+row('Require 2FA','Second-factor login for admins',sw('require_2fa',bool('require_2fa')))+row('Session timeout','Minutes before admin sessions expire','<input class="input" type="number" data-key="session_timeout_min" value="'+esc(val('session_timeout_min','120'))+'"/>')+'<button class="btn" style="color:var(--danger)"><i class="fas fa-right-from-bracket"></i>Force logout all admins</button><button class="btn btn-primary save-section" data-save="security"><i class="far fa-save"></i>Save security</button></div>';
+ const data='<div class="s-section" data-section="data" hidden><h3>Data & backup</h3><div class="desc">Create and review local database backups.</div><button class="btn btn-primary" id="backupNow"><i class="fas fa-database"></i>Create backup now</button><div id="backupList" style="margin-top:14px;"></div></div>';
+ return profile+grading+notif+rolePanel+billing+integrations+security+data;}
+async function saveSection(section){const body={};document.querySelectorAll('[data-section="'+section+'"] [data-key]').forEach(el=>{body[el.dataset.key]=el.classList.contains('switch')?(el.classList.contains('on')?'1':'0'):el.value;});if(section==='grading'){const b={};document.querySelectorAll('.band-input').forEach(i=>b[i.dataset.band]=Number(i.value));body.band_thresholds_json=JSON.stringify(b);}if(section==='notifications'){body.default_channels_json=JSON.stringify([...document.querySelectorAll('.default-channel:checked')].map(x=>x.value));}try{await api(API+'/school-settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});Joy.toast('Settings saved');settings=await api(API+'/school-settings');}catch(e){Joy.toast(e.message||'Could not save settings',{type:'danger'});}}
+function show(section){document.querySelectorAll('.s-section[data-section]').forEach(s=>s.hidden=s.dataset.section!==section);document.querySelectorAll('.s-rail-item').forEach((r,i)=>r.classList.toggle('on',names[i]===section));}
+async function loadExtras(){const sms=await api(API+'/billing/sms-balance');document.getElementById('smsBalance').textContent=sms.balance;const ints=await api(API+'/integrations');document.getElementById('integrationsList').innerHTML=ints.map(i=>'<div class="s-row"><div><div class="lbl">'+esc(i.name)+'</div><div class="help">'+esc(i.type)+' ? '+(i.connected?'connected':'disconnected')+'</div></div><button class="btn">'+(i.connected?'Disconnect':'Connect')+'</button></div>').join('');backups=await api(API+'/backups');renderBackups();}
+function renderBackups(){document.getElementById('backupList').innerHTML=backups.map(b=>'<div class="s-row"><div><div class="lbl">'+esc(b.filename)+'</div><div class="help">'+new Date(b.date).toLocaleString()+' ? '+Math.round(b.size/1024)+' KB</div></div><button class="btn">Download</button></div>').join('')||'<div class="help">No backups yet.</div>';}
+async function init(){try{[settings,roles,perms]=await Promise.all([api(API+'/school-settings'),api(API+'/roles'),api(API+'/permissions').then(d=>d.permissions)]);document.querySelector('.settings-layout > div:last-child').innerHTML=panels();document.querySelectorAll('.s-rail-item').forEach((r,i)=>{r.dataset.section=names[i];r.onclick=()=>show(names[i]);});document.addEventListener('click',e=>{const sw=e.target.closest('.switch');if(sw&&!sw.classList.contains('perm'))sw.classList.toggle('on');const save=e.target.closest('.save-section');if(save)saveSection(save.dataset.save);});document.querySelectorAll('.perm').forEach(p=>p.addEventListener('click',()=>p.classList.toggle('on')));document.querySelector('.save-section[data-save="roles"]').onclick=async()=>{for(const tr of document.querySelectorAll('tr[data-role]')){await api(API+'/roles/'+tr.dataset.role+'/permissions',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({permissions:[...tr.querySelectorAll('.perm.on')].map(x=>x.dataset.perm)})});}Joy.toast('Permissions saved');};document.getElementById('backupNow').onclick=async()=>{await api(API+'/backups',{method:'POST'});backups=await api(API+'/backups');renderBackups();Joy.toast('Backup created');};await loadExtras();show('profile');}catch(e){Joy.toast("Couldn't load settings",{type:'danger'});console.error(e);}}
+init();
+</script>
+</body>
+</html>
+

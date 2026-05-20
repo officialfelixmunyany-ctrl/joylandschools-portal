@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Analysis · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.insights{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.in-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--sh-1);position:relative;overflow:hidden;}
+.in-eyebrow{display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.in-eyebrow .mark{width:6px;height:6px;border-radius:50%;}
+.in-num{font-family:var(--display);font-weight:600;font-size:38px;color:var(--ink);letter-spacing:-.022em;line-height:1;}
+.in-num .unit{font-family:var(--body);font-size:14px;color:var(--ink-3);font-weight:500;margin-left:3px;}
+.in-spark{margin-top:10px;}
+.in-foot{margin-top:10px;font-size:12px;color:var(--ink-2);line-height:1.4;}
+.in-foot b{color:var(--ink);font-weight:600;}
+.in-tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:6px;font-family:var(--mono);}
+.in-tag.up{background:rgba(16,163,74,.10);color:var(--ok);}
+.in-tag.dn{background:rgba(185,28,28,.10);color:var(--danger);}
+
+.subj-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+.subj-row{display:grid;grid-template-columns:90px 1fr 50px;gap:10px;align-items:center;}
+.subj-name{font-size:12.5px;font-weight:600;color:var(--ink);}
+.subj-bar{position:relative;height:24px;background:var(--surface-2);border-radius:6px;overflow:hidden;display:flex;align-items:center;}
+.subj-fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;}
+.subj-trend{font-family:var(--mono);font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px;justify-content:flex-end;}
+.subj-trend.up{color:var(--ok);} .subj-trend.dn{color:var(--danger);} .subj-trend.flat{color:var(--ink-3);}
+
+.matrix-wrap{margin-top:12px;overflow-x:auto;}
+.matrix{display:grid;grid-template-columns:130px repeat(9,minmax(64px,1fr));gap:6px;min-width:780px;}
+.mx-h{font-size:10px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;text-align:center;}
+.mx-row-label{font-size:12px;font-weight:600;color:var(--ink);display:flex;align-items:center;padding-left:6px;}
+.mx-cell{aspect-ratio:1.4;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:.15s var(--ease);}
+.mx-cell:hover{transform:scale(1.05);outline:2px solid var(--ink);outline-offset:2px;z-index:1;}
+.mx-cell .band{font-size:8.5px;font-weight:700;opacity:.85;margin-top:2px;letter-spacing:.05em;}
+.mx-ee{background:linear-gradient(135deg,#10b981,#059669);}
+.mx-me{background:linear-gradient(135deg,#3b82f6,#2563eb);}
+.mx-ae{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.mx-be{background:linear-gradient(135deg,#ef4444,#dc2626);}
+.matrix-legend{display:flex;align-items:center;gap:14px;margin-top:14px;font-size:11px;color:var(--ink-2);font-family:var(--mono);flex-wrap:wrap;}
+.matrix-legend .sw{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:5px;}
+
+.coh-chip{padding:5px 11px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--ink-2);cursor:pointer;}
+.coh-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px;}
+.split-card{padding:14px;background:var(--surface-2);border-radius:10px;}
+.split-title{font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.split-bars{display:flex;align-items:flex-end;gap:14px;height:90px;}
+.split-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.split-bar .b{width:100%;border-radius:6px 6px 2px 2px;}
+.split-bar .v{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink);}
+.split-bar .l{font-size:10.5px;color:var(--ink-3);font-weight:600;}
+
+.callout{margin-top:14px;padding:12px 14px;background:linear-gradient(135deg,var(--gold-tint),#fff);border:1px solid rgba(201,151,50,.30);border-radius:10px;display:flex;align-items:flex-start;gap:11px;}
+.callout i.lead{color:var(--gold);font-size:14px;margin-top:2px;}
+.callout-body{flex:1;font-size:12.5px;color:var(--ink-2);line-height:1.5;}
+.callout-body b{color:var(--ink);font-weight:600;}
+.callout-body em{font-style:normal;color:var(--gold);font-weight:600;}
+
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;font-family:var(--mono);}
+.tag.up{background:rgba(16,163,74,.10);color:var(--ok);}
+.tag.dn{background:rgba(185,28,28,.10);color:var(--danger);}
+.tag.flat{background:var(--surface-2);color:var(--ink-3);}
+.spark-cell{width:90px;}
+.lg-item{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-2);font-weight:500;cursor:pointer;}
+.lg-dot{width:10px;height:10px;border-radius:3px;}
+.fallback-banner{
+  margin-bottom:18px;padding:12px 16px;
+  background:linear-gradient(135deg,var(--gold-tint),#fff);
+  border:1px solid rgba(201,151,50,.30);border-radius:12px;
+  display:flex;align-items:center;gap:11px;font-size:13px;color:var(--ink-2);
+}
+.fallback-banner i{color:var(--gold);font-size:14px;}
+.fallback-banner b{color:var(--ink);font-weight:600;}
+.fallback-banner .cta{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none;white-space:nowrap;}
+.fallback-banner .cta:hover{text-decoration:underline;}
+</style>
+</head>
+<body data-page="analysis" data-title="Analysis">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Analysis"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Academic intelligence</div>
+        <h1 class="h1">Analysis <em id="hTermEm">· Loading…</em></h1>
+        <div class="h-sub" id="hSub">School-wide performance · loading…</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="range-group" id="termTabs"><button class="range-btn">Loading…</button></div>
+        <div class="range-group" id="stageTabs" style="display:flex;">
+          <button class="range-btn on" data-stage="combined" title="Midterm + Endterm averaged">Combined</button>
+          <button class="range-btn" data-stage="midterm">Midterm</button>
+          <button class="range-btn" data-stage="endterm">Endterm</button>
+        </div>
+        <button class="btn btn-sm" id="strictToggle" data-strict="false" title="Toggle fallback">
+          <i class="fas fa-rotate"></i><span>Auto term</span>
+        </button>
+        <button class="btn" id="exportBtn" title="Download a CSV snapshot of this analysis view"><i class="fas fa-download"></i>Export</button>
+        <button class="btn btn-primary" id="generateReportBtn" title="Open the report cards page scoped to this term"><i class="fas fa-file-pdf"></i>Generate report</button>
+      </div>
+    </div>
+
+    <!-- Insight strip -->
+    <div class="insights">
+      <div class="in-card">
+        <div class="in-eyebrow"><span class="mark" style="background:var(--d1)"></span>School mean</div>
+        <div class="in-num" id="inSchoolMean">—</div>
+        <div class="in-foot" id="inSchoolFoot">Loading…</div>
+      </div>
+      <div class="in-card">
+        <div class="in-eyebrow"><span class="mark" style="background:var(--ok)"></span>Top class</div>
+        <div class="in-num" id="inTopClass" style="font-size:22px;font-family:var(--body);font-weight:700;letter-spacing:-.01em;line-height:1.2;">—</div>
+        <div class="in-foot" id="inTopFoot">Loading…</div>
+      </div>
+      <div class="in-card">
+        <div class="in-eyebrow"><span class="mark" style="background:var(--warn)"></span>Subjects below ME</div>
+        <div class="in-num" id="inWeakNum">—</div>
+        <div class="in-foot" id="inWeakFoot">Loading…</div>
+        <div id="inWeakList" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+      <div class="in-card">
+        <div class="in-eyebrow"><span class="mark" style="background:var(--gold)"></span>Below ME learners</div>
+        <div class="in-num" id="inBelowME">—</div>
+        <div class="in-foot" id="inBelowFoot">Loading…</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- Trend · grade mean across this session's terms (built client-side from per-term /marks/analysis) -->
+      <div class="card col-8">
+        <div class="card-head">
+          <div><div class="card-title">Performance over time</div><div class="card-sub" id="trendSub">All grades · across terms</div></div>
+        </div>
+        <div class="card-body">
+          <div id="trendBody">
+            <div style="padding:42px 24px;text-align:center;color:var(--ink-3);font-size:12.5px;">Loading term-over-term trend…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subject ranking -->
+      <div class="card col-4">
+        <div class="card-head"><div><div class="card-title">Subject performance</div><div class="card-sub">Mean across 8 classes</div></div></div>
+        <div class="card-body">
+          <div class="subj-list" id="subjList"></div>
+        </div>
+      </div>
+
+      <!-- Matrix -->
+      <div class="card col-12">
+        <div class="card-head">
+          <div><div class="card-title">Performance matrix · classes × subjects</div><div class="card-sub" id="matrixSub">Class mean (%) with CBC band</div></div>
+          <div class="toggle-pair" id="matrixMode">
+            <button class="on" data-mode="mean">Mean %</button>
+            <button data-mode="band">Band</button>
+            <button data-mode="delta">Δ vs previous term</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="matrix-wrap"><div class="matrix" id="matrix"></div></div>
+          <div class="matrix-legend" id="matrixLegend"></div>
+        </div>
+      </div>
+
+      <!-- Cohort tracker · class mean across all past terms -->
+      <div class="card col-7">
+        <div class="card-head">
+          <div><div class="card-title">Cohort tracker</div><div class="card-sub" id="cohortSub">Follow a class across terms</div></div>
+          <select class="input" id="cohortClass" style="height:32px;min-width:180px;font-size:12px;"><option>Loading…</option></select>
+        </div>
+        <div class="card-body">
+          <div id="cohortBody">
+            <div style="padding:36px 18px;text-align:center;color:var(--ink-3);font-size:12.5px;">Loading cohort history…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equity splits · performance by sex / attendance / boarding -->
+      <div class="card col-5">
+        <div class="card-head">
+          <div><div class="card-title">Equity splits</div><div class="card-sub" id="equitySub">Mean by sex · attendance band · boarding</div></div>
+        </div>
+        <div class="card-body">
+          <div id="equityBody">
+            <div style="padding:36px 18px;text-align:center;color:var(--ink-3);font-size:12.5px;">Loading equity splits…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- League table -->
+      <div class="card col-12">
+        <div class="card-head">
+          <div><div class="card-title">Class league</div><div class="card-sub" id="leagueSub">Ranked by overall mean</div></div>
+          <div style="display:flex;gap:8px;">
+            <button class="card-link" id="leagueSortBtn" data-sort="mean"><i class="fas fa-arrow-up-wide-short"></i> Sort: Mean</button>
+            <button class="card-link" id="leagueCsvBtn"><i class="fas fa-file-export"></i> Export CSV</button>
+          </div>
+        </div>
+        <div style="padding:0;">
+          <table class="tbl" id="leagueTbl">
+            <thead>
+              <tr><th>#</th><th>Class</th><th>Teacher</th><th class="c">Learners</th><th>Trend</th><th class="r">Mean</th><th class="r">Attend</th><th class="r">EE</th><th class="r">BE</th><th class="r">Δ T1</th></tr>
+            </thead>
+            <tbody id="leagueBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="shroud" id="shroud"></div>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API='/api/admin';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct=v=>Number.isFinite(Number(v))?Number(v).toFixed(1).replace(/\.0$/,'')+'%':'-';
+async function api(path){const r=await fetch(path,{credentials:'include'});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.message||'Request failed');return j.data!==undefined?j.data:j;}
+
+/* Term-selection state — terms come from the active session, the user clicks one to scope analysis */
+const termState = { sessionTerms:[], sessionYear:null, selectedTermId:null, currentTermId:null, stage:'combined' };
+
+async function loadActiveSessionTerms(){
+  try {
+    const sessions = await api(API + '/sessions');
+    const active = (sessions || []).find(s => Number(s.is_active) === 1) || sessions?.[0];
+    termState.sessionTerms = (active?.terms || []).slice().sort((a,b) => Number(a.term_number||0) - Number(b.term_number||0));
+    termState.sessionYear = active?.year || null;
+  } catch(_) { termState.sessionTerms = []; }
+}
+
+function renderTermTabs(){
+  const host = document.getElementById('termTabs');
+  if(!host) return;
+  if(!termState.sessionTerms.length){
+    host.innerHTML = '<button class="range-btn" disabled>No terms</button>';
+    return;
+  }
+  const sel = String(termState.selectedTermId || '');
+  host.innerHTML = termState.sessionTerms.map(t => {
+    const on = sel === String(t.id) ? ' on' : '';
+    const isCurrent = String(t.id) === String(termState.currentTermId);
+    const label = (t.term_name || ('Term ' + t.term_number)).replace(/^Term\s+/i, 'Term ');
+    /* Show a tiny dot for the term the school is currently in, even if user is viewing another */
+    const dot = isCurrent && !on ? '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--gold);margin-right:5px;vertical-align:middle;"></span>' : '';
+    return '<button class="range-btn' + on + '" data-tid="' + t.id + '" type="button">' + dot + esc(label) + '</button>';
+  }).join('');
+  host.querySelectorAll('button[data-tid]').forEach(btn => btn.addEventListener('click', () => {
+    termState.selectedTermId = Number(btn.dataset.tid);
+    renderTermTabs();
+    loadAnalysis().then(loadEquity);
+  }));
+}
+
+function updateHeaderForTerm(displayTerm){
+  const em = document.getElementById('hTermEm');
+  if(em){
+    const stageSuffix = termState.stage === 'midterm' ? ' · Midterm'
+                     : termState.stage === 'endterm' ? ' · Endterm'
+                     : '';
+    if(displayTerm?.name){
+      em.textContent = '· ' + displayTerm.name + (termState.sessionYear ? ', ' + termState.sessionYear : '') + stageSuffix;
+    } else if(termState.sessionYear){
+      em.textContent = '· ' + termState.sessionYear + stageSuffix;
+    } else {
+      em.textContent = stageSuffix;
+    }
+  }
+}
+function fillFor(v){return v>=70?'linear-gradient(90deg,#10b981,#059669)':v>=60?'linear-gradient(90deg,#3b82f6,#2563eb)':v>=50?'linear-gradient(90deg,#f59e0b,#d97706)':'linear-gradient(90deg,#ef4444,#dc2626)';}
+function bandCls(v){return v>=75?'mx-ee':v>=60?'mx-me':v>=50?'mx-ae':'mx-be';}
+function bandLbl(v){return v>=75?'EE':v>=60?'ME':v>=50?'AE':'BE';}
+function trendIcon(t){return t==='up'?'fa-caret-up':t==='dn'?'fa-caret-down':'fa-minus';}
+
+/* ---------- Matrix rendering (Mean / Band / Δ vs previous term) ---------- */
+const matrixCtx = { classRows: [], displayTerm: null, deltaPrevTerm: null, deltaMap: null, mode: 'mean' };
+
+/* Fetch the previous-term snapshot once and build a fast lookup
+   keyed by "<classId>::<subjectName>" → previous mean */
+async function prepareDeltaMap(currentTermId){
+  matrixCtx.deltaMap = null;
+  matrixCtx.deltaPrevTerm = null;
+  if(!currentTermId) return;
+  const all = (termState.sessionTerms || []).slice().sort((a,b) => Number(a.term_number||0) - Number(b.term_number||0));
+  const idx = all.findIndex(t => String(t.id) === String(currentTermId));
+  if(idx < 1) return; /* No earlier term in this session */
+  const prev = all[idx - 1];
+  try {
+    const stageQs = (termState.stage && termState.stage !== 'combined') ? ('&stage=' + termState.stage) : '';
+    const prevData = await api(API + '/marks/analysis?strict=true&term_id=' + prev.id + stageQs);
+    const map = {};
+    (prevData?.classes || []).forEach(c => {
+      (c.subject_averages || []).forEach(s => {
+        if(Number(s.entries || 0) > 0) map[c.class_id + '::' + s.name] = Number(s.average) || 0;
+      });
+    });
+    matrixCtx.deltaMap = map;
+    matrixCtx.deltaPrevTerm = prev;
+  } catch(_) { /* leave deltaMap null — toggle will show a notice */ }
+}
+
+function buildMatrixSubjects(classRows){
+  /* Every subject taught anywhere in the school for this term, deduped + alphabetised.
+     Falls back to subjects in the registry if no marks exist yet. */
+  const set = new Set();
+  classRows.forEach(c => (c.subject_averages || []).forEach(s => { if(s?.name) set.add(s.name); }));
+  return [...set].sort((a,b) => a.localeCompare(b));
+}
+
+function renderMatrix(){
+  const host = document.getElementById('matrix');
+  const sub  = document.getElementById('matrixSub');
+  const legend = document.getElementById('matrixLegend');
+  const { classRows, displayTerm, mode, deltaMap, deltaPrevTerm } = matrixCtx;
+  if(!classRows.length){ host.innerHTML = '<div style="padding:30px;color:var(--ink-3);grid-column:1/-1;">No classes.</div>'; return; }
+
+  const subjects = buildMatrixSubjects(classRows);
+  if(!subjects.length){ host.innerHTML = '<div style="padding:30px;color:var(--ink-3);grid-column:1/-1;">No subjects assigned yet.</div>'; return; }
+
+  /* Adjust grid template — labels column + N subject columns */
+  host.style.gridTemplateColumns = '130px repeat(' + subjects.length + ', minmax(64px, 1fr))';
+  host.style.minWidth = (130 + subjects.length * 70) + 'px';
+
+  const termLbl = displayTerm?.name || 'Selected term';
+  if(mode === 'delta' && !deltaMap){
+    sub.textContent = deltaPrevTerm ? 'Δ unavailable — previous term had no marks' : 'Δ unavailable — no earlier term in this session';
+  } else if(mode === 'delta'){
+    sub.textContent = 'Change in class mean vs ' + (deltaPrevTerm?.term_name || 'previous term');
+  } else if(mode === 'band'){
+    sub.textContent = 'CBC band per class · ' + termLbl;
+  } else {
+    sub.textContent = 'Class mean (%) with CBC band · ' + termLbl;
+  }
+
+  const abbrev = subjects.map(name => {
+    const parts = name.split(/[\s\-/]+/).filter(Boolean);
+    return parts.length > 1 ? parts.map(w => w[0]).join('').slice(0,5).toUpperCase() : name.slice(0,4).toUpperCase();
+  });
+
+  let html = '<div></div>';
+  subjects.forEach((name, i) => {
+    html += '<div class="mx-h" title="' + esc(name) + '">' + esc(abbrev[i]) + '</div>';
+  });
+
+  classRows.forEach(c => {
+    const muted = c.hasMarks ? '' : 'opacity:.62;';
+    html += '<div class="mx-row-label" style="' + muted + '"><div><div style="font-size:12px;font-weight:600;">' + esc(c.class_name) + '</div><div style="font-size:10px;color:var(--ink-3);font-family:var(--mono);">' + c.learner_count + ' learners</div></div></div>';
+    subjects.forEach(name => {
+      const match = (c.subject_averages || []).find(x => x.name === name);
+      const hasCell = c.hasMarks && Number(match?.entries || 0) > 0;
+      const v = Number(match?.average || 0);
+      if(!hasCell){
+        html += '<div class="mx-cell" style="background:#f1f5f9;color:var(--ink-3);" title="' + esc(name) + ' · ' + esc(c.class_name) + ': no marks"><span>—</span><span class="band">NO DATA</span></div>';
+        return;
+      }
+      const title = esc(c.class_name) + ' · ' + esc(name) + ': ' + v.toFixed(1) + '% (' + bandLbl(v) + ')';
+      if(mode === 'band'){
+        html += '<div class="mx-cell ' + bandCls(v) + '" title="' + title + '"><span style="font-size:16px;font-family:var(--display);">' + bandLbl(v) + '</span><span class="band">' + Math.round(v) + '%</span></div>';
+      } else if(mode === 'delta'){
+        const prev = deltaMap ? deltaMap[c.class_id + '::' + name] : undefined;
+        if(prev == null){
+          html += '<div class="mx-cell" style="background:#f1f5f9;color:var(--ink-3);" title="' + title + ' · no comparable previous-term data"><span>—</span><span class="band">NEW</span></div>';
+        } else {
+          const d = v - prev;
+          const cls = d >= 1 ? 'mx-ee' : d <= -1 ? 'mx-be' : 'mx-me';
+          const sign = d >= 0 ? '+' : '';
+          html += '<div class="mx-cell ' + cls + '" title="' + title + ' · ' + (deltaPrevTerm?.term_name || 'prev') + ' was ' + prev.toFixed(1) + '%"><span>' + sign + d.toFixed(1) + '</span><span class="band">' + (d >= 0 ? 'UP' : 'DOWN') + '</span></div>';
+        }
+      } else {
+        html += '<div class="mx-cell ' + bandCls(v) + '" title="' + title + '"><span>' + Math.round(v) + '</span><span class="band">' + bandLbl(v) + '</span></div>';
+      }
+    });
+  });
+  host.innerHTML = html;
+
+  /* Legend changes with mode */
+  if(mode === 'delta'){
+    legend.innerHTML =
+      '<span><span class="sw" style="background:linear-gradient(135deg,#10b981,#059669);"></span>Up ≥ 1 pt</span>' +
+      '<span><span class="sw" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"></span>Within ±1 pt</span>' +
+      '<span><span class="sw" style="background:linear-gradient(135deg,#ef4444,#dc2626);"></span>Down ≥ 1 pt</span>' +
+      '<span><span class="sw" style="background:#f1f5f9;border:1px solid var(--line);"></span>NEW · no prior</span>';
+  } else {
+    legend.innerHTML =
+      '<span><span class="sw" style="background:linear-gradient(135deg,#10b981,#059669);"></span>EE · 75%+</span>' +
+      '<span><span class="sw" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"></span>ME · 60–74%</span>' +
+      '<span><span class="sw" style="background:linear-gradient(135deg,#f59e0b,#d97706);"></span>AE · 50–59%</span>' +
+      '<span><span class="sw" style="background:linear-gradient(135deg,#ef4444,#dc2626);"></span>BE · &lt;50%</span>';
+  }
+}
+
+document.getElementById('matrixMode')?.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-mode]'); if(!btn) return;
+  document.querySelectorAll('#matrixMode button').forEach(x => x.classList.remove('on'));
+  btn.classList.add('on');
+  matrixCtx.mode = btn.dataset.mode;
+  renderMatrix();
+});
+
+/* Stage tabs (Combined / Midterm / Endterm) — re-runs analysis with ?stage= */
+document.getElementById('stageTabs')?.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-stage]'); if(!btn) return;
+  if(btn.classList.contains('on')) return;
+  document.querySelectorAll('#stageTabs button').forEach(x => x.classList.remove('on'));
+  btn.classList.add('on');
+  termState.stage = btn.dataset.stage;
+  loadAnalysis();
+});
+function fallbackBanner(displayTerm, requestedTerm, clock){
+  document.querySelector('.fallback-banner')?.remove();
+  if(!displayTerm?.is_fallback || !requestedTerm) return;
+  const current = clock?.in_term
+    ? (esc(clock.term?.term_name || 'Current term') + ' · ' + esc(clock.stage_label || clock.period_label || 'Term') + ' · Week ' + esc(clock.week_no || '-') + '/' + esc(clock.total_weeks || '-'))
+    : esc(clock?.period_label || 'Current period');
+  const banner = document.createElement('div');
+  banner.className = 'fallback-banner';
+  banner.innerHTML =
+    '<i class="fas fa-circle-info"></i>' +
+    '<span>You are in <b>' + current + '</b>. Performance is showing <b>' + esc(displayTerm.name) +
+    '</b> because Joyland records marks only for <b>Midterm</b> and <b>Endterm</b>.</span>' +
+    '<a class="cta" href="/admin/marks.html"><i class="fas fa-pen"></i> Enter marks</a>';
+  const anchor = document.querySelector('.insights');
+  anchor.parentNode.insertBefore(banner, anchor);
+}
+async function loadAnalysis(){
+ try{
+ const strict = document.getElementById('strictToggle')?.dataset.strict === 'true';
+ const params = new URLSearchParams();
+ if(strict) params.set('strict','true');
+ if(termState.selectedTermId) params.set('term_id', String(termState.selectedTermId));
+ if(termState.stage && termState.stage !== 'combined') params.set('stage', termState.stage);
+ const qs = params.toString() ? ('?' + params.toString()) : '';
+ const [analysis, stats, clock]=await Promise.all([api(API+'/marks/analysis'+qs),api(API+'/stats'),api(API+'/current-period')]);
+ /* Sync term tabs against what the backend resolved (handles fallback) */
+ termState.currentTermId = clock?.term?.id || termState.currentTermId;
+ if(analysis?.display_term?.id){
+   termState.selectedTermId = analysis.display_term.id;
+ } else if(analysis?.requested_term?.id){
+   termState.selectedTermId = analysis.requested_term.id;
+ }
+ renderTermTabs();
+ updateHeaderForTerm(analysis?.display_term || analysis?.requested_term || clock?.term);
+ const classes=analysis.classes||[];
+ const classRows=classes.map(c=>{
+   const vals=(c.ranked||[]).map(l=>Number(l.average)).filter(Number.isFinite);
+   const hasMarks=c.has_marks!==false&&vals.length>0;
+   return Object.assign({},c,{
+     hasMarks,
+     mean:hasMarks?vals.reduce((s,v)=>s+v,0)/vals.length:null,
+     ee:hasMarks?vals.filter(v=>v>=75).length:0,
+     be:hasMarks?vals.filter(v=>v<50).length:0
+   });
+ }).sort((a,b)=>{
+   if(a.hasMarks!==b.hasMarks) return a.hasMarks?-1:1;
+   if(a.hasMarks&&b.hasMarks) return b.mean-a.mean;
+   return String(a.class_name).localeCompare(String(b.class_name),undefined,{numeric:true});
+ });
+  const markedRows=classRows.filter(c=>c.hasMarks);
+  const schoolMean=markedRows.length?markedRows.reduce((s,c)=>s+c.mean,0)/markedRows.length:null;
+  const subj=new Map();
+  classes.forEach(c=>(c.subject_averages||[]).forEach(s=>{
+    const row=subj.get(s.name)||{name:s.name,sum:0,count:0,seen:0};
+    row.seen++;
+    if(Number(s.entries||0)>0){row.sum+=Number(s.average||0);row.count++;}
+    subj.set(s.name,row);
+  }));
+  const subjRows=[...subj.values()].map(s=>Object.assign(s,{mean:s.count?s.sum/s.count:null})).sort((a,b)=>(b.mean??-1)-(a.mean??-1)||a.name.localeCompare(b.name));
+  const markedSubjects=subjRows.filter(s=>s.mean!==null);
+ /* Card 1 — school mean */
+ const schoolBand = schoolMean === null ? '—' : schoolMean >= 75 ? 'EE' : schoolMean >= 60 ? 'ME' : schoolMean >= 50 ? 'AE' : 'BE';
+ document.getElementById('inSchoolMean').innerHTML = pct(schoolMean);
+ document.getElementById('inSchoolFoot').innerHTML = markedRows.length
+   ? '<b>' + schoolBand + '</b> band · across ' + markedRows.length + ' class' + (markedRows.length===1?'':'es') + ' with marks'
+   : 'No classes have marks yet';
+ /* Card 2 — top class */
+ const top = markedRows[0];
+ document.getElementById('inTopClass').textContent = top ? top.class_name : '—';
+ document.getElementById('inTopFoot').innerHTML = top
+   ? '<b>' + pct(top.mean) + '</b> mean · leading ' + markedRows.length + ' marked class' + (markedRows.length===1?'':'es')
+   : 'No marks recorded yet';
+ /* Card 3 — subjects below ME (mean < 60) */
+ const weakSubjects = subjRows.filter(s => s.mean !== null && s.mean < 60).sort((a,b) => a.mean - b.mean);
+ document.getElementById('inWeakNum').innerHTML = weakSubjects.length + '<span class="unit">below ME</span>';
+ document.getElementById('inWeakFoot').textContent = weakSubjects.length
+   ? 'Across the school'
+   : (markedSubjects.length ? 'Every subject at ME+' : 'No subject data yet');
+ document.getElementById('inWeakList').innerHTML = weakSubjects.slice(0, 3).map(s =>
+   '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;"><span style="color:var(--ink-2);font-weight:600;">' + esc(s.name) + '</span><span style="font-family:var(--mono);font-weight:700;color:var(--warn);">' + pct(s.mean) + '</span></div>'
+ ).join('');
+ /* Card 4 — learners below ME band (across all marked classes) */
+ const belowME = classRows.reduce((s, c) => s + (c.ranked || []).filter(l => Number(l.average || 0) < 60).length, 0);
+ const totalRanked = classRows.reduce((s, c) => s + (c.ranked || []).length, 0);
+ document.getElementById('inBelowME').innerHTML = belowME + '<span class="unit">of ' + totalRanked + '</span>';
+ document.getElementById('inBelowFoot').textContent = totalRanked
+   ? Math.round((belowME / totalRanked) * 100) + '% need support'
+   : 'No learner data yet';
+ document.getElementById('subjList').innerHTML=markedSubjects.map(s=>'<div class="subj-row"><span class="subj-name">'+esc(s.name)+'</span><div class="subj-bar"><div class="subj-fill" style="width:'+Math.max(4,s.mean)+'%;background:'+fillFor(s.mean)+';">'+pct(s.mean)+'</div></div><span class="subj-trend flat"><i class="fas fa-minus"></i>live</span></div>').join('')||'<div style="color:var(--ink-3);">No subject marks yet.</div>';
+ /* Matrix: keep this term's data + the resolved term name in module scope so the toggle handler can re-render */
+ matrixCtx.classRows = classRows;
+ matrixCtx.displayTerm = analysis.display_term || analysis.requested_term;
+ await prepareDeltaMap(matrixCtx.displayTerm?.id);
+ renderMatrix();
+ let rank=0;
+ document.getElementById('leagueBody').innerHTML=classRows.map(c=>{
+   const pos=c.hasMarks?++rank:'-';
+   const rowStyle=c.hasMarks?'':' style="opacity:.62;"';
+   const badge=c.hasMarks?'<span class="rank-pos '+(rank===1?'gold':rank===2?'silver':rank===3?'bronze':'')+'">'+pos+'</span>':'<span style="color:var(--ink-3);font-family:var(--mono);">-</span>';
+   return '<tr'+rowStyle+'><td>'+badge+'</td><td><b>'+esc(c.class_name)+'</b></td><td>'+(c.hasMarks?'live':'not marked')+'</td><td class="c">'+c.learner_count+'</td><td>'+(c.hasMarks?'live':'-')+'</td><td class="r">'+pct(c.mean)+'</td><td class="r">-</td><td class="r">'+(c.hasMarks?c.ee:'-')+'</td><td class="r">'+(c.hasMarks?c.be:'-')+'</td><td class="r">-</td></tr>';
+ }).join('');
+ fallbackBanner(analysis.display_term, analysis.requested_term, clock);
+ /* Snapshot for CSV export + report-card deeplink */
+ pageSnapshot.term         = analysis.display_term || analysis.requested_term || clock?.term || null;
+ pageSnapshot.classRows    = classRows;
+ pageSnapshot.subjectRows  = subjRows;
+ pageSnapshot.schoolMean   = schoolMean;
+ pageSnapshot.belowME      = belowME;
+ pageSnapshot.totalRanked  = totalRanked;
+ pageSnapshot.weakSubjects = weakSubjects;
+ }catch(e){Joy.toast("Couldn't load analysis",{type:'danger'});console.error(e);}}
+
+const pageSnapshot = { term:null, classRows:[], subjectRows:[], schoolMean:null, belowME:0, totalRanked:0, weakSubjects:[], leagueSort:'mean' };
+
+function csvCell(v){ const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }
+function downloadCsv(filename, lines){
+  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportAnalysisCsv(){
+  if(!pageSnapshot.classRows.length){ Joy.toast('Nothing to export yet — let the page finish loading', { type:'warn' }); return; }
+  const t = pageSnapshot.term;
+  const termLabel = t?.name || 'Current term';
+  const stageLabel = termState.stage === 'midterm' ? 'Midterm' : termState.stage === 'endterm' ? 'Endterm' : 'Combined';
+  const lines = [];
+  /* Header */
+  lines.push(['Joyland Schools · Analysis snapshot'].map(csvCell).join(','));
+  lines.push(['Term', termLabel].map(csvCell).join(','));
+  lines.push(['Stage', stageLabel].map(csvCell).join(','));
+  lines.push(['Generated', new Date().toISOString()].map(csvCell).join(','));
+  lines.push('');
+  /* Section 1: school-wide summary */
+  lines.push('# Summary');
+  lines.push(['Metric','Value'].map(csvCell).join(','));
+  lines.push(['School mean (%)', pageSnapshot.schoolMean == null ? '' : pageSnapshot.schoolMean.toFixed(2)].map(csvCell).join(','));
+  lines.push(['Classes with marks', pageSnapshot.classRows.filter(c => c.hasMarks).length].map(csvCell).join(','));
+  lines.push(['Subjects below ME', pageSnapshot.weakSubjects.length].map(csvCell).join(','));
+  lines.push(['Learners below ME band', pageSnapshot.belowME + ' of ' + pageSnapshot.totalRanked].map(csvCell).join(','));
+  lines.push('');
+  /* Section 2: class league */
+  lines.push('# Class league');
+  lines.push(['Rank','Class','Learners','Mean (%)','EE count','BE count','Has marks'].map(csvCell).join(','));
+  let rank = 0;
+  pageSnapshot.classRows.forEach(c => {
+    if(c.hasMarks) rank++;
+    lines.push([
+      c.hasMarks ? rank : '',
+      c.class_name,
+      c.learner_count,
+      c.hasMarks ? c.mean.toFixed(2) : '',
+      c.hasMarks ? c.ee : '',
+      c.hasMarks ? c.be : '',
+      c.hasMarks ? 'yes' : 'no'
+    ].map(csvCell).join(','));
+  });
+  lines.push('');
+  /* Section 3: subject performance */
+  lines.push('# Subject performance (school-wide)');
+  lines.push(['Subject','Mean (%)','Classes with marks'].map(csvCell).join(','));
+  pageSnapshot.subjectRows.forEach(s => {
+    lines.push([s.name, s.mean == null ? '' : s.mean.toFixed(2), s.count].map(csvCell).join(','));
+  });
+  lines.push('');
+  /* Section 4: full matrix (classes × subjects) */
+  const subjectsInMatrix = [...new Set(pageSnapshot.classRows.flatMap(c => (c.subject_averages || []).map(s => s.name)))]
+    .filter(Boolean).sort((a,b) => a.localeCompare(b));
+  lines.push('# Performance matrix · classes × subjects (mean %)');
+  lines.push(['Class', ...subjectsInMatrix].map(csvCell).join(','));
+  pageSnapshot.classRows.forEach(c => {
+    const row = [c.class_name];
+    subjectsInMatrix.forEach(name => {
+      const match = (c.subject_averages || []).find(x => x.name === name);
+      row.push((c.hasMarks && Number(match?.entries || 0) > 0) ? Number(match.average).toFixed(2) : '');
+    });
+    lines.push(row.map(csvCell).join(','));
+  });
+  const safeName = String(termLabel).replace(/[^a-z0-9-]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase() || 'term';
+  downloadCsv('analysis-' + safeName + '-' + stageLabel.toLowerCase() + '-' + new Date().toISOString().slice(0,10) + '.csv', lines);
+  Joy.toast('CSV downloaded · ' + termLabel + ' (' + stageLabel + ')');
+}
+
+function exportLeagueCsv(){
+  if(!pageSnapshot.classRows.length){ Joy.toast('Nothing to export yet', { type:'warn' }); return; }
+  const t = pageSnapshot.term;
+  const lines = [['Rank','Class','Learners','Mean (%)','EE','BE'].map(csvCell).join(',')];
+  let rank = 0;
+  pageSnapshot.classRows.forEach(c => {
+    if(c.hasMarks) rank++;
+    lines.push([
+      c.hasMarks ? rank : '',
+      c.class_name,
+      c.learner_count,
+      c.hasMarks ? c.mean.toFixed(2) : '',
+      c.hasMarks ? c.ee : '',
+      c.hasMarks ? c.be : ''
+    ].map(csvCell).join(','));
+  });
+  const safeName = String(t?.name || 'term').replace(/[^a-z0-9-]+/gi,'-').toLowerCase();
+  downloadCsv('class-league-' + safeName + '-' + new Date().toISOString().slice(0,10) + '.csv', lines);
+  Joy.toast('League CSV downloaded');
+}
+
+function reSortLeague(){
+  if(!pageSnapshot.classRows.length) return;
+  const modes = ['mean','name','ee','be'];
+  const cur = pageSnapshot.leagueSort || 'mean';
+  pageSnapshot.leagueSort = modes[(modes.indexOf(cur) + 1) % modes.length];
+  const label = { mean:'Mean', name:'Name', ee:'EE count', be:'BE count' }[pageSnapshot.leagueSort];
+  document.getElementById('leagueSortBtn').innerHTML = '<i class="fas fa-arrow-up-wide-short"></i> Sort: ' + label;
+  /* Sort classRows in place — keep no-marks rows at the bottom */
+  pageSnapshot.classRows.sort((a,b) => {
+    if(a.hasMarks !== b.hasMarks) return a.hasMarks ? -1 : 1;
+    if(!a.hasMarks && !b.hasMarks) return String(a.class_name).localeCompare(String(b.class_name), undefined, { numeric:true });
+    switch(pageSnapshot.leagueSort){
+      case 'name': return String(a.class_name).localeCompare(String(b.class_name), undefined, { numeric:true });
+      case 'ee':   return (b.ee || 0) - (a.ee || 0);
+      case 'be':   return (a.be || 0) - (b.be || 0);   /* ascending — fewer BE is better */
+      default:     return b.mean - a.mean;
+    }
+  });
+  /* Re-render the league rows without refetching */
+  let rank = 0;
+  document.getElementById('leagueBody').innerHTML = pageSnapshot.classRows.map(c => {
+    const pos = c.hasMarks ? ++rank : '-';
+    const rowStyle = c.hasMarks ? '' : ' style="opacity:.62;"';
+    const badge = c.hasMarks ? '<span class="rank-pos ' + (rank===1?'gold':rank===2?'silver':rank===3?'bronze':'') + '">' + pos + '</span>' : '<span style="color:var(--ink-3);font-family:var(--mono);">-</span>';
+    return '<tr' + rowStyle + '><td>' + badge + '</td><td><b>' + esc(c.class_name) + '</b></td><td>' + (c.hasMarks?'live':'not marked') + '</td><td class="c">' + c.learner_count + '</td><td>' + (c.hasMarks?'live':'-') + '</td><td class="r">' + (c.hasMarks ? c.mean.toFixed(1) + '%' : '—') + '</td><td class="r">-</td><td class="r">' + (c.hasMarks?c.ee:'-') + '</td><td class="r">' + (c.hasMarks?c.be:'-') + '</td><td class="r">-</td></tr>';
+  }).join('');
+}
+
+function openReportCards(){
+  const tid = pageSnapshot.term?.id || termState.selectedTermId;
+  /* Reports page accepts ?term=ID — keeps the same scope */
+  const qs = tid ? ('?term=' + tid) : '';
+  window.location.href = '/admin/reports.html' + qs;
+}
+
+document.getElementById('exportBtn')?.addEventListener('click', exportAnalysisCsv);
+document.getElementById('leagueCsvBtn')?.addEventListener('click', exportLeagueCsv);
+document.getElementById('leagueSortBtn')?.addEventListener('click', reSortLeague);
+document.getElementById('generateReportBtn')?.addEventListener('click', openReportCards);
+document.getElementById('strictToggle')?.addEventListener('click', e => {
+  const btn = e.currentTarget;
+  const isStrict = btn.dataset.strict === 'true';
+  btn.dataset.strict = isStrict ? 'false' : 'true';
+  btn.querySelector('span').textContent = isStrict ? 'Auto term' : 'Strict (current term only)';
+  loadAnalysis().then(loadEquity);
+});
+
+/* h-sub: real counts from /api/admin/stats, not hardcoded */
+async function refreshHsub(){
+  try {
+    const s = await api(API + '/stats');
+    const parts = [];
+    if(Number.isFinite(Number(s?.classes_count)))  parts.push('<b>' + Number(s.classes_count)  + ' classes</b>');
+    if(Number.isFinite(Number(s?.subjects_count))) parts.push('<b>' + Number(s.subjects_count) + ' subjects</b>');
+    if(Number.isFinite(Number(s?.learners_count))) parts.push('<b>' + Number(s.learners_count) + ' learners</b>');
+    document.getElementById('hSub').innerHTML = 'School-wide performance' + (parts.length ? ' across ' + parts.join(', ') : '') + '.';
+  } catch(_){ /* leave existing copy */ }
+}
+
+/* ---------- Cohort tracker ---------- */
+function emptyCohort(title, msg){
+  return '<div style="padding:48px 24px;text-align:center;color:var(--ink-3);">'
+    + '<i class="fas fa-chart-line" style="font-size:28px;color:var(--ink-4);margin-bottom:10px;display:block;"></i>'
+    + '<div style="font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px;">'+esc(title)+'</div>'
+    + '<div style="font-size:12.5px;line-height:1.5;max-width:380px;margin:0 auto;">'+msg+'</div></div>';
+}
+function renderCohort(data){
+  const points = (data?.points || []).filter(p => Number.isFinite(Number(p.mean)));
+  const sub = document.getElementById('cohortSub');
+  const body = document.getElementById('cohortBody');
+  if (points.length < 2) {
+    sub.textContent = data?.class_name ? (data.class_name + ' · not enough term data') : 'Follow a class across terms';
+    body.innerHTML = emptyCohort('Need 2+ terms with marks', 'This class has '+(points.length||'no')+' term'+(points.length===1?'':'s')+' of published marks. Cohort tracking lights up once <b>two or more</b> terms are recorded.');
+    return;
+  }
+  sub.textContent = data.class_name + ' · ' + points.length + ' terms · '+esc(points[0].label)+' → '+esc(points[points.length-1].label);
+  const W=560, H=200, P=28;
+  const xs = points.map((_,i) => P + (i*(W-P*2))/(points.length-1));
+  const all = points.map(p => Number(p.mean));
+  const minV = Math.max(0, Math.floor(Math.min(...all)/10)*10 - 5);
+  const maxV = Math.min(100, Math.ceil(Math.max(...all)/10)*10 + 5);
+  const ys = all.map(v => H - P - ((v-minV)/(maxV-minV))*(H-P*2));
+  const path = points.map((_,i) => (i?'L':'M')+xs[i].toFixed(1)+' '+ys[i].toFixed(1)).join(' ');
+  const last = points[points.length-1];
+  const first = points[0];
+  const delta = Number(last.mean) - Number(first.mean);
+  const dTag = delta>=0.5 ? '<span class="tag up"><i class="fas fa-caret-up"></i>+'+delta.toFixed(1)+'</span>'
+             : delta<=-0.5 ? '<span class="tag dn"><i class="fas fa-caret-down"></i>'+delta.toFixed(1)+'</span>'
+             : '<span class="tag flat"><i class="fas fa-minus"></i>flat</span>';
+  body.innerHTML =
+    '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:200px;">'
+    + '<g stroke="var(--line-2)" stroke-dasharray="2 4">'
+      + '<line x1="'+P+'" y1="'+(P+0)+'" x2="'+(W-P)+'" y2="'+(P+0)+'"/>'
+      + '<line x1="'+P+'" y1="'+(H/2)+'" x2="'+(W-P)+'" y2="'+(H/2)+'"/>'
+      + '<line x1="'+P+'" y1="'+(H-P)+'" x2="'+(W-P)+'" y2="'+(H-P)+'"/>'
+    + '</g>'
+    + '<g style="font-family:var(--mono);font-size:9px;fill:var(--ink-3);">'
+      + '<text x="2" y="'+(P+3)+'">'+maxV+'</text>'
+      + '<text x="2" y="'+(H/2+3)+'">'+Math.round((maxV+minV)/2)+'</text>'
+      + '<text x="2" y="'+(H-P+3)+'">'+minV+'</text>'
+    + '</g>'
+    + '<path d="'+path+'" fill="none" stroke="var(--gold)" stroke-width="2.5"/>'
+    + points.map((p,i)=>'<circle cx="'+xs[i].toFixed(1)+'" cy="'+ys[i].toFixed(1)+'" r="4" fill="var(--gold)"/>').join('')
+    + points.map((p,i)=>'<text x="'+xs[i].toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" style="font-family:var(--mono);font-size:9px;fill:var(--ink-3);">'+esc(p.label)+'</text>').join('')
+    + points.map((p,i)=>'<text x="'+xs[i].toFixed(1)+'" y="'+(ys[i]-9)+'" text-anchor="middle" style="font-family:var(--mono);font-size:10px;font-weight:700;fill:var(--ink);">'+Number(p.mean).toFixed(1)+'</text>').join('')
+    + '</svg>'
+    + '<div class="callout" style="margin-top:8px;">'
+      + '<i class="fas fa-chart-line lead"></i>'
+      + '<div class="callout-body"><b>'+esc(data.class_name)+'</b> moved from <b>'+pct(first.mean)+'</b> in <em>'+esc(first.label)+'</em> to <b>'+pct(last.mean)+'</b> in <em>'+esc(last.label)+'</em>. '+dTag+'</div>'
+    + '</div>';
+}
+async function loadCohort(classId){
+  const body = document.getElementById('cohortBody');
+  try {
+    const data = await api(API + '/cohort-tracker?classId=' + encodeURIComponent(classId));
+    renderCohort(data);
+  } catch (e) {
+    if (String(e.message||'').match(/404|not.?found/i)) {
+      document.getElementById('cohortSub').textContent = 'Backend endpoint pending';
+      body.innerHTML = emptyCohort('Cohort tracker · backend pending', 'The aggregation endpoint <code>/api/admin/cohort-tracker</code> is not deployed yet. Once Codex ships it, this card lights up automatically.');
+    } else {
+      body.innerHTML = emptyCohort("Couldn't load cohort", esc(e.message||'Request failed'));
+    }
+  }
+}
+async function initCohort(){
+  try {
+    const classes = await api(API + '/classes');
+    const sel = document.getElementById('cohortClass');
+    sel.innerHTML = classes.map(c => '<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
+    if (!classes.length) { sel.innerHTML = '<option>No classes</option>'; return; }
+    sel.addEventListener('change', () => loadCohort(sel.value));
+    loadCohort(sel.value);
+  } catch (e) {
+    document.getElementById('cohortBody').innerHTML = emptyCohort("Couldn't load classes", esc(e.message||''));
+  }
+}
+
+/* ---------- Equity splits ---------- */
+function splitBars(title, groups){
+  if (!groups || !groups.length) {
+    return '<div class="split-card"><div class="split-title">'+esc(title)+'</div><div style="font-size:11.5px;color:var(--ink-3);padding:18px 4px;text-align:center;">No data</div></div>';
+  }
+  const max = Math.max(...groups.map(g => Number(g.mean)||0), 1);
+  return '<div class="split-card"><div class="split-title">'+esc(title)+'</div>'
+    + '<div class="split-bars">'
+    + groups.map(g => {
+        const v = Number(g.mean)||0;
+        const h = Math.max(4, Math.round((v/max)*80));
+        const bg = fillFor(v);
+        return '<div class="split-bar">'
+          + '<span class="v">'+pct(v)+'</span>'
+          + '<div class="b" style="height:'+h+'px;background:'+bg+';"></div>'
+          + '<span class="l">'+esc(g.label)+'<br><span style="font-family:var(--mono);font-size:9.5px;color:var(--ink-3);font-weight:600;">n='+(g.count||0)+'</span></span>'
+          + '</div>';
+      }).join('')
+    + '</div></div>';
+}
+function renderEquity(data){
+  const body = document.getElementById('equityBody');
+  const sub = document.getElementById('equitySub');
+  const bySex = data?.by_sex || [];
+  const byAttend = data?.by_attendance || [];
+  const byBoarding = data?.by_boarding || [];
+  const total = (bySex.reduce((s,g)=>s+(g.count||0),0))
+              + (byAttend.reduce((s,g)=>s+(g.count||0),0))
+              + (byBoarding.reduce((s,g)=>s+(g.count||0),0));
+  if (!total) {
+    sub.textContent = 'No marks recorded yet';
+    body.innerHTML = emptyCohort('No data yet', 'Equity splits appear once at least one class has published marks this term.');
+    return;
+  }
+  sub.textContent = (data?.term_name || 'This term') + ' · ' + (data?.learner_count || 0) + ' learners';
+  body.innerHTML = '<div class="split-grid">'
+    + splitBars('By sex', bySex)
+    + splitBars('By attendance', byAttend)
+    + '</div>'
+    + (byBoarding.length ? '<div class="split-grid" style="grid-template-columns:1fr;margin-top:10px;">'+splitBars('By boarding', byBoarding)+'</div>' : '');
+}
+async function loadEquity(){
+  const body = document.getElementById('equityBody');
+  try {
+    const qs = termState.selectedTermId ? ('?termId=' + encodeURIComponent(termState.selectedTermId)) : '';
+    const data = await api(API + '/equity-splits' + qs);
+    renderEquity(data);
+  } catch (e) {
+    if (String(e.message||'').match(/404|not.?found/i)) {
+      document.getElementById('equitySub').textContent = 'Backend endpoint pending';
+      body.innerHTML = emptyCohort('Equity splits · backend pending', 'The aggregation endpoint <code>/api/admin/equity-splits</code> is not deployed yet. Once Codex ships it, this card lights up automatically.');
+    } else {
+      body.innerHTML = emptyCohort("Couldn't load equity splits", esc(e.message||'Request failed'));
+    }
+  }
+}
+
+/* ---------- Performance over time (school-wide, per-grade across terms) ---------- */
+function gradeKeyFromClass(c){
+  /* Use grade_level if the API exposes it, else derive from the class name (Grade 7, GRADE 1, G6…) */
+  if(c.grade_level != null && c.grade_level !== '') return 'G' + String(c.grade_level).replace(/[^\d]/g,'');
+  const m = String(c.class_name || '').match(/(\d+)/);
+  return m ? ('G' + m[1]) : (c.class_name || 'Class');
+}
+function trendEmpty(title, msg){
+  return '<div style="padding:42px 24px;text-align:center;color:var(--ink-3);">'
+    + '<i class="fas fa-chart-line" style="font-size:28px;color:var(--ink-4);margin-bottom:10px;display:block;"></i>'
+    + '<div style="font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px;">'+esc(title)+'</div>'
+    + '<div style="font-size:12.5px;line-height:1.5;max-width:420px;margin:0 auto;">'+msg+'</div></div>';
+}
+async function loadTrendOverTime(){
+  const body = document.getElementById('trendBody');
+  const sub  = document.getElementById('trendSub');
+  const terms = (termState.sessionTerms || []).slice().sort((a,b) => Number(a.term_number||0) - Number(b.term_number||0));
+  if(!terms.length){ body.innerHTML = trendEmpty('No terms yet', 'Create a session with terms first.'); return; }
+
+  /* Fetch each term in strict mode (no fallback) — we want this term or nothing */
+  const results = await Promise.all(terms.map(t =>
+    api(API + '/marks/analysis?strict=true&term_id=' + t.id)
+      .then(d => ({ term: t, classes: d?.classes || [] }))
+      .catch(() => ({ term: t, classes: [] }))
+  ));
+
+  /* Build [{termLabel, perGrade:{G1:mean,G2:mean,...}}], excluding terms with no marks */
+  const points = results.map(({ term, classes }) => {
+    const perGrade = {};
+    const grouped = {};
+    classes.forEach(c => {
+      const vals = (c.ranked || []).map(l => Number(l.average)).filter(Number.isFinite);
+      if(!vals.length) return;
+      const key = gradeKeyFromClass(c);
+      (grouped[key] ||= []).push(...vals);
+    });
+    Object.keys(grouped).forEach(k => {
+      const arr = grouped[k];
+      if(arr.length) perGrade[k] = arr.reduce((s,v)=>s+v,0) / arr.length;
+    });
+    const allVals = Object.values(perGrade);
+    const schoolMean = allVals.length ? allVals.reduce((s,v)=>s+v,0)/allVals.length : null;
+    return { term, label: term.term_name || ('Term ' + term.term_number), perGrade, schoolMean };
+  });
+
+  const withMarks = points.filter(p => Object.keys(p.perGrade).length > 0);
+  if(withMarks.length < 2){
+    sub.textContent = withMarks.length ? (withMarks.length + ' term with marks · need 2+ for a trend') : 'No marks recorded yet';
+    body.innerHTML = trendEmpty('Need 2+ terms with marks',
+      withMarks.length
+        ? 'Only <b>' + esc(withMarks[0].label) + '</b> has published marks so far. Once a second term has marks, this chart lights up. For per-class history right now, use the <b>Cohort tracker</b> below.'
+        : 'No term in this session has published marks yet. Once marks are saved, this chart appears.'
+    );
+    return;
+  }
+
+  /* Render multi-line chart */
+  const grades = [...new Set(withMarks.flatMap(p => Object.keys(p.perGrade)))]
+    .sort((a,b) => Number(a.replace(/\D/g,'')) - Number(b.replace(/\D/g,'')));
+  const W = 760, H = 280, P = 40;
+  const xs = withMarks.map((_,i) => P + (i*(W-P*2)) / Math.max(1, withMarks.length-1));
+  /* Y scale: dynamic min/max with 5pt padding */
+  const allYs = withMarks.flatMap(p => Object.values(p.perGrade));
+  const minV = Math.max(0,  Math.floor(Math.min(...allYs)/10)*10 - 5);
+  const maxV = Math.min(100, Math.ceil(Math.max(...allYs)/10)*10 + 5);
+  const yFor = v => H - 30 - ((v-minV)/(maxV-minV))*(H-70);
+
+  /* One colour per grade, falling back to gold for the highest */
+  const palette = ['var(--d1)','var(--d2)','var(--d3)','var(--gold)','var(--d6)','var(--d4)','var(--ok)','var(--warn)','var(--danger)'];
+  const colourFor = i => palette[i % palette.length];
+
+  const gridYs = [0, 0.25, 0.5, 0.75, 1].map(t => H - 30 - t*(H-70));
+  const ticks = gridYs.map((y,i) => {
+    const v = Math.round(minV + (1 - i*0.25)*(maxV-minV));
+    return '<line x1="'+P+'" y1="'+y+'" x2="'+(W-P)+'" y2="'+y+'" stroke="var(--line-2)" stroke-dasharray="2 4"/>'
+         + '<text x="'+(P-6)+'" y="'+(y+3)+'" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink-3)">'+v+'</text>';
+  }).join('');
+
+  const lines = grades.map((g, gi) => {
+    const segs = withMarks.map((p,i) => p.perGrade[g] != null ? { i, v: p.perGrade[g] } : null).filter(Boolean);
+    if(segs.length < 2) {
+      /* Single point — render as a dot only */
+      return segs.map(s => '<circle cx="'+xs[s.i].toFixed(1)+'" cy="'+yFor(s.v).toFixed(1)+'" r="3.5" fill="'+colourFor(gi)+'"></circle>').join('');
+    }
+    const d = segs.map((s,i) => (i?'L':'M') + xs[s.i].toFixed(1) + ' ' + yFor(s.v).toFixed(1)).join(' ');
+    return '<path d="'+d+'" fill="none" stroke="'+colourFor(gi)+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'
+         + segs.map(s => '<circle cx="'+xs[s.i].toFixed(1)+'" cy="'+yFor(s.v).toFixed(1)+'" r="3" fill="'+colourFor(gi)+'"><title>'+esc(g)+' · '+withMarks[s.i].label+': '+s.v.toFixed(1)+'%</title></circle>').join('');
+  }).join('');
+
+  /* School-mean dotted reference line */
+  const meanSegs = withMarks.map((p,i) => p.schoolMean != null ? { i, v: p.schoolMean } : null).filter(Boolean);
+  const meanPath = meanSegs.length >= 2
+    ? '<path d="' + meanSegs.map((s,i) => (i?'L':'M') + xs[s.i].toFixed(1) + ' ' + yFor(s.v).toFixed(1)).join(' ') + '" fill="none" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4"/>'
+    : '';
+
+  const xLabels = withMarks.map((p,i) =>
+    '<text x="'+xs[i].toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink-3)">'+esc(p.label)+'</text>'
+  ).join('');
+
+  const legend = grades.map((g, gi) =>
+    '<span class="lg-item"><span class="lg-dot" style="background:'+colourFor(gi)+'"></span>'+esc(g)+'</span>'
+  ).join('') + '<span class="lg-item"><span class="lg-dot" style="background:var(--ink-3);width:14px;height:2px;border-radius:0;"></span>School mean</span>';
+
+  /* Insight: which grade moved most between the first and last marked term */
+  const first = withMarks[0], last = withMarks[withMarks.length-1];
+  let movers = grades
+    .map(g => ({ g, delta: (last.perGrade[g] != null && first.perGrade[g] != null) ? last.perGrade[g] - first.perGrade[g] : null }))
+    .filter(x => x.delta != null);
+  movers.sort((a,b) => Math.abs(b.delta) - Math.abs(a.delta));
+  const top = movers[0];
+  const insight = top
+    ? '<div class="callout"><i class="fas fa-wand-magic-sparkles lead"></i><div class="callout-body"><em>Insight:</em> <b>'+esc(top.g)+'</b> '
+      + (top.delta >= 0 ? 'climbed' : 'dropped') + ' from <b>'+(first.perGrade[top.g]).toFixed(1)+'%</b> in '
+      + esc(first.label) + ' to <b>'+(last.perGrade[top.g]).toFixed(1)+'%</b> in ' + esc(last.label)
+      + ' — a <b>' + (top.delta >= 0 ? '+' : '') + top.delta.toFixed(1) + '</b> point swing.</div></div>'
+    : '';
+
+  sub.textContent = withMarks.length + ' terms with marks · ' + esc(first.label) + ' → ' + esc(last.label);
+  body.innerHTML =
+    '<div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;">' + legend + '</div>'
+    + '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:280px;">' + ticks + meanPath + lines + xLabels + '</svg>'
+    + insight;
+}
+
+/* Boot: build the term tabs from the live active session, then load analysis (which will sync the selected/active tab) */
+(async () => {
+  await loadActiveSessionTerms();
+  renderTermTabs();
+  refreshHsub();
+  await loadAnalysis();
+  initCohort();
+  loadTrendOverTime();
+  await loadEquity();
+})();
+</script>
+</body>
+</html>

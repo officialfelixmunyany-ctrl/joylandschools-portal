@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Comms · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.bc-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:10px;cursor:default;transition:.12s var(--ease);}
+.bc-card.tappable{cursor:pointer;}
+.bc-card.tappable:hover{box-shadow:var(--sh-2);border-color:var(--ink-4);}
+.bc-card.unread{border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(201,151,50,.04),var(--surface) 30%);}
+.bc-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.bc-icon{width:38px;height:38px;border-radius:10px;background:rgba(59,130,246,.10);color:var(--d1);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.bc-icon.event{background:rgba(245,158,11,.10);color:var(--warn);}
+.bc-icon.urgent{background:rgba(185,28,28,.10);color:var(--danger);}
+.bc-icon.celeb{background:rgba(201,151,50,.10);color:var(--gold);}
+.bc-meta{flex:1;min-width:0;}
+.bc-title{font-family:var(--display);font-weight:600;font-size:15px;color:var(--ink);letter-spacing:-.01em;}
+.bc-sub{font-size:11px;color:var(--ink-3);margin-top:2px;font-family:var(--mono);}
+.bc-body{font-size:13px;color:var(--ink-2);line-height:1.6;margin:8px 0 12px;}
+.bc-foot{display:flex;align-items:center;gap:14px;font-size:11px;color:var(--ink-3);padding-top:10px;border-top:1px solid var(--line-2);flex-wrap:wrap;}
+.bc-foot span{display:inline-flex;align-items:center;gap:5px;}
+.bc-foot b{color:var(--ink);font-weight:600;}
+.bc-foot .danger-link{margin-left:auto;color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;}
+.bc-foot .danger-link:hover{text-decoration:underline;}
+.bc-empty{padding:48px 20px;text-align:center;color:var(--ink-3);background:var(--surface);border:1px dashed var(--line);border-radius:14px;}
+.bc-empty i{font-size:28px;color:var(--ink-4);margin-bottom:10px;display:block;}
+.bc-empty b{color:var(--ink);font-weight:600;}
+
+.compose-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--ink);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--sh-3);z-index:20;}
+.compose-fab:hover{transform:scale(1.05);}
+
+.aud-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;}
+.aud-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);font-size:11.5px;font-weight:600;color:var(--ink-2);cursor:pointer;}
+.aud-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.chan-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.chan-card{padding:11px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:9px;cursor:pointer;background:var(--surface);}
+.chan-card.on{border-color:var(--ink);background:var(--surface-2);}
+.chan-card.disabled{opacity:.55;cursor:not-allowed;}
+.chan-info{flex:1;}
+.chan-name{font-size:12px;font-weight:600;color:var(--ink);}
+.chan-meta{font-size:10px;color:var(--ink-3);margin-top:1px;}
+.chan-check{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--ink-4);}
+.chan-card.on .chan-check{background:var(--ink);border-color:var(--ink);position:relative;}
+.chan-card.on .chan-check::after{content:'';position:absolute;top:3px;left:5px;width:4px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);}
+.textarea{min-height:140px;resize:vertical;line-height:1.5;}
+.aud-meta{font-size:11.5px;color:var(--ink-3);margin-top:6px;}
+.aud-meta b{color:var(--ink);font-weight:600;}
+</style>
+</head>
+<body data-page="notifications" data-title="Comms">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Comms · Broadcasts"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">School-to-home communication</div>
+        <h1 class="h1">Comms <em>· broadcasts</em></h1>
+        <div class="h-sub">Every announcement sent to parents, teachers and learners — track delivery and read receipts.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="openInboxBtn"><i class="fas fa-inbox"></i>Inbox</button>
+        <button class="btn btn-primary" id="newBroadcastBtn"><i class="fas fa-paper-plane"></i>New broadcast</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="commsTabs">
+      <div class="tab active" data-tab="sent">Sent <span class="count" id="cntSent">—</span></div>
+      <div class="tab" data-tab="inbox">Inbox <span class="count" id="cntInbox">—</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="col-8" style="grid-column:span 8;">
+        <div id="bcList">
+          <div class="bc-empty"><i class="fas fa-circle-notch fa-spin"></i>Loading broadcasts…</div>
+        </div>
+      </div>
+
+      <div class="col-4" style="grid-column:span 4;">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Delivery stats</div><div class="card-sub">Past 30 days</div></div></div>
+          <div class="card-body" id="statCard">
+            <div style="padding:20px;color:var(--ink-3);font-size:13px;">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Compose slide -->
+<div class="shroud" id="shroud"></div>
+<aside class="slide" id="composeSlide" style="width:640px;max-width:96vw;">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">New broadcast</div>
+      <div class="slide-sub">Reach parents, teachers, learners or one class</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field">
+      <label class="field-label">Audience</label>
+      <div class="aud-row" id="audRow">
+        <span class="aud-chip on" data-aud="all-parents"><i class="fas fa-users"></i>All parents</span>
+        <span class="aud-chip" data-aud="all-teachers"><i class="fas fa-chalkboard-user"></i>All teachers</span>
+        <span class="aud-chip" data-aud="all-learners"><i class="fas fa-user-graduate"></i>All learners</span>
+        <span class="aud-chip" data-aud="everyone"><i class="fas fa-globe"></i>Everyone</span>
+        <span class="aud-chip" data-aud="class"><i class="fas fa-school"></i>One class</span>
+      </div>
+      <select class="input" id="audClass" style="display:none;margin-top:8px;"><option value="">— pick a class —</option></select>
+      <div class="aud-meta" id="audMeta">Calculating recipients…</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Subject</label>
+      <input class="input" id="bcSubject" placeholder="A short, clear subject" maxlength="120"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Message</label>
+      <textarea class="input textarea" id="bcBody" placeholder="Dear parents,&#10;&#10;…" maxlength="2000"></textarea>
+      <div style="font-size:10.5px;color:var(--ink-3);text-align:right;margin-top:3px;font-family:var(--mono);"><span id="bcCharCount">0</span> / 2000</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Channels</label>
+      <div class="chan-row" id="chanRow">
+        <div class="chan-card on" data-ch="in-app"><i class="fas fa-mobile-screen"></i><div class="chan-info"><div class="chan-name">In-app</div><div class="chan-meta">Push to portal &amp; mobile</div></div><div class="chan-check"></div></div>
+        <div class="chan-card" data-ch="sms"><i class="fas fa-comment-sms"></i><div class="chan-info"><div class="chan-name">SMS</div><div class="chan-meta">For phone-verified contacts</div></div><div class="chan-check"></div></div>
+        <div class="chan-card" data-ch="email"><i class="fas fa-envelope"></i><div class="chan-info"><div class="chan-name">Email</div><div class="chan-meta">For contacts with email</div></div><div class="chan-check"></div></div>
+        <div class="chan-card disabled" title="Coming soon"><i class="fab fa-whatsapp"></i><div class="chan-info"><div class="chan-name">WhatsApp</div><div class="chan-meta">Coming soon</div></div><div class="chan-check"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct" id="composeStatus">Saved live to the database</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="bcSendBtn"><i class="fas fa-paper-plane"></i>Send now</button>
+    </div>
+  </div>
+</aside>
+
+<button class="compose-fab" id="composeFab" title="New broadcast"><i class="fas fa-pen"></i></button>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/notifications';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+
+const state = { tab:'sent', sent:[], inbox:[], stats:null, classes:[], audience:'all-parents', channels:['in-app'], classId:null };
+
+function timeAgo(iso){
+  if(!iso) return 'just now';
+  const ms = Date.now() - new Date(iso).getTime();
+  if(ms < 60000) return 'just now';
+  const mins = Math.floor(ms / 60000);
+  if(mins < 60) return mins + ' min ago';
+  const hr = Math.floor(mins / 60);
+  if(hr < 24) return hr + ' hr ago';
+  const days = Math.floor(hr / 24);
+  if(days < 7) return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+  return new Date(iso).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+
+function typeIcon(t){
+  if(t === 'alert')        return { c:'urgent', i:'fa-triangle-exclamation' };
+  if(t === 'event')        return { c:'event',  i:'fa-calendar-day' };
+  if(t === 'announcement') return { c:'celeb',  i:'fa-bullhorn' };
+  return { c:'',           i:'fa-bullhorn' };
+}
+
+function audienceLabel(raw){
+  const v = String(raw || '').toLowerCase();
+  if(v === 'all-parents' || v === 'parents')   return 'All parents';
+  if(v === 'all-teachers' || v === 'teachers') return 'All teachers';
+  if(v === 'all-learners' || v === 'learners') return 'All learners';
+  if(v === 'everyone' || v === 'all')          return 'Everyone';
+  if(v.startsWith('class:')){
+    const id = v.slice(6);
+    const cls = state.classes.find(c => String(c.id) === id);
+    return cls ? ('Class · ' + cls.name) : 'One class';
+  }
+  return raw || 'Audience';
+}
+
+/* ─── Sent list ──────────────────────────────────────────────── */
+function renderSent(){
+  const host = document.getElementById('bcList');
+  if(!state.sent.length){
+    host.innerHTML = '<div class="bc-empty"><i class="fas fa-paper-plane"></i><b>No broadcasts sent yet.</b><br>Click <b>New broadcast</b> to reach parents, teachers or one class.</div>';
+    return;
+  }
+  host.innerHTML = state.sent.map(b => {
+    const ic = typeIcon(b.type);
+    const chs = (b.channels || []).map(c => c === 'in-app' ? 'In-app' : c === 'sms' ? 'SMS' : c === 'email' ? 'Email' : c).join(' · ');
+    const body = String(b.body || '');
+    return '<div class="bc-card" data-id="' + b.id + '">' +
+      '<div class="bc-head">' +
+        '<div class="bc-icon ' + ic.c + '"><i class="fas ' + ic.i + '"></i></div>' +
+        '<div class="bc-meta">' +
+          '<div class="bc-title">' + esc(b.title || 'Untitled') + '</div>' +
+          '<div class="bc-sub">Sent · ' + esc(timeAgo(b.sentAt)) + ' · by ' + esc(b.senderName || 'Admin') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bc-body">' + esc(body.length > 280 ? body.slice(0, 280) + '…' : body) + '</div>' +
+      '<div class="bc-foot">' +
+        '<span><i class="fas fa-users"></i> <b>' + esc(audienceLabel(b.audience)) + '</b></span>' +
+        '<span><i class="fas fa-paper-plane"></i> <b>' + b.stats.delivered + '</b> / ' + b.stats.total + ' delivered</span>' +
+        '<span><i class="far fa-eye"></i> <b>' + b.stats.readRate + '%</b> read</span>' +
+        (chs ? '<span><i class="fas fa-mobile-screen"></i> ' + esc(chs) + '</span>' : '') +
+        '<span class="danger-link" data-act="delete">Delete</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* ─── Inbox list (the admin's own received notifications) ───── */
+function renderInbox(){
+  const host = document.getElementById('bcList');
+  if(!state.inbox.length){
+    host.innerHTML = '<div class="bc-empty"><i class="fas fa-inbox"></i><b>Your inbox is empty.</b><br>Messages addressed to you or to all admins will land here.</div>';
+    return;
+  }
+  host.innerHTML = state.inbox.map(n => {
+    const unread = !n.read_at;
+    return '<div class="bc-card tappable ' + (unread ? 'unread' : '') + '" data-id="' + n.id + '" data-act="open">' +
+      '<div class="bc-head">' +
+        '<div class="bc-icon"><i class="fas fa-envelope' + (unread ? '' : '-open') + '"></i></div>' +
+        '<div class="bc-meta">' +
+          '<div class="bc-title">' + esc(n.title || 'Untitled') + '</div>' +
+          '<div class="bc-sub">' + esc(timeAgo(n.created_at)) + ' · ' + esc(audienceLabel(n.audience)) + (unread ? ' · <b style="color:var(--gold)">unread</b>' : '') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bc-body">' + esc(String(n.body || '').slice(0, 280)) + ((n.body || '').length > 280 ? '…' : '') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderTab(){
+  if(state.tab === 'inbox') renderInbox();
+  else                       renderSent();
+}
+
+/* ─── Delivery stats card ────────────────────────────────────── */
+function renderStats(){
+  const host = document.getElementById('statCard');
+  const s = state.stats || { sent:0, delivered:0, readRate:0, avgResponseMs:0, byChannel:{} };
+  const respLabel = s.avgResponseMs
+    ? (s.avgResponseMs >= 3600000 ? Math.round(s.avgResponseMs / 3600000) + 'h' : Math.round(s.avgResponseMs / 60000) + 'm')
+    : '—';
+  host.innerHTML =
+    '<div style="margin-bottom:18px;">' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:6px;"><span>Total sent</span><b style="color:var(--ink);font-family:var(--mono);">' + s.sent + '</b></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:6px;"><span>Delivered</span><b style="color:var(--ok);font-family:var(--mono);">' + s.delivered + '%</b></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:6px;"><span>Read rate</span><b style="color:var(--ink);font-family:var(--mono);">' + s.readRate + '%</b></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);"><span>Avg response time</span><b style="color:var(--ink);font-family:var(--mono);">' + respLabel + '</b></div>' +
+    '</div>' +
+    '<div style="padding-top:14px;border-top:1px solid var(--line);">' +
+      '<div style="font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">By channel</div>' +
+      ['in-app','sms','email'].map(ch => {
+        const v = Number(s.byChannel?.[ch] || 0);
+        const colour = ch === 'in-app' ? 'linear-gradient(90deg,#3b82f6,#2563eb)' : ch === 'sms' ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#f59e0b,#d97706)';
+        return '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>' + (ch === 'in-app' ? 'In-app' : ch.toUpperCase()) + '</span><b style="font-family:var(--mono);">' + v + '%</b></div><div style="height:5px;background:var(--surface-2);border-radius:3px;"><div style="height:100%;width:' + v + '%;background:' + colour + ';border-radius:3px;"></div></div></div>';
+      }).join('') +
+    '</div>';
+}
+
+/* ─── Loaders ────────────────────────────────────────────────── */
+async function loadSent(){
+  try {
+    const rows = await api(API + '/admin/history');
+    /* admin/history returns notifications: rows with recipients_count, read_count etc. — map to the shape renderSent expects */
+    const list = Array.isArray(rows?.notifications) ? rows.notifications : [];
+    state.sent = list.map(n => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      sentAt: n.sent_at || n.created_at,
+      senderName: n.sender_name || 'Admin',
+      audience: n.audience || (n.class_name ? 'class:' + n.target_class_id : 'parents'),
+      type: n.type || 'broadcast',
+      channels: (() => { try { return JSON.parse(n.channels || '[]'); } catch { return ['in-app']; } })(),
+      stats: {
+        total: Number(n.recipients_count || 0),
+        delivered: Number(n.recipients_count || 0),
+        readRate: Number(n.recipients_count || 0) ? Math.round(Number(n.read_count || 0) / Number(n.recipients_count) * 100) : 0
+      }
+    }));
+    document.getElementById('cntSent').textContent = state.sent.length;
+  } catch(e) {
+    /* /admin/history may not be admin-restricted in all setups — fall back to / */
+    try {
+      state.sent = await api(API + '/?limit=50');
+      document.getElementById('cntSent').textContent = state.sent.length;
+    } catch(err) {
+      Joy.toast("Couldn't load Sent broadcasts", { type:'danger' });
+      state.sent = [];
+    }
+  }
+}
+async function loadInbox(){
+  try {
+    const data = await api(API + '/inbox');
+    state.inbox = Array.isArray(data?.notifications) ? data.notifications : (Array.isArray(data) ? data : []);
+    const unread = state.inbox.filter(n => !n.read_at).length;
+    const el = document.getElementById('cntInbox');
+    el.textContent = state.inbox.length ? (unread ? unread + '/' + state.inbox.length : String(state.inbox.length)) : '0';
+  } catch(e) {
+    Joy.toast("Couldn't load inbox", { type:'danger' });
+    state.inbox = [];
+  }
+}
+async function loadStats(){
+  try { state.stats = await api(API + '/stats?range=30days'); }
+  catch(_) { state.stats = null; }
+  renderStats();
+}
+async function loadClasses(){
+  try {
+    const rows = await fetch('/api/admin/classes', { credentials:'include' }).then(r => r.json()).then(j => j?.data || j || []);
+    state.classes = Array.isArray(rows) ? rows : [];
+    const sel = document.getElementById('audClass');
+    sel.innerHTML = '<option value="">— pick a class —</option>' + state.classes.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+  } catch(_) { /* fine — admin can still send to global audiences */ }
+}
+
+/* ─── Tab + button wiring ────────────────────────────────────── */
+document.getElementById('commsTabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if(!t) return;
+  document.querySelectorAll('#commsTabs .tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  state.tab = t.dataset.tab;
+  renderTab();
+});
+
+document.getElementById('openInboxBtn').addEventListener('click', () => {
+  document.querySelector('#commsTabs .tab[data-tab="inbox"]').click();
+  window.scrollTo({ top:0, behavior:'smooth' });
+});
+
+document.getElementById('newBroadcastBtn').addEventListener('click', openCompose);
+document.getElementById('composeFab').addEventListener('click', openCompose);
+
+function openCompose(){
+  /* Reset compose state */
+  state.audience = 'all-parents';
+  state.classId  = null;
+  state.channels = ['in-app'];
+  document.querySelectorAll('#audRow .aud-chip').forEach(c => c.classList.toggle('on', c.dataset.aud === 'all-parents'));
+  document.getElementById('audClass').style.display = 'none';
+  document.getElementById('audClass').value = '';
+  document.querySelectorAll('#chanRow .chan-card').forEach(c => c.classList.toggle('on', c.dataset.ch === 'in-app'));
+  document.getElementById('bcSubject').value = '';
+  document.getElementById('bcBody').value = '';
+  document.getElementById('bcCharCount').textContent = '0';
+  refreshAudienceMeta();
+  Joy.openSlide('composeSlide');
+  setTimeout(() => document.getElementById('bcSubject').focus(), 100);
+}
+
+/* ─── Compose: audience chips, class picker, channels, char count ─ */
+document.getElementById('audRow').addEventListener('click', e => {
+  const chip = e.target.closest('.aud-chip'); if(!chip) return;
+  document.querySelectorAll('#audRow .aud-chip').forEach(c => c.classList.remove('on'));
+  chip.classList.add('on');
+  state.audience = chip.dataset.aud;
+  const classSel = document.getElementById('audClass');
+  classSel.style.display = state.audience === 'class' ? '' : 'none';
+  refreshAudienceMeta();
+});
+
+document.getElementById('audClass').addEventListener('change', e => {
+  state.classId = e.target.value ? Number(e.target.value) : null;
+  refreshAudienceMeta();
+});
+
+document.getElementById('chanRow').addEventListener('click', e => {
+  const card = e.target.closest('.chan-card'); if(!card || card.classList.contains('disabled')) return;
+  card.classList.toggle('on');
+  state.channels = [...document.querySelectorAll('#chanRow .chan-card.on')].map(c => c.dataset.ch).filter(Boolean);
+});
+
+document.getElementById('bcBody').addEventListener('input', e => {
+  document.getElementById('bcCharCount').textContent = e.target.value.length;
+});
+
+function refreshAudienceMeta(){
+  const host = document.getElementById('audMeta');
+  if(state.audience === 'class' && !state.classId){
+    host.innerHTML = '<b style="color:var(--warn);">Pick a class above.</b>';
+    return;
+  }
+  const label = audienceLabel(state.audience === 'class' ? 'class:' + state.classId : state.audience);
+  host.innerHTML = 'Sending to: <b>' + esc(label) + '</b>';
+}
+
+/* ─── Send ────────────────────────────────────────────────────── */
+document.getElementById('bcSendBtn').addEventListener('click', async () => {
+  const subject = document.getElementById('bcSubject').value.trim();
+  const body    = document.getElementById('bcBody').value.trim();
+  if(!subject || !body){ Joy.toast('Subject and message are required', { type:'warn' }); return; }
+  if(!state.channels.length){ Joy.toast('Choose at least one channel', { type:'warn' }); return; }
+  if(state.audience === 'class' && !state.classId){ Joy.toast('Pick a class first', { type:'warn' }); return; }
+
+  const audiencePayload = state.audience === 'class' ? ('class:' + state.classId) : state.audience;
+  const btn = document.getElementById('bcSendBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+  try {
+    const r = await api(API + '/broadcasts', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ audience: audiencePayload, subject, body, channels: state.channels })
+    });
+    Joy.closeSlide();
+    Joy.toast('Broadcast sent to ' + (r.recipients || 0) + ' contact' + (r.recipients === 1 ? '' : 's'));
+    /* Reload sent + stats + inbox (admin may have received their own broadcast) */
+    await Promise.all([loadSent(), loadStats(), loadInbox()]);
+    state.tab = 'sent';
+    document.querySelectorAll('#commsTabs .tab').forEach(x => x.classList.toggle('active', x.dataset.tab === 'sent'));
+    renderTab();
+  } catch(e) {
+    Joy.toast(e.message || 'Could not send broadcast', { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>Send now';
+  }
+});
+
+/* ─── Sent: delete; Inbox: mark-as-read on tap ───────────────── */
+document.getElementById('bcList').addEventListener('click', async e => {
+  const card = e.target.closest('.bc-card'); if(!card) return;
+  const id = card.dataset.id;
+
+  /* Delete on Sent */
+  if(e.target.matches('.danger-link[data-act="delete"]')){
+    if(!confirm('Delete this broadcast?\n\nRecipients keep the message in their inbox, but it disappears from your Sent log.')) return;
+    try {
+      await api(API + '/admin/' + id, { method:'DELETE' });
+      Joy.toast('Broadcast deleted');
+      await loadSent();
+      renderTab();
+    } catch(err) { Joy.toast(err.message || "Couldn't delete", { type:'danger' }); }
+    return;
+  }
+
+  /* Inbox tap: mark as read + show full body */
+  if(state.tab === 'inbox' && card.dataset.act === 'open'){
+    const n = state.inbox.find(x => String(x.id) === String(id));
+    if(!n) return;
+    if(!n.read_at){
+      try {
+        const r = await api(API + '/read/' + id, { method:'POST' });
+        n.read_at = new Date().toISOString();
+        const unread = state.inbox.filter(x => !x.read_at).length;
+        document.getElementById('cntInbox').textContent = state.inbox.length ? (unread ? unread + '/' + state.inbox.length : String(state.inbox.length)) : '0';
+        renderInbox();
+      } catch(_){ /* best-effort */ }
+    }
+    /* Expand by toggling a body class — simple inline expansion */
+    const body = card.querySelector('.bc-body');
+    if(body){
+      const full = String(n.body || '');
+      body.textContent = full;
+      body.style.whiteSpace = 'pre-wrap';
+    }
+  }
+});
+
+/* ─── Boot ───────────────────────────────────────────────────── */
+(async () => {
+  await loadClasses();
+  await Promise.all([loadSent(), loadInbox(), loadStats()]);
+  renderTab();
+})();
+</script>
+</body>
+</html>

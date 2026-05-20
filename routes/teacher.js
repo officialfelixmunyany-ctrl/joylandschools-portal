@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { getDB } = require('../database');
 const { todayInSchoolTime } = require('../lib/dates');
+const { resolveSchoolDay } = require('../lib/schoolDays');
 const router  = express.Router();
 
 // Same template directory used by routes/admin.js â€” read-only access from here.
@@ -245,6 +246,178 @@ router.get('/me', (req, res) => {
   res.json({ success:true, data:user });
 });
 
+router.get('/timetable', (req, res) => {
+  const db = getDB();
+  const teacherId = req.session.user.id;
+  const settings = db.prepare('SELECT visible_to_teachers FROM timetable_settings WHERE id=1').get();
+  if (settings && Number(settings.visible_to_teachers) === 0) {
+    return res.json({ success:false, message:'The admin has not yet published the timetable to teachers' });
+  }
+  const active = db.prepare("SELECT id, term_id FROM timetable_generations WHERE status='active' ORDER BY id DESC LIMIT 1").get();
+  if (!active) return res.json({ success:true, data:{ slots:[], covers:[], periods:[], message:'No timetable published yet' } });
+  const slots = db.prepare(`
+    SELECT ts.id, ts.day_of_week, ts.period_no, ts.subject_id, ts.teacher_id,
+           sub.name AS subject_name, c.id AS class_id, c.name AS class_name
+    FROM timetable_slots ts
+    JOIN subjects sub ON sub.id=ts.subject_id
+    JOIN classes c ON c.id=ts.class_id
+    WHERE ts.generation_id=? AND ts.teacher_id=?
+    ORDER BY ts.day_of_week, ts.period_no
+  `).all(active.id, teacherId);
+  const today = todayInSchoolTime();
+  const covers = db.prepare(`
+    SELECT sa.*, ts.day_of_week, ts.period_no, ts.subject_id, ts.class_id,
+           sub.name AS subject_name, c.name AS class_name,
+           u.name AS original_teacher_name
+    FROM substitution_assignments sa
+    JOIN timetable_slots ts ON ts.id=sa.slot_id
+    JOIN subjects sub ON sub.id=ts.subject_id
+    JOIN classes c ON c.id=ts.class_id
+    LEFT JOIN users u ON u.id=sa.original_teacher_id
+    WHERE sa.date=? AND sa.substitute_teacher_id=?
+    ORDER BY ts.day_of_week, ts.period_no
+  `).all(today, teacherId);
+  const periods = db.prepare('SELECT * FROM bell_periods WHERE schedule_id=1 ORDER BY period_no').all().map(p => ({
+    ...p,
+    active_days:(() => { try { return JSON.parse(p.active_days || '[]'); } catch { return []; } })()
+  }));
+  res.json({ success:true, data:{ slots, covers, periods, today } });
+});
+
+router.get('/timetable/free-slots', (req, res) => {
+  const db = getDB();
+  const active = db.prepare("SELECT id FROM timetable_generations WHERE status='active' ORDER BY id DESC LIMIT 1").get();
+  if (!active) return res.json({ success:true, data:{ classes:[], periods:[], subjects:[] } });
+  const periods = db.prepare('SELECT * FROM bell_periods WHERE schedule_id=1 ORDER BY period_no').all().map(p => ({
+    ...p,
+    active_days:(() => { try { return JSON.parse(p.active_days || '[]'); } catch { return []; } })()
+  }));
+  const lessonPeriods = periods.filter(p => p.type === 'lesson');
+  const subjects = db.prepare("SELECT id, name FROM subjects WHERE status='active' ORDER BY name").all();
+  const classes = db.prepare(`
+    SELECT c.id, c.name, c.grade_level, c.active_periods,
+           u.name AS teacher_name
+    FROM classes c
+    LEFT JOIN users u ON u.id=c.class_teacher_id
+    WHERE c.status='active'
+    ORDER BY c.name
+  `).all();
+
+  classes.forEach(cls => {
+    let attended = null;
+    if (cls.active_periods) {
+      try { attended = new Set(JSON.parse(cls.active_periods).map(Number)); } catch {}
+    }
+    const slots = db.prepare(`
+      SELECT ts.day_of_week, ts.period_no, s.name AS subject_name, u.name AS teacher_name
+      FROM timetable_slots ts
+      JOIN subjects s ON s.id=ts.subject_id
+      LEFT JOIN users u ON u.id=ts.teacher_id
+      WHERE ts.generation_id=? AND ts.class_id=?
+    `).all(active.id, cls.id);
+    const taken = new Map(slots.map(slot => [slot.day_of_week + ':' + slot.period_no, slot]));
+    const freeSlots = [];
+    const takenSlots = [];
+    for (let day = 1; day <= 5; day++) {
+      lessonPeriods.forEach(period => {
+        if (attended && !attended.has(Number(period.period_no))) return;
+        const activeDays = Array.isArray(period.active_days) && period.active_days.length
+          ? period.active_days
+          : ['mon','tue','wed','thu','fri'];
+        const dayName = ['', 'mon', 'tue', 'wed', 'thu', 'fri'][day];
+        if (!activeDays.includes(dayName)) return;
+        const key = day + ':' + period.period_no;
+        const takenSlot = taken.get(key);
+        if (takenSlot) takenSlots.push({ day_of_week:day, period_no:period.period_no, subject_name:takenSlot.subject_name, teacher_name:takenSlot.teacher_name });
+        else freeSlots.push({ day_of_week:day, period_no:period.period_no });
+      });
+    }
+    cls.free_slots = freeSlots;
+    cls.taken_slots = takenSlots;
+    delete cls.active_periods;
+  });
+  res.json({ success:true, data:{ classes, periods, subjects } });
+});
+
+router.post('/bookings', (req, res) => {
+  const db = getDB();
+  const teacherId = req.session.user.id;
+  const classId = Number(req.body?.class_id || req.body?.classId);
+  const subjectId = Number(req.body?.subject_id || req.body?.subjectId);
+  const day = Number(req.body?.day_of_week || req.body?.dayOfWeek);
+  const period = Number(req.body?.period_no || req.body?.periodNo);
+  const date = String(req.body?.date || '').trim();
+  const reason = String(req.body?.reason || '').trim();
+  if (!classId || !subjectId || !day || !period || !date) {
+    return res.json({ success:false, message:'class_id, subject_id, day_of_week, period_no, and date are required' });
+  }
+  const active = db.prepare("SELECT id FROM timetable_generations WHERE status='active' ORDER BY id DESC LIMIT 1").get();
+  if (active) {
+    const taken = db.prepare(`
+      SELECT id FROM timetable_slots
+      WHERE generation_id=? AND class_id=? AND day_of_week=? AND period_no=?
+    `).get(active.id, classId, day, period);
+    if (taken) return res.json({ success:false, message:'That slot is no longer free - someone else is teaching there' });
+    const teacherBusy = db.prepare(`
+      SELECT id FROM timetable_slots
+      WHERE generation_id=? AND teacher_id=? AND day_of_week=? AND period_no=?
+    `).get(active.id, teacherId, day, period);
+    if (teacherBusy) return res.json({ success:false, message:'You already teach another class at that time' });
+  }
+  const conflict = db.prepare(`
+    SELECT id FROM lesson_bookings
+    WHERE teacher_id=? AND date=? AND period_no=? AND day_of_week=? AND status IN ('pending','approved')
+  `).get(teacherId, date, period, day);
+  if (conflict) return res.json({ success:false, message:'You already have a booking at that time on that date' });
+
+  const result = db.prepare(`
+    INSERT INTO lesson_bookings (teacher_id, class_id, subject_id, day_of_week, period_no, date, reason)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(teacherId, classId, subjectId, day, period, date, reason || null);
+
+  try {
+    const teacher = db.prepare('SELECT name FROM users WHERE id=?').get(teacherId);
+    const cls = db.prepare('SELECT name FROM classes WHERE id=?').get(classId);
+    const subject = db.prepare('SELECT name FROM subjects WHERE id=?').get(subjectId);
+    db.prepare(`
+      INSERT INTO notifications (title, body, audience, target_class_id, created_by_role, created_by_id, type, sent_at, role_scope)
+      VALUES (?, ?, ?, ?, 'teacher', ?, 'booking', datetime('now'), 'admin')
+    `).run(
+      'Booking request: ' + (subject?.name || '') + ' in ' + (cls?.name || ''),
+      (teacher?.name || 'A teacher') + ' has requested to teach ' + (subject?.name || '') + ' in ' + (cls?.name || '') + ' on ' + date + ' (period ' + period + '). Reason: ' + (reason || '-'),
+      'admin',
+      classId,
+      teacherId
+    );
+  } catch {}
+
+  res.json({ success:true, id:result.lastInsertRowid });
+});
+
+router.get('/bookings', (req, res) => {
+  const teacherId = req.session.user.id;
+  const rows = getDB().prepare(`
+    SELECT b.*, c.name AS class_name, s.name AS subject_name
+    FROM lesson_bookings b
+    JOIN classes c ON c.id=b.class_id
+    JOIN subjects s ON s.id=b.subject_id
+    WHERE b.teacher_id=?
+    ORDER BY datetime(b.created_at) DESC, b.id DESC
+    LIMIT 50
+  `).all(teacherId);
+  res.json({ success:true, data:rows });
+});
+
+router.delete('/bookings/:id', (req, res) => {
+  const db = getDB();
+  const teacherId = req.session.user.id;
+  const row = db.prepare('SELECT * FROM lesson_bookings WHERE id=? AND teacher_id=?').get(req.params.id, teacherId);
+  if (!row) return res.json({ success:false, message:'Not found' });
+  if (row.status !== 'pending') return res.json({ success:false, message:'Already decided - cannot cancel' });
+  db.prepare("UPDATE lesson_bookings SET status='cancelled' WHERE id=?").run(req.params.id);
+  res.json({ success:true });
+});
+
 router.get('/dashboard', (req, res) => {
   const db = getDB();
   const active = db.prepare("SELECT * FROM academic_sessions WHERE is_active=1 LIMIT 1").get();
@@ -283,6 +456,12 @@ router.get('/classes/:id/learners', (req, res) => {
   res.json({ success:true, data:{ class:{ id:classRow.id, name:classRow.name }, learners } });
 });
 
+router.get('/school-day', (req, res) => {
+  const date = validDateStr(req.query.date || todayStr());
+  if (!date) return res.status(400).json({ success:false, message:'Invalid date' });
+  res.json({ success:true, data:resolveSchoolDay(getDB(), date) });
+});
+
 router.get('/attendance/overview', (req, res) => {
   const db = getDB();
   const date = validDateStr(req.query.date || todayStr());
@@ -290,9 +469,60 @@ router.get('/attendance/overview', (req, res) => {
   if (date > todayStr()) return res.status(400).json({ success:false, message:'Future dates are not allowed' });
 
   const term = termForDate(db, date);
-  if (!term) return res.status(400).json({ success:false, message:'No school term contains this date' });
+  const day = resolveSchoolDay(db, date);
+  if (!term) {
+    return res.json({
+      success:true,
+      data:{
+        date,
+        day_status:day,
+        can_mark:false,
+        total_classes:0,
+        marked_count:0,
+        pending_count:0,
+        present:0,
+        absent:0,
+        late:0,
+        total:0,
+        pct:null,
+        classes:[]
+      }
+    });
+  }
 
   const classes = teacherClassLists(db, req.session.user.id).homeroom;
+  if (!day.is_school_day) {
+    return res.json({
+      success:true,
+      data:{
+        date,
+        term:{ id:term.id, name:term.name },
+        day_status:day,
+        can_mark:false,
+        total_classes:classes.length,
+        marked_count:0,
+        pending_count:0,
+        present:0,
+        absent:0,
+        late:0,
+        total:0,
+        pct:null,
+        classes:classes.map((cls) => ({
+          id:cls.id,
+          name:cls.name,
+          grade_level:cls.grade_level,
+          learner_count:Number(cls.enrollment_count || 0),
+          marked:false,
+          marked_at:null,
+          present:0,
+          absent:0,
+          late:0,
+          total:0,
+          pct:null
+        }))
+      }
+    });
+  }
   let present = 0;
   let absent = 0;
   let late = 0;
@@ -351,6 +581,8 @@ router.get('/attendance/overview', (req, res) => {
     data:{
       date,
       term:{ id:term.id, name:term.name },
+      day_status:day,
+      can_mark:true,
       total_classes:classRows.length,
       marked_count:markedCount,
       pending_count:Math.max(0, classRows.length - markedCount),
@@ -371,10 +603,11 @@ router.get('/attendance', (req, res) => {
   const date = validDateStr(req.query.date || todayStr());
   if (!date) return res.status(400).json({ success:false, message:'Invalid date' });
   if (date > todayStr()) return res.status(400).json({ success:false, message:'Future dates are not allowed' });
-  if (!termForDate(db, date)) return res.status(400).json({ success:false, message:'No school term contains this date' });
+  const day = resolveSchoolDay(db, date);
+  if (!day.is_school_day) return res.json({ success:true, data:{ entries:{}, day_status:day, can_mark:false } });
 
   const record = db.prepare("SELECT id FROM attendance_records WHERE class_id=? AND date=?").get(classRow.id, date);
-  if (!record) return res.json({ success:true, data:{ entries:{} } });
+  if (!record) return res.json({ success:true, data:{ entries:{}, day_status:day, can_mark:true } });
 
   const rows = db.prepare(`
     SELECT learner_id, status, note
@@ -385,7 +618,7 @@ router.get('/attendance', (req, res) => {
     map[row.learner_id] = { status:attendanceStatusToApi(row.status), note:row.note || '' };
     return map;
   }, {});
-  res.json({ success:true, data:{ entries } });
+  res.json({ success:true, data:{ entries, day_status:day, can_mark:true } });
 });
 
 router.post('/attendance', (req, res) => {
@@ -397,8 +630,9 @@ router.post('/attendance', (req, res) => {
   if (!date || !entries) return res.status(400).json({ success:false, message:'Invalid data' });
   if (date > todayStr()) return res.status(400).json({ success:false, message:'Future dates are not allowed' });
 
-  const term = termForDate(db, date);
-  if (!term) return res.status(400).json({ success:false, message:'No school term contains this date' });
+  const day = resolveSchoolDay(db, date);
+  if (!day.is_school_day) return res.status(400).json({ success:false, message:day.message, data:{ day_status:day } });
+  const term = day.term;
 
   const learnerIds = activeLearnerIdsForClass(db, classRow.name);
   let saved = 0;
@@ -1202,7 +1436,14 @@ router.get('/marks', (req, res) => {
     entries[row.learner_id][row.component_key] = row.score;
   });
 
-  res.json({ success:true, data:{ term:{ id:term.id, name:term.name }, entries } });
+  const learners = db.prepare(`
+    SELECT id, name, admission_no
+    FROM users
+    WHERE role='learner' AND status='active' AND class_name=?
+    ORDER BY name
+  `).all(cls.name);
+
+  res.json({ success:true, data:{ term:{ id:term.id, name:term.name }, entries, learners } });
 });
 
 router.post('/marks', (req, res) => {
@@ -1998,6 +2239,26 @@ router.put('/change-password', (req, res) => {
   if (!bcrypt.compareSync(current_password, user.password)) return res.json({ success:false, message:'Current password incorrect' });
   db.prepare("UPDATE users SET password=?,temp_code=NULL,updated_at=datetime('now') WHERE id=?").run(bcrypt.hashSync(new_password,10), user.id);
   res.json({ success:true, message:'Password changed' });
+});
+
+router.get('/notifications', (req, res) => {
+  const db = getDB();
+  const rows = db.prepare(`
+    SELECT n.id, n.title, n.body, n.created_at, nr.read_at
+    FROM notification_recipients nr
+    JOIN notifications n ON n.id=nr.notification_id
+    WHERE nr.user_role='teacher' AND nr.user_id=?
+    ORDER BY datetime(n.created_at) DESC, n.id DESC
+    LIMIT 100
+  `).all(req.session.user.id);
+  const items = rows.map(row => ({
+    id:row.id,
+    title:row.title,
+    body:row.body,
+    created_at:row.created_at,
+    read:!!row.read_at
+  }));
+  res.json({ success:true, data:{ items } });
 });
 
 module.exports = router;

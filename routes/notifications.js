@@ -20,6 +20,10 @@ function currentRecipient(req) {
   return { role:req.session.user.role, id:Number(req.session.user.id) };
 }
 function clean(value) { return String(value || '').trim(); }
+function safeJsonArray(value, fallback = []) {
+  if (Array.isArray(value)) return value;
+  try { return JSON.parse(value || ''); } catch { return fallback; }
+}
 
 function recipientsForAudience(db, audience, classId) {
   const rows = [];
@@ -53,6 +57,141 @@ function recipientsForAudience(db, audience, classId) {
     return true;
   });
 }
+
+function normalizeAudience(raw) {
+  const value = clean(raw || 'all-parents').toLowerCase();
+  if (value === 'all-parents' || value === 'parents') return { audience:'parents', classId:null, label:'all-parents' };
+  if (value === 'all-teachers' || value === 'teachers') return { audience:'teachers', classId:null, label:'all-teachers' };
+  if (value === 'all-learners' || value === 'learners') return { audience:'learners', classId:null, label:'all-learners' };
+  if (value === 'everyone' || value === 'all') return { audience:'all', classId:null, label:'all' };
+  const classMatch = value.match(/^class:(\d+)$/);
+  if (classMatch) return { audience:'class', classId:Number(classMatch[1]), label:value };
+  return { audience:'parents', classId:null, label:'all-parents' };
+}
+
+function deliveryStats(db, notificationId) {
+  const rows = db.prepare('SELECT channel, status, delivered_at, read_at FROM notification_deliveries WHERE notification_id=?').all(notificationId);
+  const total = rows.length;
+  const delivered = rows.filter(r => ['delivered','read'].includes(r.status) || r.delivered_at || r.read_at).length;
+  const read = rows.filter(r => r.status === 'read' || r.read_at).length;
+  const byChannel = {};
+  ['in-app','sms','email'].forEach(channel => {
+    const channelRows = rows.filter(r => r.channel === channel);
+    const ok = channelRows.filter(r => ['delivered','read'].includes(r.status) || r.delivered_at || r.read_at).length;
+    byChannel[channel] = channelRows.length ? Math.round((ok / channelRows.length) * 1000) / 10 : 0;
+  });
+  return { delivered, total, readRate:total ? Math.round((read / total) * 1000) / 10 : 0, byChannel };
+}
+
+function recentBroadcastRows(db, limit, status) {
+  let sql = `
+    SELECT n.*, COALESCE(u.name, 'Admin') AS sender_name
+    FROM notifications n
+    LEFT JOIN users u ON u.id=COALESCE(n.sent_by, n.created_by_id)
+    WHERE COALESCE(n.type, 'broadcast') IN ('broadcast','announcement','alert','event')
+  `;
+  const params = [];
+  if (status && status !== 'sent') {
+    sql += ' AND COALESCE(n.type, "broadcast")=?';
+    params.push(status);
+  }
+  sql += ' ORDER BY datetime(COALESCE(n.sent_at, n.created_at)) DESC, n.id DESC LIMIT ?';
+  params.push(limit);
+  return db.prepare(sql).all(...params);
+}
+
+router.get('/', requireAdmin, (req, res) => {
+  const db = getDB();
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+  const rows = recentBroadcastRows(db, limit, clean(req.query.status).toLowerCase()).map(row => ({
+    id:row.id,
+    title:row.title,
+    body:row.body,
+    sentAt:row.sent_at || row.created_at,
+    senderName:row.sender_name,
+    audience:row.audience,
+    channels:safeJsonArray(row.channels, ['in-app']),
+    type:row.type || 'broadcast',
+    status:'sent',
+    stats:deliveryStats(db, row.id)
+  }));
+  res.json({ success:true, data:rows });
+});
+
+router.get('/stats', requireAdmin, (req, res) => {
+  const db = getDB();
+  const days = String(req.query.range || '30days').match(/\d+/)?.[0] || '30';
+  const rows = db.prepare(`
+    SELECT nd.*
+    FROM notification_deliveries nd
+    JOIN notifications n ON n.id=nd.notification_id
+    WHERE datetime(COALESCE(n.sent_at, n.created_at)) >= datetime('now', ?)
+  `).all(`-${days} days`);
+  const notifications = db.prepare(`
+    SELECT COUNT(*) c FROM notifications
+    WHERE datetime(COALESCE(sent_at, created_at)) >= datetime('now', ?)
+  `).get(`-${days} days`).c;
+  const total = rows.length;
+  const delivered = rows.filter(r => ['delivered','read'].includes(r.status) || r.delivered_at || r.read_at).length;
+  const readRows = rows.filter(r => r.status === 'read' || r.read_at);
+  const byChannel = {};
+  ['in-app','sms','email'].forEach(channel => {
+    const channelRows = rows.filter(r => r.channel === channel);
+    const ok = channelRows.filter(r => ['delivered','read'].includes(r.status) || r.delivered_at || r.read_at).length;
+    byChannel[channel] = channelRows.length ? Math.round((ok / channelRows.length) * 1000) / 10 : 0;
+  });
+  const responseMs = readRows.map(r => {
+    if (!r.read_at || !r.delivered_at) return null;
+    return new Date(r.read_at) - new Date(r.delivered_at);
+  }).filter(v => Number.isFinite(v));
+  res.json({ success:true, data:{
+    sent:Number(notifications || 0),
+    delivered:total ? Math.round((delivered / total) * 1000) / 10 : 0,
+    readRate:total ? Math.round((readRows.length / total) * 1000) / 10 : 0,
+    avgResponseMs:responseMs.length ? Math.round(responseMs.reduce((s,v)=>s+v,0) / responseMs.length) : 0,
+    byChannel
+  }});
+});
+
+router.post('/broadcasts', requireAdmin, async (req, res) => {
+  const subject = clean(req.body?.subject || req.body?.title);
+  const body = clean(req.body?.body);
+  const channels = safeJsonArray(req.body?.channels, ['in-app']).filter(c => ['in-app','sms','email'].includes(c));
+  const normalized = normalizeAudience(req.body?.audience);
+  if (!subject || !body) return res.status(400).json({ success:false, message:'Subject and message are required' });
+  if (!channels.length) return res.status(400).json({ success:false, message:'Choose at least one channel' });
+  const db = getDB();
+  const recipients = recipientsForAudience(db, normalized.audience, normalized.classId);
+  if (!recipients.length) return res.status(400).json({ success:false, message:'No recipients found for this audience' });
+  let notificationId;
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    notificationId = db.prepare(`
+      INSERT INTO notifications
+        (title, body, audience, target_class_id, created_by_role, created_by_id, role_scope, type, sent_by, sent_at, channels, delivered_at)
+      VALUES (?, ?, ?, ?, ?, ?, 'admin', 'broadcast', ?, datetime('now'), ?, datetime('now'))
+    `).run(subject, body, normalized.label, normalized.classId, req.session.user.role, req.session.user.id, req.session.user.id, JSON.stringify(channels)).lastInsertRowid;
+    const insertRecipient = db.prepare(`
+      INSERT OR IGNORE INTO notification_recipients (notification_id, user_role, user_id)
+      VALUES (?, ?, ?)
+    `);
+    recipients.forEach(r => insertRecipient.run(notificationId, r.user_role, r.user_id));
+    const recipientRows = db.prepare('SELECT id, user_id FROM notification_recipients WHERE notification_id=?').all(notificationId);
+    const insertDelivery = db.prepare(`
+      INSERT OR IGNORE INTO notification_deliveries (notification_id, recipient_id, channel, status, delivered_at)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    recipientRows.forEach(recipient => channels.forEach(channel => {
+      const deliveredNow = channel === 'in-app';
+      insertDelivery.run(notificationId, recipient.id, channel, deliveredNow ? 'delivered' : 'pending', deliveredNow ? new Date().toISOString() : null);
+    }));
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    return res.status(500).json({ success:false, message:error.message });
+  }
+  res.json({ success:true, message:`Sent to ${recipients.length} recipient(s)`, data:{ id:notificationId, recipients:recipients.length } });
+});
 
 router.post('/device-token', (req, res) => {
   const token = clean(req.body?.token);

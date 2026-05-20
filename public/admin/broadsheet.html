@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broadsheet · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--ink:#17201b;--muted:#6f7b73;--line:#dfe6df;--green:#0b5d32;--gold:#c99721;--bg:#f7f8f5;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line);}
+.title{display:flex;align-items:center;gap:11px;min-width:0;}
+.title .icon{width:38px;height:38px;border-radius:10px;background:#102117;color:#fff;display:grid;place-items:center;}
+.title h1{font-size:16px;line-height:1.25;margin:0;font-weight:800;}
+.title p{font-size:12px;color:var(--muted);margin:2px 0 0;}
+.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:10px 14px;font:700 13px/1 Inter;display:inline-flex;gap:8px;align-items:center;cursor:pointer;text-decoration:none;}
+.btn.primary{background:#101713;color:#fff;border-color:#101713;}
+.status{font-size:12px;color:var(--muted);}
+
+.wrap{max-width:1180px;margin:24px auto;padding:0 14px 40px;}
+.loading,.error{background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--muted);}
+.error{color:#9f1239;border-color:#fecdd3;background:#fff1f2;}
+
+/* ── Broadsheet sheet (one A4 landscape) ────────────────────────── */
+.bs-sheet{
+  background:#fff;
+  width:297mm;max-width:100%;
+  min-height:210mm;
+  margin:0 auto 18px;
+  padding:14mm 12mm 10mm;
+  box-shadow:0 10px 34px rgba(15,23,42,.16);
+  color:#111827;
+  font-size:11px;
+  line-height:1.35;
+}
+
+/* Header */
+.bs-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--green);padding-bottom:8px;margin-bottom:10px;}
+.bs-logo{width:62px;height:62px;flex:0 0 auto;border-radius:8px;overflow:hidden;background:#f3f5f0;display:grid;place-items:center;}
+.bs-logo img{width:100%;height:100%;object-fit:contain;display:block;}
+.bs-logo i{font-size:26px;color:var(--green);}
+.bs-head-text{flex:1;min-width:0;}
+.bs-school{font-family:'Playfair Display',serif;font-size:22px;font-weight:800;letter-spacing:.5px;color:var(--green);margin:0;line-height:1.1;}
+.bs-motto{font-size:11px;color:var(--muted);font-style:italic;margin-top:2px;}
+.bs-school-meta{font-size:10px;color:var(--muted);margin-top:3px;}
+.bs-head-right{text-align:right;font-size:11px;}
+.bs-head-right .tag{display:inline-block;background:var(--green);color:#fff;padding:2px 8px;border-radius:5px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;}
+.bs-head-right .doc{font-family:'Playfair Display',serif;font-weight:700;font-size:14px;color:var(--ink);margin-top:4px;}
+
+/* Sub-header strip */
+.bs-sub{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:#f7f8f5;border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:10px;font-size:10.5px;}
+.bs-sub div{display:flex;flex-direction:column;}
+.bs-sub .lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.bs-sub .val{font-weight:700;color:var(--ink);font-size:11.5px;}
+
+/* Table */
+.bs-tbl{width:100%;border-collapse:collapse;font-size:10.5px;}
+.bs-tbl thead{display:table-header-group;}
+.bs-tbl th{background:var(--green);color:#fff;font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;padding:5px 4px;border:1px solid #084d28;text-align:center;}
+.bs-tbl td{border:1px solid var(--line);padding:4px 5px;text-align:center;vertical-align:middle;}
+.bs-tbl td.nm{text-align:left;font-weight:600;color:var(--ink);}
+.bs-tbl td.adm{text-align:left;color:var(--muted);font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;}
+.bs-tbl tbody tr{break-inside:avoid;page-break-inside:avoid;}
+.bs-tbl tbody tr:nth-child(even) td{background:#fbfcfa;}
+.bs-tbl .num{font-family:'JetBrains Mono','Courier New',monospace;color:#1f2937;}
+.bs-tbl .pos{font-weight:700;color:var(--green);}
+.bs-band{display:inline-block;font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;}
+.bs-band.ee{background:#dcfce7;color:#15803d;}
+.bs-band.me{background:#dbeafe;color:#1d4ed8;}
+.bs-band.ae{background:#fef3c7;color:#92400e;}
+.bs-band.be{background:#fee2e2;color:#b91c1c;}
+
+/* Footer with stats and signatures */
+.bs-foot{margin-top:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:10px;color:var(--muted);}
+.bs-foot .box{border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:#fbfcfa;}
+.bs-foot .box b{display:block;color:var(--green);font-size:9px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.bs-foot .sign{display:flex;justify-content:space-between;gap:14px;margin-top:8px;}
+.bs-foot .sign div{flex:1;border-top:1px solid #999;padding-top:3px;text-align:center;font-size:9.5px;color:var(--muted);}
+
+/* Subject header — cap column to ~"English Activities" width; clamp longer names to 2 lines */
+.bs-subj-cell{
+  width:78px;max-width:78px;min-width:58px;
+  white-space:normal;
+  word-break:break-word;
+  overflow-wrap:break-word;
+  vertical-align:bottom;
+  padding:5px 3px;
+}
+.bs-subj-cell .code{display:block;font-weight:800;font-size:10.5px;letter-spacing:.04em;line-height:1.1;}
+.bs-subj-cell .name{
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin-top:1px;
+  font-weight:500;font-size:7.5px;
+  opacity:.85;
+  text-transform:none;
+  letter-spacing:0;
+  line-height:1.1;
+  max-height:17px;
+}
+
+/* Mobile / small screen preview */
+@media(max-width:760px){
+  .topbar{align-items:flex-start;flex-direction:column}
+  .actions{width:100%}
+  .btn{flex:1;justify-content:center}
+  .bs-sheet{width:100%;padding:8mm 6mm;}
+  .bs-sub{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ── Print: exact A4 landscape, repeat header on overflow pages ── */
+@page{size:A4 landscape;margin:0;}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;}
+  html,body{width:297mm!important;margin:0!important;padding:0!important;background:#fff!important;}
+  .topbar{display:none!important;}
+  .wrap{max-width:none!important;margin:0!important;padding:0!important;}
+  .bs-sheet{
+    width:297mm!important;
+    margin:0!important;padding:6mm 7mm 5mm!important;
+    box-shadow:none!important;border:none!important;border-radius:0!important;
+    font-size:10px!important;
+  }
+  /* Tighten every block so up to ~30 learners fit on one A4 landscape page */
+  .bs-head{padding-bottom:5px!important;margin-bottom:6px!important;}
+  .bs-logo{width:50px!important;height:50px!important;}
+  .bs-school{font-size:18px!important;}
+  .bs-motto{font-size:10px!important;}
+  .bs-school-meta{font-size:9px!important;}
+  .bs-head-right .doc{font-size:12px!important;}
+  .bs-sub{padding:5px 8px!important;margin-bottom:6px!important;font-size:10px!important;}
+  .bs-tbl{font-size:10px!important;}
+  .bs-tbl th{padding:3px 3px!important;font-size:9px!important;}
+  .bs-tbl td{padding:2px 4px!important;}
+  .bs-subj-cell .code{font-size:10px!important;}
+  .bs-subj-cell .name{font-size:7px!important;max-height:15px!important;}
+  .bs-foot{margin-top:6px!important;font-size:9.5px!important;gap:10px!important;}
+  .bs-foot .box{padding:4px 8px!important;}
+  .bs-foot .sign{margin-top:5px!important;}
+  /* Overflow handling: header repeats on any subsequent page if the class is large */
+  .bs-tbl thead{display:table-header-group;}
+  .bs-tbl tfoot{display:table-footer-group;}
+  .bs-tbl tbody tr{break-inside:avoid;page-break-inside:avoid;}
+  /* Prevent the sheet itself from forcing a blank trailing page */
+  .bs-sheet{break-after:auto;page-break-after:auto;}
+  .bs-sheet+.bs-sheet{break-before:page;page-break-before:always;}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="title">
+    <div class="icon"><i class="fas fa-table"></i></div>
+    <div>
+      <h1 id="pageTitle">Broadsheet</h1>
+      <p id="pageSub">Loading broadsheet...</p>
+    </div>
+  </div>
+  <div class="actions">
+    <span class="status" id="statusText"></span>
+    <button class="btn" type="button" onclick="downloadCsv()"><i class="fas fa-file-csv"></i>Download CSV</button>
+    <button class="btn" type="button" onclick="location.reload()"><i class="fas fa-rotate"></i>Refresh</button>
+    <button class="btn primary" type="button" onclick="window.print()"><i class="fas fa-print"></i>Print / Save as PDF</button>
+  </div>
+</header>
+
+<main class="wrap" id="root">
+  <div class="loading"><i class="fas fa-spinner fa-spin"></i><br><br>Preparing broadsheet...</div>
+</main>
+
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = (v, d=1) => v == null ? '—' : Number(v).toFixed(d);
+function bandCls(v){ return v>=75?'ee':v>=60?'me':v>=50?'ae':'be'; }
+function bandLbl(v){ return v>=75?'EE':v>=60?'ME':v>=50?'AE':'BE'; }
+function csvCell(v){ const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }
+function safeName(s){ return String(s||'').replace(/[^a-z0-9-]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase() || 'broadsheet'; }
+
+async function api(path){
+  const res = await fetch(path, { credentials:'include' });
+  const json = await res.json().catch(()=>({}));
+  if(!res.ok || json.success === false) throw new Error(json.message || 'Request failed');
+  return json.data !== undefined ? json.data : json;
+}
+
+let csvCache = null;
+let csvFilename = 'broadsheet.csv';
+function downloadCsv(){
+  if(!csvCache){ return; }
+  const blob = new Blob([csvCache.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = csvFilename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildSheet({ school, cls, term, assessment, subjects, rows }){
+  const assessmentLabel = assessment === 'endterm' ? 'End Term' : assessment === 'midterm' ? 'Mid Term' : assessment;
+  const logo = school.school_logo
+    ? '<img src="' + esc(school.school_logo) + '" alt="Logo">'
+    : '<i class="fas fa-school"></i>';
+
+  let head = '<div class="bs-head">' +
+    '<div class="bs-logo">' + logo + '</div>' +
+    '<div class="bs-head-text">' +
+      '<h2 class="bs-school">' + esc(school.school_name || 'School') + '</h2>' +
+      (school.school_motto ? '<div class="bs-motto">' + esc(school.school_motto) + '</div>' : '') +
+      '<div class="bs-school-meta">' +
+        [school.school_address, school.school_phone, school.school_email].filter(Boolean).map(esc).join(' · ') +
+      '</div>' +
+    '</div>' +
+    '<div class="bs-head-right">' +
+      '<div class="tag">Broadsheet</div>' +
+      '<div class="doc">' + esc(cls.name || 'Class') + '</div>' +
+    '</div>' +
+  '</div>';
+
+  const sub = '<div class="bs-sub">' +
+    '<div><span class="lbl">Class / Grade</span><span class="val">' + esc(cls.name || '—') + '</span></div>' +
+    '<div><span class="lbl">Term</span><span class="val">' + esc(term.term_name || term.name || '—') + (term.session_name ? ' · ' + esc(term.session_name) : '') + '</span></div>' +
+    '<div><span class="lbl">Assessment</span><span class="val">' + esc(assessmentLabel) + '</span></div>' +
+    '<div><span class="lbl">Learners</span><span class="val">' + rows.length + '</span></div>' +
+  '</div>';
+
+  /* Header row */
+  let head2 = '<tr><th style="width:34px;">#</th><th style="text-align:left;min-width:140px;">Learner</th><th style="width:60px;">ADM</th>';
+  subjects.forEach(s => {
+    head2 += '<th class="bs-subj-cell"><span class="code">' + esc(s.code || s.name.slice(0,3).toUpperCase()) + '</span><span class="name">' + esc(s.name) + '</span></th>';
+  });
+  head2 += '<th style="width:48px;">Total</th><th style="width:48px;">Avg</th><th style="width:40px;">Band</th><th style="width:36px;">Pos</th></tr>';
+
+  /* Body rows */
+  let body = '';
+  rows.forEach((r,i) => {
+    body += '<tr>';
+    body += '<td>' + (i+1) + '</td>';
+    body += '<td class="nm">' + esc(r.name) + '</td>';
+    body += '<td class="adm">' + esc(r.admission_no || '') + '</td>';
+    subjects.forEach((s, si) => {
+      const v = r.subjects?.[si]?.average;
+      body += '<td class="num">' + (v == null ? '—' : Math.round(Number(v))) + '</td>';
+    });
+    body += '<td class="num">' + (r.total == null ? '—' : Math.round(Number(r.total))) + '</td>';
+    body += '<td class="num">' + (r.average == null ? '—' : Number(r.average).toFixed(1)) + '</td>';
+    body += '<td>' + (r.average == null ? '—' : '<span class="bs-band ' + bandCls(r.average) + '">' + bandLbl(r.average) + '</span>') + '</td>';
+    body += '<td class="pos">' + (r.position == null ? '—' : r.position) + '</td>';
+    body += '</tr>';
+  });
+
+  const table = '<table class="bs-tbl"><thead>' + head2 + '</thead><tbody>' + body + '</tbody></table>';
+
+  /* Footer: simple stats + signature lines */
+  const avgList = rows.map(r => r.average).filter(v => v != null);
+  const meanAvg = avgList.length ? (avgList.reduce((a,b) => a+Number(b), 0) / avgList.length) : null;
+  const top = avgList.length ? Math.max(...avgList) : null;
+  const low = avgList.length ? Math.min(...avgList) : null;
+
+  const foot = '<div class="bs-foot">' +
+    '<div class="box"><b>Class mean</b>' + (meanAvg == null ? '—' : Number(meanAvg).toFixed(1)) + '</div>' +
+    '<div class="box"><b>Highest</b>' + (top == null ? '—' : Number(top).toFixed(1)) + '</div>' +
+    '<div class="box"><b>Lowest</b>' + (low == null ? '—' : Number(low).toFixed(1)) + '</div>' +
+  '</div>' +
+  '<div class="bs-foot sign">' +
+    '<div>Class Teacher</div>' +
+    '<div>Head Teacher</div>' +
+    '<div>Date</div>' +
+  '</div>';
+
+  return '<div class="bs-sheet">' + head + sub + table + foot + '</div>';
+}
+
+function buildCsv({ school, cls, term, assessment, subjects, rows }){
+  const lines = [];
+  lines.push([school.school_name || 'School', '· Broadsheet'].map(csvCell).join(','));
+  lines.push(['Class', cls.name || ''].map(csvCell).join(','));
+  lines.push(['Term', term.term_name || term.name || ''].map(csvCell).join(','));
+  lines.push(['Session', term.session_name || ''].map(csvCell).join(','));
+  lines.push(['Assessment', assessment === 'endterm' ? 'End Term' : 'Mid Term'].map(csvCell).join(','));
+  lines.push('');
+  lines.push(['#','Learner','ADM', ...subjects.map(s => s.name), 'Total','Average','Band','Position'].map(csvCell).join(','));
+  rows.forEach((r,i) => {
+    lines.push([
+      i+1, r.name, r.admission_no || '',
+      ...subjects.map((s, si) => r.subjects?.[si]?.average == null ? '' : Number(r.subjects[si].average).toFixed(2)),
+      r.total == null ? '' : Number(r.total).toFixed(2),
+      r.average == null ? '' : Number(r.average).toFixed(2),
+      r.average == null ? '' : bandLbl(r.average),
+      r.position == null ? '' : r.position
+    ].map(csvCell).join(','));
+  });
+  return lines;
+}
+
+async function render(){
+  const params = new URLSearchParams(location.search);
+  const classId = params.get('class_id') || params.get('classId');
+  const termId = params.get('term_id') || params.get('termId');
+  const assessment = (params.get('assessment_type') || params.get('assessmentType') || 'midterm').toLowerCase();
+  if(!classId || !termId){
+    const missing = [];
+    if(!classId) missing.push('class_id');
+    if(!termId) missing.push('term_id');
+    throw new Error('Missing URL parameter(s): ' + missing.join(' and ') + '. Open this page from Reports → Broadsheet.');
+  }
+  const data = await api(API + '/marks/broadsheet?class_id=' + encodeURIComponent(classId) + '&term_id=' + encodeURIComponent(termId) + '&assessment_type=' + encodeURIComponent(assessment));
+  const subjects = data.subjects || [];
+  const rows = (data.learners || data.rows || []).filter(r => Number(r.subject_count || 0) > 0);
+  const cls = data.class || { id:classId, name:'Class ' + classId };
+  const term = data.term || { id:termId, term_name:'Term ' + termId };
+  const school = data.school || {};
+
+  if(!rows.length){
+    document.getElementById('root').innerHTML = '<div class="error"><i class="fas fa-circle-info"></i><br><br>No ' + esc(assessment === 'endterm' ? 'End Term' : 'Mid Term') + ' marks have been entered for ' + esc(cls.name || 'this class') + ' yet.</div>';
+    document.getElementById('pageSub').textContent = 'Nothing to display';
+    return;
+  }
+
+  document.getElementById('pageTitle').textContent = (cls.name || 'Class') + ' · Broadsheet';
+  document.getElementById('pageSub').textContent = [
+    cls.name,
+    (term.term_name || term.name) + (term.session_name ? ' · ' + term.session_name : ''),
+    assessment === 'endterm' ? 'End Term' : 'Mid Term',
+    rows.length + ' learner' + (rows.length === 1 ? '' : 's'),
+    subjects.length + ' subject' + (subjects.length === 1 ? '' : 's')
+  ].filter(Boolean).join(' · ');
+  document.getElementById('statusText').textContent = rows.length + ' learners · ' + subjects.length + ' subjects';
+
+  document.getElementById('root').innerHTML = buildSheet({ school, cls, term, assessment, subjects, rows });
+
+  csvCache = buildCsv({ school, cls, term, assessment, subjects, rows });
+  csvFilename = 'broadsheet-' + safeName(cls.name) + '-' + safeName(term.term_name || term.name) + '-' + assessment + '.csv';
+}
+
+render().catch(err => {
+  document.getElementById('root').innerHTML = '<div class="error"><i class="fas fa-triangle-exclamation"></i><br><br>' + esc(err.message || 'Could not load broadsheet') + '</div>';
+  document.getElementById('pageSub').textContent = 'Could not load broadsheet';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Assessments · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.asmt-stage{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);}
+.stage-draft{background:var(--surface-2);color:var(--ink-3);}
+.stage-open{background:rgba(59,130,246,.10);color:var(--d1);}
+.stage-marking{background:rgba(245,158,11,.10);color:var(--warn);}
+.stage-done{background:rgba(22,163,74,.10);color:var(--ok);}
+
+.progress-mini{width:80px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
+.progress-mini > div{height:100%;border-radius:3px;}
+
+/* Components builder inside slide-over */
+.comp-row{display:grid;grid-template-columns:1fr 1.6fr 70px 30px;gap:8px;align-items:center;margin-bottom:6px;}
+.comp-row input{height:34px;padding:0 10px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12.5px;}
+.comp-row input:focus{border-color:var(--ink);outline:none;}
+.comp-row input.mono{font-family:var(--mono);font-weight:600;}
+.comp-row .x{height:32px;border:none;background:transparent;color:var(--ink-3);border-radius:6px;cursor:pointer;}
+.comp-row .x:hover{background:rgba(185,28,28,.08);color:var(--danger);}
+.comp-hint{font-size:11px;color:var(--ink-3);line-height:1.5;margin-top:6px;}
+.comp-hint b{color:var(--ink);font-weight:600;}
+</style>
+</head>
+<body data-page="assessments" data-title="Assessments">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Assessments"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow" id="aEyebrow">Loading current term…</div>
+        <h1 class="h1">Assessments <em>· components</em></h1>
+        <div class="h-sub">One row per scoring component. <b id="aSub">Loading…</b></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="exportBtn"><i class="fas fa-download"></i>Export</button>
+        <button class="btn btn-primary" id="newBtn"><i class="fas fa-plus"></i>New assessment</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="all">All <span class="count" id="ctAll">—</span></div>
+      <div class="tab" data-tab="midterm">Midterm <span class="count" id="ctMid">—</span></div>
+      <div class="tab" data-tab="endterm">Endterm <span class="count" id="ctEnd">—</span></div>
+    </div>
+
+    <div class="filter-row">
+      <div class="input-wrap"><i class="fas fa-search"></i><input class="input input-search" id="search" placeholder="Search class, subject or component name…"/></div>
+      <select class="input" id="classFilter"><option value="">All classes</option></select>
+      <select class="input" id="subjectFilter"><option value="">All subjects</option></select>
+    </div>
+
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Class</th>
+            <th>Subject</th>
+            <th class="c">Type</th>
+            <th class="c">Out of</th>
+            <th>Stage</th>
+            <th>Progress</th>
+            <th class="r">Mean</th>
+            <th class="r" style="width:80px;"></th>
+          </tr>
+        </thead>
+        <tbody id="asmtBody"><tr><td colspan="9" style="padding:18px;color:var(--ink-3);">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- New assessment slide -->
+<div class="shroud" id="shroud"></div>
+<aside class="slide" id="newSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">New assessment</div>
+      <div class="slide-sub">Configure components for a class · subject · midterm or endterm</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field">
+      <label class="field-label">Class</label>
+      <select class="input" id="nClass"></select>
+    </div>
+    <div class="field">
+      <label class="field-label">Subject</label>
+      <select class="input" id="nSubject"></select>
+    </div>
+    <div class="field">
+      <label class="field-label">Assessment type</label>
+      <div style="display:flex;gap:8px;">
+        <span class="chip on" data-type="midterm">Midterm</span>
+        <span class="chip" data-type="endterm">Endterm</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Components</label>
+      <div id="compsList"></div>
+      <button class="btn btn-sm" id="addCompBtn" style="margin-top:4px;"><i class="fas fa-plus"></i>Add component</button>
+      <div class="comp-hint">
+        Each component is one scoring item (e.g. CAT 1, CAT 2, Exam). The <b>key</b> is an internal identifier — lowercase letters, digits, underscores only (<code>cat1</code>, <code>exam</code>).
+        The <b>name</b> is what teachers see in marks entry. Saving <b>replaces</b> all components for this class · subject · type.
+      </div>
+    </div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct" id="newFoot">—</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="newSave"><i class="fas fa-check"></i>Save components</button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') + '%' : '—';
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+function csvCell(v){ const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
+const state = { rows:[], classes:[], subjects:[], term:null, tab:'all', filterClass:'', filterSubject:'', search:'', newType:'midterm', newComponents:[] };
+
+const body = document.getElementById('asmtBody');
+const stageLabel = { open:'Open', marking:'Marking', done:'Published' };
+function stageFor(a){ const done = Number(a.done || 0), total = Number(a.total || 0); if(total && done >= total) return 'done'; if(done > 0) return 'marking'; return 'open'; }
+
+function fillFilters(){
+  const cls = document.getElementById('classFilter');
+  const subj = document.getElementById('subjectFilter');
+  cls.innerHTML = '<option value="">All classes</option>' + state.classes.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+  subj.innerHTML = '<option value="">All subjects</option>' + state.subjects.map(s => '<option value="' + s.id + '">' + esc(s.name) + '</option>').join('');
+}
+
+function filtered(){
+  return state.rows.filter(a => {
+    if(state.tab !== 'all' && a.assessment_type !== state.tab) return false;
+    if(state.filterClass && String(a.class_id) !== state.filterClass) return false;
+    if(state.filterSubject && String(a.subject_id) !== state.filterSubject) return false;
+    if(state.search){
+      const hay = (a.class_name + ' ' + a.subject_name + ' ' + a.component_name + ' ' + a.component_key + ' ' + a.assessment_type).toLowerCase();
+      if(!hay.includes(state.search)) return false;
+    }
+    return true;
+  });
+}
+
+function row(a){
+  const done = Number(a.done || 0), total = Number(a.total || 0);
+  const st = stageFor(a);
+  const pctDone = total ? Math.round(done / total * 100) : 0;
+  const fillCol = st === 'done' ? 'linear-gradient(90deg,#10b981,#059669)'
+                : st === 'marking' ? 'linear-gradient(90deg,#f59e0b,#d97706)'
+                : 'linear-gradient(90deg,#3b82f6,#2563eb)';
+  const typeLabel = a.assessment_type === 'midterm' ? 'Midterm' : 'Endterm';
+  return '<tr data-id="' + a.id + '" data-class="' + a.class_id + '" data-subject="' + a.subject_id + '" data-type="' + a.assessment_type + '">' +
+    '<td><div style="font-weight:600;color:var(--ink);">' + esc(a.component_name) + '</div><div style="font-size:11px;color:var(--ink-3);font-family:var(--mono);margin-top:2px;">' + esc(a.component_key) + '</div></td>' +
+    '<td>' + esc(a.class_name) + '</td>' +
+    '<td>' + esc(a.subject_name) + '</td>' +
+    '<td class="c"><span style="font-size:11px;font-weight:600;color:var(--ink-2);">' + typeLabel + '</span></td>' +
+    '<td class="c"><span style="font-family:var(--mono);font-size:12px;color:var(--ink-3);">' + a.max_score + '</span></td>' +
+    '<td><span class="asmt-stage stage-' + st + '">' + stageLabel[st] + '</span></td>' +
+    '<td><span class="progress-mini"><div style="width:' + pctDone + '%;background:' + fillCol + ';"></div></span><span style="font-family:var(--mono);font-size:11px;color:var(--ink-2);font-weight:600;">' + done + '/' + total + '</span></td>' +
+    '<td class="r">' + (a.mean == null ? '—' : pct(a.mean)) + '</td>' +
+    '<td class="r"><div class="row-actions" style="display:flex;justify-content:flex-end;gap:3px;">' +
+      '<button data-act="open" title="Open marks entry"><i class="fas fa-pen"></i></button>' +
+      '<button data-act="delete" title="Delete component" style="color:var(--ink-3);"><i class="fas fa-trash"></i></button>' +
+    '</div></td>' +
+  '</tr>';
+}
+
+function render(){
+  const rows = filtered();
+  body.innerHTML = rows.length
+    ? rows.map(row).join('')
+    : '<tr><td colspan="9" style="padding:18px;color:var(--ink-3);">No components match these filters. <button class="card-link" onclick="document.getElementById(\'newBtn\').click()">Create one →</button></td></tr>';
+
+  /* Update header counts */
+  document.getElementById('ctAll').textContent = state.rows.length;
+  document.getElementById('ctMid').textContent = state.rows.filter(a => a.assessment_type === 'midterm').length;
+  document.getElementById('ctEnd').textContent = state.rows.filter(a => a.assessment_type === 'endterm').length;
+  /* Update subline */
+  const open    = state.rows.filter(a => stageFor(a) === 'open').length;
+  const marking = state.rows.filter(a => stageFor(a) === 'marking').length;
+  const done    = state.rows.filter(a => stageFor(a) === 'done').length;
+  document.getElementById('aSub').textContent = state.rows.length + ' total · ' + open + ' open · ' + marking + ' marking · ' + done + ' published';
+}
+
+/* Row-level actions */
+body.addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-act]');
+  const tr = e.target.closest('tr[data-id]');
+  if(!tr) return;
+  if(btn?.dataset.act === 'delete'){
+    e.stopPropagation();
+    if(!confirm('Delete this component permanently?\n\nNote: any marks scored under this component are also removed.')) return;
+    try {
+      await api(API + '/assessment-components/' + tr.dataset.id, { method:'DELETE' });
+      Joy.toast('Component deleted');
+      load();
+    } catch(err) { Joy.toast(err.message || "Couldn't delete", { type:'danger' }); }
+    return;
+  }
+  /* Default: open marks entry */
+  const url = '/admin/marks.html?classId=' + tr.dataset.class + '&subjectId=' + tr.dataset.subject + '&assessmentType=' + tr.dataset.type;
+  location.href = url;
+});
+
+/* Filters */
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  state.tab = t.dataset.tab;
+  render();
+}));
+document.getElementById('classFilter').addEventListener('change', e => { state.filterClass = e.target.value; render(); });
+document.getElementById('subjectFilter').addEventListener('change', e => { state.filterSubject = e.target.value; render(); });
+document.getElementById('search').addEventListener('input', e => { state.search = e.target.value.toLowerCase().trim(); render(); });
+
+/* Export — CSV of filtered rows */
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const rows = filtered();
+  if(!rows.length){ Joy.toast('Nothing to export', { type:'warn' }); return; }
+  const lines = ['Class,Subject,Type,Component Key,Component Name,Out of,Done,Total,Mean'];
+  rows.forEach(a => {
+    lines.push([a.class_name, a.subject_name, a.assessment_type, a.component_key, a.component_name, a.max_score, a.done || 0, a.total || 0, a.mean == null ? '' : Number(a.mean).toFixed(1)].map(csvCell).join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'assessments-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  Joy.toast('Exported ' + rows.length + ' rows');
+});
+
+/* New assessment slide */
+function defaultComponents(type){
+  /* Sensible defaults — admin can adjust before saving */
+  return type === 'midterm'
+    ? [{ component_key:'cat1', component_name:'CAT 1', max_score:30 }, { component_key:'exam', component_name:'Midterm Exam', max_score:70 }]
+    : [{ component_key:'exam', component_name:'Endterm Exam', max_score:100 }];
+}
+function renderComponents(){
+  const host = document.getElementById('compsList');
+  host.innerHTML = state.newComponents.map((c, i) =>
+    '<div class="comp-row" data-i="' + i + '">' +
+      '<input class="mono" placeholder="key (e.g. cat1)" value="' + esc(c.component_key) + '" data-f="component_key"/>' +
+      '<input placeholder="Display name (e.g. CAT 1)" value="' + esc(c.component_name) + '" data-f="component_name"/>' +
+      '<input class="mono" type="number" placeholder="max" min="1" value="' + (c.max_score || '') + '" data-f="max_score"/>' +
+      '<button class="x" data-act="rm" title="Remove"><i class="fas fa-xmark"></i></button>' +
+    '</div>'
+  ).join('');
+  const totalMax = state.newComponents.reduce((s, c) => s + (Number(c.max_score) || 0), 0);
+  document.getElementById('newFoot').textContent = state.newComponents.length + ' component' + (state.newComponents.length === 1 ? '' : 's') + ' · total out of ' + totalMax;
+}
+document.getElementById('compsList').addEventListener('input', e => {
+  const row = e.target.closest('.comp-row'); if(!row) return;
+  const i = +row.dataset.i;
+  const field = e.target.dataset.f;
+  if(!state.newComponents[i]) return;
+  state.newComponents[i][field] = field === 'max_score' ? Number(e.target.value) || 0 : String(e.target.value);
+  renderComponents();
+});
+document.getElementById('compsList').addEventListener('click', e => {
+  if(!e.target.closest('[data-act="rm"]')) return;
+  const i = +e.target.closest('.comp-row').dataset.i;
+  state.newComponents.splice(i, 1);
+  if(!state.newComponents.length) state.newComponents = [{ component_key:'', component_name:'', max_score:0 }];
+  renderComponents();
+});
+document.getElementById('addCompBtn').addEventListener('click', () => {
+  state.newComponents.push({ component_key:'', component_name:'', max_score:0 });
+  renderComponents();
+});
+document.querySelectorAll('#newSlide .chip').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('#newSlide .chip').forEach(x => x.classList.remove('on'));
+  c.classList.add('on');
+  state.newType = c.dataset.type;
+  /* Replace component defaults only if user hasn't customized them yet */
+  if(state.newComponents.every(c => !c.component_key && !c.component_name && !c.max_score)){
+    state.newComponents = defaultComponents(state.newType);
+    renderComponents();
+  }
+}));
+
+document.getElementById('newBtn').addEventListener('click', () => {
+  const cls = document.getElementById('nClass');
+  const subj = document.getElementById('nSubject');
+  cls.innerHTML = state.classes.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+  subj.innerHTML = state.subjects.map(s => '<option value="' + s.id + '">' + esc(s.name) + '</option>').join('');
+  state.newType = 'midterm';
+  document.querySelectorAll('#newSlide .chip').forEach((c, i) => c.classList.toggle('on', i === 0));
+  state.newComponents = defaultComponents('midterm');
+  renderComponents();
+  Joy.openSlide('newSlide');
+});
+
+document.getElementById('newSave').addEventListener('click', async () => {
+  const class_id = Number(document.getElementById('nClass').value);
+  const subject_id = Number(document.getElementById('nSubject').value);
+  const assessment_type = state.newType;
+  const components = state.newComponents
+    .map(c => ({ component_key: String(c.component_key || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, ''), component_name: String(c.component_name || '').trim(), max_score: Number(c.max_score) || 0 }))
+    .filter(c => c.component_key && c.component_name && c.max_score > 0);
+  if(!class_id || !subject_id){ Joy.toast('Pick a class and subject', { type:'warn' }); return; }
+  if(!components.length){ Joy.toast('Add at least one valid component (key + name + max)', { type:'warn' }); return; }
+  const btn = document.getElementById('newSave');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try {
+    await api(API + '/assessment-components', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ class_id, subject_id, assessment_type, components })
+    });
+    Joy.toast('Saved ' + components.length + ' component' + (components.length === 1 ? '' : 's'));
+    Joy.closeSlide();
+    load();
+  } catch(e){
+    Joy.toast(e.message || "Couldn't save", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Save components';
+  }
+});
+
+async function load(){
+  try {
+    const [rows, classes, subjects, period] = await Promise.all([
+      api(API + '/assessment-components'),
+      api(API + '/classes'),
+      api(API + '/subjects'),
+      api(API + '/current-period').catch(() => ({}))
+    ]);
+    state.rows = rows || [];
+    state.classes = (classes || []).filter(c => (c.status || 'active') === 'active');
+    state.subjects = (subjects || []).filter(s => (s.status || 'active') === 'active');
+    state.term = period?.term || null;
+    document.getElementById('aEyebrow').textContent = 'Joyland Schools · ' + ((period?.term?.session_name ? period.term.session_name + ' · ' : '') + (period?.term?.name || 'Current term'));
+    fillFilters();
+    render();
+  } catch(e){
+    Joy.toast("Couldn't load assessments", { type:'danger' });
+    body.innerHTML = '<tr><td colspan="9" style="padding:18px;color:var(--ink-3);">Failed to load.</td></tr>';
+  }
+}
+load();
+</script>
+</body>
+</html>

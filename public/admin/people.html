@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>People · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+/* Page-specific */
+.tab-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:9px;background:transparent;border:1px solid transparent;font-size:12.5px;font-weight:600;color:var(--ink-3);cursor:pointer;font-family:inherit;}
+.tab-chip:hover{color:var(--ink);background:var(--surface-2);}
+.tab-chip.on{background:var(--surface);color:var(--ink);border-color:var(--line);box-shadow:var(--sh-1);}
+.tab-chip .ct{font-family:var(--mono);font-size:10px;background:var(--surface-2);padding:1px 6px;border-radius:5px;font-weight:600;color:var(--ink-2);}
+.tab-chip.on .ct{background:var(--ink);color:#fff;}
+.tab-strip{display:flex;align-items:center;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:3px;margin-bottom:14px;}
+
+/* Density · compact mode tightens row padding, shrinks avatars, hides the secondary role label */
+.table-wrap.compact .tbl td{padding:6px 14px;font-size:12px;}
+.table-wrap.compact .tbl td .person .ava{width:26px;height:26px;font-size:10px;}
+.table-wrap.compact .tbl td .person .nm{font-size:12.5px;}
+.table-wrap.compact .tbl td .person .sub{font-size:10px;margin-top:0;}
+.table-wrap.compact .tbl td .role-chip{padding:2px 7px;font-size:9.5px;}
+.table-wrap.compact .tbl td > div[style*="margin-top:4px"]{display:none;}
+.table-wrap.compact .tbl td .status{padding:2px 7px;font-size:10px;}
+
+/* Row-action menu (ellipsis dropdown) */
+.row-menu{position:absolute;background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:var(--sh-3);padding:5px;min-width:180px;z-index:120;}
+.row-menu button{display:flex;align-items:center;gap:9px;width:100%;padding:7px 10px;border:none;background:transparent;font-family:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer;border-radius:6px;text-align:left;}
+.row-menu button:hover{background:var(--surface-2);color:var(--ink);}
+.row-menu button i{width:14px;color:var(--ink-3);font-size:11px;}
+.row-menu button.danger{color:var(--danger);}
+.row-menu button.danger:hover{background:rgba(185,28,28,.06);}
+.row-menu button.danger i{color:var(--danger);}
+
+.head-stats{display:flex;align-items:center;gap:18px;margin-top:10px;flex-wrap:wrap;}
+.head-stat{font-size:12px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px;}
+.head-stat b{font-family:var(--display);font-weight:600;font-size:15px;color:var(--ink);letter-spacing:-.01em;}
+.head-stat .dot{width:6px;height:6px;border-radius:50%;}
+
+/* Slide-over profile body */
+.prof-hero{display:flex;align-items:flex-start;gap:14px;}
+.prof-meta{flex:1;}
+.prof-name{font-family:var(--display);font-weight:600;font-size:22px;color:var(--ink);letter-spacing:-.014em;line-height:1.1;}
+.prof-id{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;}
+.prof-chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.prof-actions{display:flex;gap:6px;margin:18px 0;}
+.prof-actions .btn{flex:1;}
+.prof-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin:0 -22px 16px;padding:0 22px;}
+.prof-tab{padding:9px 12px;font-size:12.5px;font-weight:600;color:var(--ink-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.prof-tab.on{color:var(--ink);border-bottom-color:var(--ink);}
+
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.kv{padding:11px 13px;background:var(--surface-2);border-radius:8px;}
+.kv .k{font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.kv .v{font-size:13px;font-weight:600;color:var(--ink);}
+.kv .v.mono{font-family:var(--mono);font-weight:700;}
+
+.snap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px;background:linear-gradient(135deg,var(--surface-2),#fff);border-radius:10px;margin-bottom:18px;border:1px solid var(--line);}
+.snap-cell{text-align:center;}
+.snap-v{font-family:var(--display);font-weight:600;font-size:22px;color:var(--ink);letter-spacing:-.018em;}
+.snap-l{font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+
+.section-h{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 10px;display:flex;align-items:center;gap:8px;}
+.section-h::after{content:'';flex:1;height:1px;background:var(--line);}
+
+.parent-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:9px;}
+.parent-row:hover{background:var(--surface-2);}
+.parent-row .nm{flex:1;}
+.parent-row .nm > .pn{font-size:13px;font-weight:600;color:var(--ink);}
+.parent-row .nm > .pm{font-size:11px;color:var(--ink-3);}
+.parent-row .acts{display:flex;gap:4px;}
+
+.flag-row{display:flex;gap:10px;padding:10px 12px;border:1px solid rgba(217,119,6,.18);background:rgba(217,119,6,.05);border-radius:8px;margin-bottom:6px;}
+.flag-row i{color:var(--warn);font-size:12px;margin-top:3px;}
+.flag-row .ft{flex:1;}
+.flag-row .ft b{font-size:12px;color:var(--ink);font-weight:600;}
+.flag-row .ft p{font-size:11px;color:var(--ink-3);margin-top:2px;}
+</style>
+</head>
+<body data-page="people" data-title="People">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="People"></div>
+
+  <div class="content">
+
+    <!-- ═══ Page head ═══ -->
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">All people in the school directory</div>
+        <h1 class="h1">People <em>· <span id="totalCount">—</span></em></h1>
+        <div class="head-stats">
+          <span class="head-stat"><span class="dot" style="background:var(--ok)"></span><b id="activeCount">—</b> active</span>
+          <span class="head-stat"><span class="dot" style="background:var(--d1)"></span><b id="termAddedCount">—</b> added this term</span>
+          <span class="head-stat"><span class="dot" style="background:var(--warn)"></span><b id="inviteCount">—</b> pending invites</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="exportBtn" title="Download visible rows as CSV"><i class="fas fa-download"></i>Export</button>
+        <button class="btn" id="importBtn" title="Bulk-add learners from a spreadsheet"><i class="fas fa-file-import"></i>Import CSV</button>
+        <button class="btn btn-primary" id="addPersonBtn"><i class="fas fa-user-plus"></i>Add person</button>
+      </div>
+    </div>
+
+    <!-- ═══ Segmented tabs ═══ -->
+    <div class="tab-strip">
+      <button class="tab-chip on" data-tab="all">All <span class="ct">—</span></button>
+      <button class="tab-chip" data-tab="learners">Learners <span class="ct">—</span></button>
+      <button class="tab-chip" data-tab="teachers">Teachers <span class="ct">—</span></button>
+      <button class="tab-chip" data-tab="parents">Parents <span class="ct">—</span></button>
+      <button class="tab-chip" data-tab="admins">Admins <span class="ct">—</span></button>
+      <button class="tab-chip" data-tab="invites">Invites <span class="ct">—</span></button>
+    </div>
+
+    <!-- ═══ Filter row ═══ -->
+    <div class="filter-row">
+      <div class="input-wrap">
+        <i class="fas fa-search"></i>
+        <input class="input input-search" id="searchInput" placeholder="Search name, admission no, phone, email…" autocomplete="off"/>
+      </div>
+      <select class="input" id="classFilter">
+        <option value="">All classes</option>
+      </select>
+      <select class="input" id="statusFilter">
+        <option value="">Any status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="pending">Pending</option>
+      </select>
+      <select class="input" id="sortSelect">
+        <option value="name">Sort · Name</option>
+        <option value="created">Sort · Recently added</option>
+        <option value="class">Sort · Class</option>
+        <option value="role">Sort · Role</option>
+      </select>
+      <div class="spacer"></div>
+      <div class="toggle-pair">
+        <button class="on" title="Comfortable density"><i class="fas fa-grip-lines"></i></button>
+        <button title="Compact density"><i class="fas fa-bars"></i></button>
+      </div>
+    </div>
+
+    <!-- ═══ Table ═══ -->
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th class="checkbox"><span class="cb" id="cbAll" onclick="toggleAll()"></span></th>
+            <th>Person</th>
+            <th>Role</th>
+            <th>Class / Context</th>
+            <th>Status</th>
+            <th>Last active</th>
+            <th class="r" style="width:120px;"></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="pagination">
+        <span class="info" id="pageInfo">Loading records · <span id="selInfo" class="muted">none selected</span></span>
+        <div class="pages" id="pageButtons"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ Bulk action bar ═══ -->
+<div class="bulk-bar" id="bulkBar">
+  <span class="bulk-count"><span>0</span> selected</span>
+  <div class="bulk-acts">
+    <button onclick="bulkMessage()"><i class="far fa-envelope"></i>Message</button>
+    <button onclick="bulkMove()"><i class="fas fa-arrow-right-arrow-left"></i>Move</button>
+    <button onclick="bulkCodes()"><i class="fas fa-key"></i>Codes</button>
+    <button onclick="exportSelected()"><i class="fas fa-download"></i>Export</button>
+    <button onclick="bulkDeactivate()"><i class="fas fa-ban"></i>Deactivate</button>
+  </div>
+  <button class="bulk-x" onclick="clearSel()"><i class="fas fa-xmark"></i></button>
+</div>
+
+<!-- ═══ Shroud ═══ -->
+<div class="shroud" id="shroud"></div>
+
+<!-- ═══ Profile slide-over ═══ -->
+<aside class="slide" id="profSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">Person profile</div>
+      <div class="slide-sub" id="profSub">—</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body" id="profBody"></div>
+  <div class="slide-foot">
+    <span class="ct" id="profFoot">Live database record</span>
+    <button class="btn"><i class="fas fa-pen"></i>Edit</button>
+  </div>
+</aside>
+
+<!-- ═══ Add / Edit slide-over (dual-mode) ═══ -->
+<aside class="slide" id="addSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title" id="addTitle">Add a new person</div>
+      <div class="slide-sub" id="addSub">Pick a role, fill the form, then save to the live database.</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field" id="roleField">
+      <label class="field-label">Role</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="chip on" data-role="learner">Learner</span>
+        <span class="chip" data-role="teacher">Teacher</span>
+        <span class="chip" data-role="parent">Parent</span>
+        <span class="chip" data-role="admin">Admin</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Full name</label>
+      <input class="input" id="pName" placeholder="Full name"/>
+    </div>
+    <div class="field">
+      <label class="field-label" id="pAdmLabel">Admission number</label>
+      <input class="input" id="pAdm" placeholder="Admission number"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Class</label>
+      <select class="input" id="addClass">
+        <option value="">Unassigned</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">Date of birth</label>
+      <input class="input" id="pDob" type="date"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Sex</label>
+      <select class="input" id="pSex"><option value="">—</option><option value="Female">Female</option><option value="Male">Male</option></select>
+    </div>
+    <div class="field">
+      <label class="field-label">Parent / guardian phone</label>
+      <input class="input" id="pPhone" placeholder="Phone or guardian contact"/>
+    </div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct" id="addFoot">Live save · Joyland database</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="addSave">Save</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ Import CSV slide-over ═══ -->
+<aside class="slide" id="importSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">Import learners from CSV</div>
+      <div class="slide-sub">Bulk-add new learners. Existing admission numbers will be skipped.</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+
+    <div style="padding:14px 16px;background:linear-gradient(135deg,var(--brand-tint),#fff);border:1px solid rgba(27,94,32,.18);border-radius:10px;margin-bottom:18px;font-size:12.5px;color:var(--ink-2);line-height:1.5;">
+      <div style="font-weight:600;color:var(--ink);margin-bottom:5px;"><i class="fas fa-circle-info" style="color:var(--brand);margin-right:5px;"></i>Required columns</div>
+      <code style="font-family:var(--mono);font-size:11px;color:var(--ink);background:#fff;padding:2px 6px;border-radius:4px;border:1px solid var(--line);">Name, Admission No, Sex, Class, Date of Birth, Parent Phone</code>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--ink-3);">Class must match an existing class name exactly (e.g. <b>GRADE 5</b>, <b>PP1</b>). Date of birth in YYYY-MM-DD. Sex is M or F.</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">1. Get the template</label>
+      <button class="btn" id="dlTemplate"><i class="fas fa-download"></i>Download CSV template</button>
+    </div>
+
+    <div class="field">
+      <label class="field-label">2. Upload your completed CSV</label>
+      <input type="file" id="csvFile" accept=".csv,text/csv" class="input" style="padding:8px;"/>
+    </div>
+
+    <div id="csvPreview" style="display:none;margin-top:14px;">
+      <label class="field-label">Preview &amp; validation</label>
+      <div id="csvSummary" style="font-size:12px;color:var(--ink-2);margin-bottom:10px;"></div>
+      <div style="max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);">
+        <table class="tbl" style="font-size:12px;"><thead id="csvHead"></thead><tbody id="csvBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct" id="importFoot">Choose a file to begin</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="importSubmit" disabled><i class="fas fa-upload"></i>Import <span id="importCount"></span></button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || j.error || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+const tbody = document.getElementById('rows');
+const sel = new Set();
+let people = [];
+let classes = [];
+let filteredPeople = [];
+let counts = { all:0, learners:0, teachers:0, parents:0, admins:0, invites:0 };
+let currentPeriod = null;
+function roleChip(r){
+  const map = { learner:['Learner','role-learner'], teacher:['Teacher','role-teacher'], parent:['Parent','role-parent'], admin:['Admin','role-admin'] };
+  const v = map[r] || ['-',''];
+  return '<span class="role-chip ' + v[1] + '">' + v[0] + '</span>';
+}
+function statusPill(s){ s = s || 'active'; return '<span class="status status-' + esc(s) + '">' + esc(s.charAt(0).toUpperCase()+s.slice(1)) + '</span>'; }
+function createdAt(x){ return x.created_at || x.createdAt || ''; }
+function inviteBadge(x){ return x.status === 'pending' ? 'INVITE' : null; }
+function mapLearner(x){ return { key:'learner:' + x.id, id:x.id, source:x, name:x.name, sub:x.admission_no || x.user_id || '-', role:'learner', roleX:x.class_name || 'Learner', ctx:x.class_name || 'Unassigned', className:x.class_name || '', status:x.status || 'active', last:'Live record', created_at:createdAt(x), online:false, badge:inviteBadge(x) }; }
+function mapTeacher(x){ return { key:'teacher:' + x.id, id:x.id, source:x, name:x.name, sub:x.user_id || '-', role:'teacher', roleX:x.subject || 'Teacher', ctx:x.primary_class || x.subject || 'No class assigned', className:x.primary_class || '', status:x.status || 'active', last:'Live record', created_at:createdAt(x), online:false, badge:x.is_admin?'ADMIN':inviteBadge(x) }; }
+function mapParent(x){ return { key:'parent:' + x.id, id:x.id, source:x, name:x.name, sub:x.phone || x.user_id || '-', role:'parent', roleX:'Parent of ' + (x.children_count || 0), ctx:'Parent of ' + (x.children_count || 0), className:'', status:x.status || 'active', last:'Live record', created_at:createdAt(x), online:false, badge:inviteBadge(x) }; }
+function mapAdmin(x){ return { key:'admin:' + x.id, id:x.id, source:x, name:x.name, sub:x.user_id || 'OWNER', role:'admin', roleX:x.is_admin?'Full access':'Admin', ctx:'All school', className:'', status:x.status || 'active', last:'Live record', created_at:createdAt(x), online:false, badge:x.is_admin?'OWNER':inviteBadge(x) }; }
+function row(p){
+  const badge = p.badge ? '<span class="chip chip-brand" style="font-size:9px;padding:2px 7px;letter-spacing:.05em;font-weight:700;margin-left:6px;">' + esc(p.badge) + '</span>' : '';
+  return '<tr data-key="' + esc(p.key) + '" data-id="' + p.id + '" data-role="' + p.role + '"><td class="checkbox"><span class="cb" onclick="toggleRow(\'' + esc(p.key) + '\',this)"></span></td>' +
+    '<td><div class="person"><div class="ava" style="' + Joy.avaStyle(p.name) + '">' + Joy.initials(p.name) + '</div><div><div class="nm">' + esc(p.name) + badge + '</div><div class="sub">' + esc(p.sub) + '</div></div></div></td>' +
+    '<td>' + roleChip(p.role) + '<div style="font-size:11px;color:var(--ink-3);margin-top:4px;">' + esc(p.roleX) + '</div></td>' +
+    '<td><span style="font-size:13px;color:var(--ink);font-weight:500;">' + esc(p.ctx) + '</span></td><td>' + statusPill(p.status) + '</td>' +
+    '<td><span class="mono" style="font-size:11px;color:var(--ink-3);">' + esc(p.last) + '</span></td>' +
+    '<td class="r"><div class="row-actions" style="justify-content:flex-end;"><button title="Message"><i class="far fa-envelope"></i></button><button title="Edit"><i class="fas fa-pen"></i></button><button title="More"><i class="fas fa-ellipsis-v"></i></button></div></td></tr>';
+}
+function updateCounts(){
+  counts.all = counts.learners + counts.teachers + counts.parents + counts.admins;
+  document.getElementById('totalCount').textContent = counts.all;
+  document.querySelectorAll('.tab-chip').forEach(ch => { const key=ch.dataset.tab; const ct=ch.querySelector('.ct'); if(ct) ct.textContent = counts[key] ?? 0; });
+  document.getElementById('activeCount').textContent = people.filter(p=>p.status==='active').length;
+  document.getElementById('inviteCount').textContent = counts.invites;
+  const termStart = currentPeriod?.term?.start_date ? new Date(currentPeriod.term.start_date + 'T00:00:00') : null;
+  const added = termStart ? people.filter(p => p.created_at && new Date(p.created_at.replace(' ', 'T')) >= termStart).length : 0;
+  document.getElementById('termAddedCount').textContent = added;
+}
+function refreshClassSelects(){
+  const opts = '<option value="">All classes</option>' + classes.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
+  const classFilter = document.getElementById('classFilter');
+  if(classFilter) classFilter.innerHTML = opts;
+  const addClass = document.getElementById('addClass');
+  if(addClass) addClass.innerHTML = '<option value="">Unassigned</option>' + classes.map(c => '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>').join('');
+}
+function sortedRows(rows){
+  const sort = document.getElementById('sortSelect')?.value || 'name';
+  return [...rows].sort((a,b) => {
+    if(sort === 'created') return String(b.created_at || '').localeCompare(String(a.created_at || '')) || a.name.localeCompare(b.name);
+    if(sort === 'class') return String(a.className || a.ctx || '').localeCompare(String(b.className || b.ctx || ''), undefined, {numeric:true}) || a.name.localeCompare(b.name);
+    if(sort === 'role') return a.role.localeCompare(b.role) || a.name.localeCompare(b.name);
+    return a.name.localeCompare(b.name);
+  });
+}
+function render(){
+  const active = document.querySelector('.tab-chip.on')?.dataset.tab || 'all';
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const className = document.getElementById('classFilter')?.value || '';
+  const status = document.getElementById('statusFilter')?.value || '';
+  filteredPeople = sortedRows(people.filter(p => {
+    const tabOk = active === 'all' || (active === 'invites' ? p.status === 'pending' : p.role + 's' === active);
+    const classOk = !className || p.className === className || p.ctx === className;
+    const statusOk = !status || p.status === status;
+    const qOk = !q || [p.name,p.sub,p.role,p.roleX,p.ctx,p.status,p.source?.email,p.source?.phone].join(' ').toLowerCase().includes(q);
+    return tabOk && classOk && statusOk && qOk;
+  }));
+  tbody.innerHTML = filteredPeople.map(row).join('') || '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">No live database records match these filters.</td></tr>';
+  const info = document.getElementById('pageInfo');
+  if(info) info.innerHTML = filteredPeople.length + ' of ' + people.length + ' live records · <span id="selInfo" class="muted">' + (sel.size ? sel.size + ' selected' : 'none selected') + '</span>';
+  document.getElementById('pageButtons').innerHTML = '';
+}
+async function loadPeople(){
+  tbody.innerHTML = '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">Loading people...</td></tr>';
+  try{
+    const [learners, teachers, parents, admins, cls, period] = await Promise.all([
+      api(API + '/learners'),
+      api(API + '/teachers'),
+      api(API + '/parents'),
+      api(API + '/admins'),
+      api(API + '/classes'),
+      api(API + '/current-period')
+    ]);
+    classes = cls || [];
+    currentPeriod = period || null;
+    refreshClassSelects();
+    counts = {
+      learners:learners.length,
+      teachers:teachers.length,
+      parents:parents.length,
+      admins:admins.length,
+      invites:[...learners, ...teachers, ...parents, ...admins].filter(x=>x.status==='pending').length
+    };
+    people = learners.map(mapLearner).concat(teachers.map(mapTeacher), parents.map(mapParent), admins.map(mapAdmin));
+    updateCounts(); render(); clearSel();
+  }catch(err){ Joy.toast("Couldn't load people", {type:'danger'}); console.error(err); }
+}
+function toggleRow(key, el){ if(sel.has(key)){ sel.delete(key); el.classList.remove('on'); el.closest('tr').classList.remove('selected'); } else { sel.add(key); el.classList.add('on'); el.closest('tr').classList.add('selected'); } updateSel(); }
+function toggleAll(){ const on = !document.getElementById('cbAll').classList.contains('on'); document.getElementById('cbAll').classList.toggle('on', on); document.querySelectorAll('#rows tr').forEach(tr => { const key=tr.dataset.key; const cb=tr.querySelector('.cb'); if(!cb || !key) return; if(on){ sel.add(key); cb.classList.add('on'); tr.classList.add('selected'); } else { sel.delete(key); cb.classList.remove('on'); tr.classList.remove('selected'); } }); updateSel(); }
+function clearSel(){ sel.clear(); document.getElementById('cbAll')?.classList.remove('on'); document.querySelectorAll('#rows .cb').forEach(c=>c.classList.remove('on')); document.querySelectorAll('#rows tr').forEach(t=>t.classList.remove('selected')); updateSel(); }
+function updateSel(){ const n=sel.size; const el=document.getElementById('selInfo'); if(el) el.textContent = n ? n + ' selected' : 'none selected'; Joy.bulk.update(n); }
+async function openProfile(p){
+  document.getElementById('profSub').textContent = p.sub;
+  document.getElementById('profFoot').textContent = 'Created ' + (p.created_at ? new Date(p.created_at.replace(' ', 'T')).toLocaleDateString() : 'from live database') + ' · ' + p.role.toUpperCase() + ' #' + p.id;
+  document.getElementById('profBody').innerHTML = '<div style="padding:16px;color:var(--ink-3);">Loading profile...</div>';
+  Joy.openSlide('profSlide');
+  let prof = null;
+  if(p.role === 'learner'){
+    try{ prof = await api(API + '/learners/' + p.id + '/profile'); }catch(err){ Joy.toast("Couldn't load learner profile", {type:'danger'}); }
+  }
+  const learner = prof?.learner || p.source || p;
+  const parents = prof?.parents || [];
+  document.getElementById('profBody').innerHTML = '<div class="prof-hero"><div class="ava ava-xl" style="' + Joy.avaStyle(p.name) + '">' + Joy.initials(p.name) + '</div><div class="prof-meta"><div class="prof-name">' + esc(p.name) + '</div><div class="prof-id">' + esc(p.sub) + '</div><div class="prof-chips">' + roleChip(p.role) + statusPill(p.status) + '</div></div></div>' +
+    '<div class="prof-actions"><button class="btn btn-primary"><i class="far fa-file-alt"></i>Open report</button><button class="btn"><i class="far fa-envelope"></i>Message</button><button class="btn btn-icon"><i class="fas fa-ellipsis-h"></i></button></div>' +
+    '<div class="snap"><div class="snap-cell"><div class="snap-v">-</div><div class="snap-l">Attendance</div></div><div class="snap-cell"><div class="snap-v">-</div><div class="snap-l">Mean</div></div><div class="snap-cell"><div class="snap-v">-</div><div class="snap-l">Position</div></div></div>' +
+    '<div class="kv-grid"><div class="kv"><div class="k">Identifier</div><div class="v mono">' + esc(p.sub) + '</div></div><div class="kv"><div class="k">Class / Context</div><div class="v">' + esc(p.ctx) + '</div></div><div class="kv"><div class="k">Sex</div><div class="v">' + esc(learner.sex || '-') + '</div></div><div class="kv"><div class="k">Date of birth</div><div class="v">' + esc(learner.date_of_birth || '-') + '</div></div></div>' +
+    '<div class="section-h">Parents · ' + parents.length + '</div>' + (parents.length ? parents.map(x=>'<div class="parent-row"><div class="ava" style="' + Joy.avaStyle(x.name) + '">' + Joy.initials(x.name) + '</div><div class="nm"><div class="pn">' + esc(x.name) + '</div><div class="pm mono">' + esc(x.phone || '-') + ' · ' + esc(x.relationship || 'Guardian') + '</div></div></div>').join('') : '<div style="font-size:12px;color:var(--ink-3);">No linked parents yet.</div>') +
+    '<div class="section-h">Flags</div><div class="flag-row"><i class="fas fa-circle-info"></i><div class="ft"><b>Live profile loaded</b><p>Marks and attendance snapshots can be extended from analytics endpoints.</p></div></div>';
+}
+/* ─── Row click → open profile (unless click was on checkbox or hover action) ─ */
+tbody.addEventListener('click', e => {
+  if(e.target.closest('.cb') || e.target.closest('.row-actions')) return;
+  const tr = e.target.closest('tr');
+  if(!tr) return;
+  const p = people.find(x => x.key === tr.dataset.key);
+  if(p) openProfile(p);
+});
+
+/* ─── Row hover-action delegation (envelope · pen · ellipsis) ─── */
+tbody.addEventListener('click', e => {
+  const btn = e.target.closest('.row-actions button');
+  if(!btn) return;
+  e.stopPropagation();
+  const tr = btn.closest('tr');
+  const p = people.find(x => x.key === tr?.dataset.key);
+  if(!p) return;
+  const title = (btn.getAttribute('title') || '').toLowerCase();
+  if(title === 'message')   return messagePerson(p);
+  if(title === 'edit')      return openEdit(p);
+  if(title === 'more')      return openRowMenu(btn, p);
+});
+
+/* ─── Filters and tabs ─── */
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('classFilter').addEventListener('change', render);
+document.getElementById('statusFilter').addEventListener('change', render);
+document.getElementById('sortSelect').addEventListener('change', render);
+document.querySelectorAll('.tab-chip').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab-chip').forEach(x => x.classList.remove('on'));
+  t.classList.add('on');
+  render(); clearSel();
+}));
+
+/* ─── Density toggle (real now) ─── */
+document.querySelectorAll('.filter-row .toggle-pair button').forEach((b, i) => b.addEventListener('click', () => {
+  b.parentElement.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  /* i === 0 → comfortable · i === 1 → compact */
+  document.querySelector('.table-wrap').classList.toggle('compact', i === 1);
+}));
+
+/* ─── Role chips inside the Add/Edit slide ─── */
+document.querySelectorAll('#addSlide .chip').forEach(ch => ch.addEventListener('click', () => {
+  if(editingPerson) return; /* role is locked when editing */
+  document.querySelectorAll('#addSlide .chip').forEach(x => x.classList.remove('on'));
+  ch.classList.add('on');
+  syncRoleFields(ch.dataset.role);
+}));
+
+/* ─── Add slide state + open helpers ─── */
+let editingPerson = null;
+function syncRoleFields(role){
+  const isLearner = role === 'learner';
+  const isTeacher = role === 'teacher';
+  document.getElementById('pAdmLabel').textContent =
+    isLearner ? 'Admission number' :
+    isTeacher ? 'Staff ID' :
+    role === 'admin' ? 'Username' : 'Phone (used as login ID)';
+  document.querySelector('#pAdm').parentElement.style.display = '';
+  /* Hide class + DOB for non-learners */
+  document.querySelector('#addClass').parentElement.style.display = isLearner ? '' : 'none';
+  document.querySelector('#pDob').parentElement.style.display = isLearner ? '' : 'none';
+  /* Parent phone only useful for learner (guardian) or parent (own phone) */
+  document.querySelector('#pPhone').parentElement.style.display = (isLearner || role === 'parent') ? '' : 'none';
+}
+
+function openAddSlide(){
+  editingPerson = null;
+  document.getElementById('addTitle').textContent = 'Add a new person';
+  document.getElementById('addSub').textContent  = 'Pick a role, fill the form, then save to the live database.';
+  document.getElementById('addFoot').textContent = 'Live save · Joyland database';
+  document.getElementById('addSave').innerHTML   = 'Save';
+  document.getElementById('roleField').style.display = '';
+  /* clear */
+  document.querySelectorAll('#addSlide .chip').forEach((x,i) => x.classList.toggle('on', i === 0));
+  document.getElementById('pName').value = '';
+  document.getElementById('pAdm').value  = '';
+  document.getElementById('addClass').value = '';
+  document.getElementById('pDob').value  = '';
+  document.getElementById('pSex').value  = '';
+  document.getElementById('pPhone').value = '';
+  syncRoleFields('learner');
+  Joy.openSlide('addSlide');
+  setTimeout(() => document.getElementById('pName').focus(), 100);
+}
+document.getElementById('addPersonBtn')?.addEventListener('click', openAddSlide);
+
+function openEdit(p){
+  editingPerson = p;
+  document.getElementById('addTitle').textContent = 'Edit ' + p.name;
+  document.getElementById('addSub').textContent  = p.role.charAt(0).toUpperCase() + p.role.slice(1) + ' · live record';
+  document.getElementById('addFoot').textContent = 'Saving will update the live record';
+  document.getElementById('addSave').innerHTML   = '<i class="fas fa-check"></i>Save changes';
+  document.getElementById('roleField').style.display = 'none';
+  document.querySelectorAll('#addSlide .chip').forEach(x => x.classList.toggle('on', x.dataset.role === p.role));
+  const src = p.source || {};
+  document.getElementById('pName').value = p.name || '';
+  document.getElementById('pAdm').value  = (p.role === 'learner' ? src.admission_no : p.role === 'teacher' ? src.user_id : src.phone) || '';
+  document.getElementById('addClass').value = src.class_name || p.className || '';
+  document.getElementById('pDob').value  = src.date_of_birth || '';
+  document.getElementById('pSex').value  = src.sex || '';
+  document.getElementById('pPhone').value = src.phone || '';
+  syncRoleFields(p.role);
+  Joy.openSlide('addSlide');
+  setTimeout(() => document.getElementById('pName').focus(), 100);
+}
+
+/* ─── Save handler — branches on add vs edit ─── */
+document.getElementById('addSave').addEventListener('click', async () => {
+  const role = editingPerson?.role ||
+    (document.querySelector('#addSlide .chip.on')?.dataset.role) || 'learner';
+  const name = document.getElementById('pName').value.trim();
+  if(!name){ Joy.toast('Name is required', { type:'warn' }); return; }
+  const body = {
+    name,
+    admission_no: document.getElementById('pAdm').value.trim() || null,
+    user_id:      document.getElementById('pAdm').value.trim() || null,
+    class_name:   document.getElementById('addClass').value || '',
+    date_of_birth:document.getElementById('pDob').value || null,
+    sex:          document.getElementById('pSex').value || null,
+    phone:        document.getElementById('pPhone').value.trim() || null
+  };
+  if(!editingPerson) body.password = 'joyland123';
+  const pathBase = role === 'teacher' ? '/teachers' : role === 'parent' ? '/parents' : role === 'admin' ? '/admins' : '/learners';
+  const url = editingPerson ? `${API}${pathBase}/${editingPerson.id}` : `${API}${pathBase}`;
+  const method = editingPerson ? 'PUT' : 'POST';
+  const btn = document.getElementById('addSave');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try {
+    await api(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    Joy.closeSlide();
+    Joy.toast(editingPerson ? 'Updated ' + name : 'Added ' + name);
+    loadPeople();
+    Joy.refreshSidebarCounts?.();
+  } catch(err){
+    Joy.toast(err.message || 'Could not save', { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = editingPerson ? '<i class="fas fa-check"></i>Save changes' : 'Save';
+  }
+});
+
+/* ─── Row action: Message — open broadcast composer pre-targeted ─── */
+function messagePerson(p){
+  location.href = '/admin/notifications.html?compose=1&recipients=' + encodeURIComponent(p.role + ':' + p.id);
+}
+
+/* ─── Row action: More — small dropdown menu ─── */
+function openRowMenu(anchor, p){
+  document.querySelector('.row-menu')?.remove();
+  const menu = document.createElement('div');
+  menu.className = 'row-menu';
+  const isLearner = p.role === 'learner';
+  const isPerson  = ['learner','teacher','parent'].includes(p.role);
+  const isActive  = p.status === 'active';
+  menu.innerHTML =
+    `<button data-act="profile"><i class="fas fa-id-card"></i>View profile</button>` +
+    `<button data-act="edit"><i class="fas fa-pen"></i>Edit</button>` +
+    `<button data-act="message"><i class="far fa-envelope"></i>Message</button>` +
+    (isLearner ? `<button data-act="code"><i class="fas fa-key"></i>Generate temp code</button>` : '') +
+    `<button data-act="copy"><i class="fas fa-copy"></i>Copy identifier</button>` +
+    (isPerson ? `<button data-act="toggle" class="${isActive ? 'danger' : ''}"><i class="fas fa-${isActive ? 'ban' : 'check'}"></i>${isActive ? 'Deactivate' : 'Activate'}</button>` : '');
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  menu.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  menu.style.left = (r.right - 180 + window.scrollX) + 'px';
+  function onDocClick(e){
+    if(!menu.contains(e.target)){ menu.remove(); document.removeEventListener('click', onDocClick); }
+  }
+  setTimeout(() => document.addEventListener('click', onDocClick), 10);
+  menu.addEventListener('click', async e => {
+    const b = e.target.closest('button'); if(!b) return;
+    const act = b.dataset.act;
+    menu.remove(); document.removeEventListener('click', onDocClick);
+    if(act === 'profile') return openProfile(p);
+    if(act === 'edit')    return openEdit(p);
+    if(act === 'message') return messagePerson(p);
+    if(act === 'copy'){
+      try { await navigator.clipboard.writeText(p.sub); Joy.toast('Copied: ' + p.sub); } catch { Joy.toast(p.sub); }
+      return;
+    }
+    if(act === 'code'){
+      try {
+        const r = await api(API + '/learners/' + p.id + '/temp-code', { method:'POST' });
+        const code = r.temp_code || r.code;
+        Joy.toast(code ? 'Temp code: ' + code + ' (24h)' : 'Code generated', { duration: 6000 });
+      } catch(e){ Joy.toast(e.message || "Couldn't generate code", { type:'danger' }); }
+      return;
+    }
+    if(act === 'toggle'){
+      const verb = isActive ? 'Deactivate' : 'Activate';
+      if(!confirm(verb + ' ' + p.name + '?')) return;
+      try {
+        const path = p.role === 'learner' ? '/learners/' + p.id + '/status'
+                   : p.role === 'teacher' ? '/teachers/' + p.id + '/status'
+                   : '/parents/' + p.id + '/status';
+        await api(API + path, { method:'PATCH' });
+        Joy.toast(verb + 'd ' + p.name);
+        loadPeople();
+      } catch(e){ Joy.toast(e.message || "Couldn't change status", { type:'danger' }); }
+    }
+  });
+}
+
+/* ─── Profile slide action buttons (Open report · Message) ─── */
+function wireProfileActions(p){
+  const actions = document.querySelector('#profSlide .prof-actions');
+  if(!actions) return;
+  const [openBtn, msgBtn, moreBtn] = actions.querySelectorAll('button');
+  if(openBtn) openBtn.onclick = () => {
+    if(p.role === 'learner'){ location.href = '/admin/reports.html'; }
+    else if(p.role === 'teacher'){ location.href = '/admin/people.html?tab=teachers'; }
+    else { Joy.toast('No report available for ' + p.role + 's'); }
+  };
+  if(msgBtn)  msgBtn.onclick = () => messagePerson(p);
+  if(moreBtn) moreBtn.onclick = (e) => openRowMenu(e.currentTarget, p);
+  /* Footer Edit button */
+  document.querySelector('#profSlide .slide-foot .btn').onclick = () => { Joy.closeSlide(); setTimeout(() => openEdit(p), 250); };
+}
+/* Hook into openProfile so we wire actions after rendering */
+const originalOpenProfile = openProfile;
+openProfile = async function(p){
+  await originalOpenProfile(p);
+  wireProfileActions(p);
+};
+
+function bulkStub(action){ Joy.toast(action + ' is ready for ' + sel.size + ' selected live record(s).'); }
+window.toggleRow = toggleRow;
+window.toggleAll = toggleAll;
+window.clearSel = clearSel;
+window.bulkStub = bulkStub;
+loadPeople();
+
+/* ──────────────────────────────────────────────────────────────────────
+   EXPORT — dump the currently visible rows to CSV (client-side, no API)
+   ────────────────────────────────────────────────────────────────────── */
+function csvCell(v){
+  const s = v == null ? '' : String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function exportPeople(){
+  if(!filteredPeople.length){ Joy.toast('Nothing to export', { type:'warn' }); return; }
+  const headers = ['Role','Name','Admission/Staff ID','Class / Context','Status','Email','Phone','Date of Birth','Sex','Created'];
+  const lines = [headers.join(',')];
+  filteredPeople.forEach(p => {
+    const src = p.source || {};
+    lines.push([
+      p.role, p.name, p.sub, p.ctx, p.status,
+      src.email || '', src.phone || '', src.date_of_birth || '', src.sex || '',
+      p.created_at || ''
+    ].map(csvCell).join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const tabName = document.querySelector('.tab-chip.on')?.dataset.tab || 'all';
+  const today = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'joyland-people-' + tabName + '-' + today + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  Joy.toast('Exported ' + filteredPeople.length + ' ' + (filteredPeople.length === 1 ? 'row' : 'rows'));
+}
+document.getElementById('exportBtn')?.addEventListener('click', exportPeople);
+
+function exportSelected(){
+  if(!sel.size){ Joy.toast('Nothing selected', { type:'warn' }); return; }
+  const saved = filteredPeople;
+  filteredPeople = people.filter(p => sel.has(p.key));
+  exportPeople();
+  filteredPeople = saved;
+}
+
+/* ── Bulk action helpers ──────────────────────────────────────────── */
+function selectedByRole(role){
+  return people.filter(p => sel.has(p.key) && p.role === role);
+}
+function summarise(items){
+  const groups = items.reduce((m,p) => { m[p.role] = (m[p.role] || 0) + 1; return m; }, {});
+  return Object.entries(groups).map(([r,n]) => n + ' ' + r + (n===1?'':'s')).join(', ');
+}
+
+/* DEACTIVATE — bulk endpoint for learners; per-id toggle for teachers/parents
+   Only flips records that are currently 'active' (status endpoints are toggles). */
+async function bulkDeactivate(){
+  const items = people.filter(p => sel.has(p.key) && p.status === 'active');
+  if(!items.length){ Joy.toast('No active people selected', { type:'warn' }); return; }
+  if(!confirm('Deactivate ' + summarise(items) + '?\n\nThey will keep their records but stop appearing in active lists.')) return;
+  let ok = 0, fail = 0;
+  const learners = items.filter(p => p.role === 'learner');
+  const teachers = items.filter(p => p.role === 'teacher');
+  const parents  = items.filter(p => p.role === 'parent');
+  try {
+    if(learners.length){
+      const r = await fetch(API + '/learners/status', {
+        method:'PATCH', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ learner_ids: learners.map(p => p.id), status:'inactive' })
+      }).then(r => r.json());
+      if(r.success !== false) ok += learners.length; else fail += learners.length;
+    }
+    for(const t of teachers){
+      const r = await fetch(API + '/teachers/' + t.id + '/status', { method:'PATCH', credentials:'include' }).then(r => r.json());
+      if(r.success !== false && r.status === 'inactive') ok++; else fail++;
+    }
+    for(const p of parents){
+      const r = await fetch(API + '/parents/' + p.id + '/status', { method:'PATCH', credentials:'include' }).then(r => r.json());
+      if(r.success !== false && r.status === 'inactive') ok++; else fail++;
+    }
+  } catch(e){ console.error(e); fail += items.length - ok; }
+  Joy.toast('Deactivated ' + ok + (fail?(' · ' + fail + ' failed'):''), { type: fail ? 'warn' : '' });
+  clearSel();
+  loadPeople();
+}
+
+/* TEMP CODES — only meaningful for learners and teachers */
+async function bulkCodes(){
+  const learners = selectedByRole('learner');
+  const teachers = selectedByRole('teacher');
+  if(!learners.length && !teachers.length){
+    Joy.toast('Select learners or teachers first', { type:'warn' }); return;
+  }
+  if(!confirm('Generate fresh temporary login codes for ' + summarise([...learners, ...teachers]) + '?')) return;
+  let total = 0;
+  try {
+    if(learners.length){
+      const r = await fetch(API + '/learners/temp-codes', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ learner_ids: learners.map(p => p.id) })
+      }).then(r => r.json());
+      if(r.success === false) throw new Error(r.message);
+      total += learners.length;
+    }
+    /* Teachers don't have a bulk codes endpoint — loop per-teacher */
+    for(const t of teachers){
+      const r = await fetch(API + '/teachers/' + t.id + '/temp-code', {
+        method:'POST', credentials:'include'
+      }).then(r => r.json());
+      if(r.success !== false) total++;
+    }
+    Joy.toast('Generated ' + total + ' temp codes');
+    clearSel();
+    loadPeople();
+  } catch(e){
+    Joy.toast(e.message || "Couldn't generate codes", { type:'danger' });
+  }
+}
+
+/* MOVE TO CLASS — only meaningful for learners */
+async function bulkMove(){
+  const learners = selectedByRole('learner');
+  if(!learners.length){ Joy.toast('Move applies to learners only', { type:'warn' }); return; }
+  const opts = classes.map(c => c.name);
+  if(!opts.length){ Joy.toast('No classes available', { type:'warn' }); return; }
+  const target = prompt('Move ' + learners.length + ' learner(s) to which class?\n\nAvailable classes:\n  ' + opts.join('\n  '), opts[0]);
+  if(!target) return;
+  if(!opts.some(n => n.toUpperCase() === target.trim().toUpperCase())){
+    Joy.toast('Unknown class name: ' + target, { type:'danger' }); return;
+  }
+  try {
+    const r = await fetch(API + '/learners/class', {
+      method:'PATCH', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ learner_ids: learners.map(p => p.id), class_name: target.trim() })
+    }).then(r => r.json());
+    if(r.success === false) throw new Error(r.message);
+    Joy.toast('Moved ' + learners.length + ' learner(s) to ' + target);
+    clearSel();
+    loadPeople();
+  } catch(e){
+    Joy.toast(e.message || "Couldn't move learners", { type:'danger' });
+  }
+}
+
+/* MESSAGE — open the broadcast composer pre-targeted */
+function bulkMessage(){
+  if(!sel.size){ Joy.toast('Nothing selected', { type:'warn' }); return; }
+  /* Stash the selected IDs on the URL so the broadcast page can pick them up */
+  const ids = [...sel].join(',');
+  location.href = '/admin/notifications.html?compose=1&recipients=' + encodeURIComponent(ids);
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   IMPORT CSV — slide-over with preview + validation + backend submit
+   Backend endpoint POST /api/admin/learners/import does not exist yet.
+   The Submit button will call it; on 404 we toast a clear message.
+   ────────────────────────────────────────────────────────────────────── */
+const IMPORT_COLS = ['Name','Admission No','Sex','Class','Date of Birth','Parent Phone'];
+let parsedImport = [];
+
+function parseCSV(text){
+  /* Simple RFC 4180-ish parser: handles quoted fields with commas and "" escapes */
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i], n = text[i+1];
+    if(inQuotes){
+      if(c === '"' && n === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n' || c === '\r'){
+        if(field !== '' || row.length){ row.push(field); rows.push(row); row = []; field = ''; }
+        if(c === '\r' && n === '\n') i++;
+      }
+      else field += c;
+    }
+  }
+  if(field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(v => String(v).trim() !== ''));
+}
+
+function validateImportRow(r, classNamesSet, existingAdm){
+  const errs = [];
+  if(!r.name || r.name.trim().length < 2) errs.push('Name missing');
+  if(!r.admission_no || !r.admission_no.trim()) errs.push('Admission No missing');
+  else if(existingAdm.has(r.admission_no.trim().toUpperCase())) errs.push('Admission No already exists');
+  if(r.sex && !/^[MFmf]$/.test(r.sex.trim())) errs.push('Sex must be M or F');
+  if(!r.class || !classNamesSet.has(r.class.trim().toUpperCase())) errs.push("Class doesn't match any school class");
+  if(r.dob && !/^\d{4}-\d{2}-\d{2}$/.test(r.dob.trim())) errs.push('DOB must be YYYY-MM-DD');
+  if(r.phone && !/^[+\d][\d\s+-]{6,}$/.test(r.phone.trim())) errs.push('Phone looks invalid');
+  return errs;
+}
+
+function renderImportPreview(rows, errors){
+  const valid = rows.filter((_,i) => !errors[i].length).length;
+  const invalid = rows.length - valid;
+  document.getElementById('csvPreview').style.display = '';
+  document.getElementById('csvSummary').innerHTML =
+    '<b style="color:var(--ok);">' + valid + ' ready</b> &nbsp;·&nbsp; ' +
+    '<b style="color:' + (invalid ? 'var(--danger)' : 'var(--ink-3)') + ';">' + invalid + ' with errors</b> &nbsp;·&nbsp; ' +
+    rows.length + ' total';
+  document.getElementById('csvHead').innerHTML =
+    '<tr>' + IMPORT_COLS.map(c => '<th>' + esc(c) + '</th>').join('') + '<th>Status</th></tr>';
+  document.getElementById('csvBody').innerHTML = rows.map((r,i) => {
+    const errs = errors[i];
+    const cells = [r.name, r.admission_no, r.sex, r.class, r.dob, r.phone].map(v => '<td>' + esc(v || '—') + '</td>').join('');
+    const status = errs.length
+      ? '<td><span class="status status-blocked" title="' + esc(errs.join('; ')) + '">' + errs.length + ' err</span></td>'
+      : '<td><span class="status status-active">ready</span></td>';
+    return '<tr>' + cells + status + '</tr>';
+  }).join('');
+  const btn = document.getElementById('importSubmit');
+  btn.disabled = valid === 0;
+  document.getElementById('importCount').textContent = valid ? '· ' + valid + ' learner' + (valid===1?'':'s') : '';
+  document.getElementById('importFoot').textContent = valid ? 'Ready to import ' + valid + ' new learner' + (valid===1?'':'s') : 'Fix errors before importing';
+}
+
+async function handleCsvFile(file){
+  const text = await file.text();
+  const rows = parseCSV(text);
+  if(!rows.length){ Joy.toast('CSV looks empty', { type:'warn' }); return; }
+  const header = rows[0].map(h => String(h).trim().toLowerCase());
+  const idx = {
+    name:        header.findIndex(h => /name/.test(h)),
+    admission_no:header.findIndex(h => /admission|adm/.test(h)),
+    sex:         header.findIndex(h => /^sex|gender/.test(h)),
+    class:       header.findIndex(h => /class|grade/.test(h)),
+    dob:         header.findIndex(h => /dob|birth/.test(h)),
+    phone:       header.findIndex(h => /phone|guardian/.test(h))
+  };
+  if(idx.name < 0 || idx.admission_no < 0 || idx.class < 0){
+    Joy.toast('CSV must include Name, Admission No and Class columns', { type:'danger' });
+    return;
+  }
+  const data = rows.slice(1).map(r => ({
+    name:         (r[idx.name] || '').trim(),
+    admission_no: (r[idx.admission_no] || '').trim(),
+    sex:          idx.sex >= 0 ? (r[idx.sex] || '').trim().toUpperCase() : '',
+    class:        (r[idx.class] || '').trim(),
+    dob:          idx.dob >= 0 ? (r[idx.dob] || '').trim() : '',
+    phone:        idx.phone >= 0 ? (r[idx.phone] || '').trim() : ''
+  }));
+  const classSet = new Set(classes.map(c => String(c.name).toUpperCase()));
+  const existingAdm = new Set(people.filter(p => p.role === 'learner').map(p => String(p.sub).toUpperCase()));
+  const errors = data.map(r => validateImportRow(r, classSet, existingAdm));
+  parsedImport = data.map((r,i) => ({ row:r, errors:errors[i] }));
+  renderImportPreview(data, errors);
+}
+
+document.getElementById('importBtn')?.addEventListener('click', () => {
+  /* Reset state every open */
+  parsedImport = [];
+  document.getElementById('csvFile').value = '';
+  document.getElementById('csvPreview').style.display = 'none';
+  document.getElementById('importSubmit').disabled = true;
+  document.getElementById('importCount').textContent = '';
+  document.getElementById('importFoot').textContent = 'Choose a file to begin';
+  Joy.openSlide('importSlide');
+});
+
+document.getElementById('csvFile')?.addEventListener('change', e => {
+  const f = e.target.files?.[0];
+  if(f) handleCsvFile(f).catch(err => { console.error(err); Joy.toast("Couldn't read that file", { type:'danger' }); });
+});
+
+document.getElementById('dlTemplate')?.addEventListener('click', () => {
+  const sample = classes[0]?.name || 'GRADE 5';
+  const lines = [
+    IMPORT_COLS.join(','),
+    ['Brian Otieno', 'JLS/2026/039', 'M', sample, '2011-03-12', '+254712345678'].map(csvCell).join(','),
+    ['Faith Wanjiku', 'JLS/2026/040', 'F', sample, '2011-07-04', '+254720987654'].map(csvCell).join(',')
+  ];
+  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'joyland-learner-import-template.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importSubmit')?.addEventListener('click', async () => {
+  const valid = parsedImport.filter(r => !r.errors.length).map(r => r.row);
+  if(!valid.length) return;
+  const btn = document.getElementById('importSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing…';
+  try {
+    const res = await fetch(API + '/learners/import', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ learners: valid })
+    });
+    if(res.status === 404){
+      Joy.toast("Backend import endpoint isn't enabled yet — see CODEX_IMPORT_LEARNERS.md", { type:'warn', duration: 6000 });
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-upload"></i> Import';
+      return;
+    }
+    const j = await res.json().catch(() => ({}));
+    if(!res.ok || j.success === false) throw new Error(j.message || 'Import failed');
+    Joy.toast('Imported ' + (j.created ?? valid.length) + ' learners' + (j.skipped ? ' · ' + j.skipped + ' skipped' : ''));
+    Joy.closeSlide();
+    loadPeople();
+    Joy.refreshSidebarCounts?.();
+  } catch(e){
+    console.error(e);
+    Joy.toast("Couldn't import: " + e.message, { type:'danger' });
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-upload"></i> Import';
+  }
+});
+</script>
+</body>
+</html>

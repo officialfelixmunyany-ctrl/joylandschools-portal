@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Marks · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.context-bar{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;box-shadow:var(--sh-1);}
+.cb-grp{display:flex;flex-direction:column;gap:4px;}
+.cb-lbl{font-size:10px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;}
+.cb-val{font-family:var(--display);font-weight:600;font-size:15px;color:var(--ink);letter-spacing:-.012em;}
+
+.entry-tbl input[type="number"]{width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;text-align:center;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink);outline:none;background:var(--surface);}
+.entry-tbl input[type="number"]:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(15,17,18,.05);}
+.entry-tbl input[type="number"]:valid:not(:placeholder-shown){background:var(--brand-tint);border-color:rgba(27,94,32,.25);color:var(--brand);}
+
+.mass-bar{position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);padding:16px 0 0;margin-top:18px;display:flex;justify-content:flex-end;gap:8px;}
+
+.score-band{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px;color:#fff;display:inline-block;min-width:28px;text-align:center;}
+.sb-ee{background:linear-gradient(135deg,#10b981,#059669);}
+.sb-me{background:linear-gradient(135deg,#3b82f6,#2563eb);}
+.sb-ae{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.sb-be{background:linear-gradient(135deg,#ef4444,#dc2626);}
+.sb-no{background:var(--surface-2);color:var(--ink-3);}
+</style>
+</head>
+<body data-page="marks" data-title="Marks">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Marks entry"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Score entry · automatically grades into CBC bands</div>
+        <h1 class="h1">Marks <em>· entry</em></h1>
+        <div class="h-sub">Pick a class, subject and assessment — then enter scores. Bands compute live.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn"><i class="fas fa-file-import"></i>Import</button>
+        <button class="btn"><i class="fas fa-print"></i>Print sheet</button>
+      </div>
+    </div>
+
+    <!-- Context bar -->
+    <div class="context-bar">
+      <div class="cb-grp">
+        <span class="cb-lbl">Class</span>
+        <select class="input" style="font-family:var(--display);font-weight:600;font-size:15px;height:auto;padding:4px 28px 4px 0;border:none;background-position:right 0 center;">
+          <option>Loading classes…</option>
+        </select>
+      </div>
+      <div style="width:1px;height:36px;background:var(--line);"></div>
+      <div class="cb-grp">
+        <span class="cb-lbl">Subject</span>
+        <select class="input" style="font-family:var(--display);font-weight:600;font-size:15px;height:auto;padding:4px 28px 4px 0;border:none;background-position:right 0 center;">
+          <option>—</option>
+        </select>
+      </div>
+      <div style="width:1px;height:36px;background:var(--line);"></div>
+      <div class="cb-grp">
+        <span class="cb-lbl">Assessment</span>
+        <select class="input" style="font-family:var(--display);font-weight:600;font-size:15px;height:auto;padding:4px 28px 4px 0;border:none;background-position:right 0 center;">
+          <option>—</option>
+        </select>
+      </div>
+      <div style="width:1px;height:36px;background:var(--line);"></div>
+      <div class="cb-grp">
+        <span class="cb-lbl">Out of</span>
+        <span class="cb-val">100</span>
+      </div>
+      <div class="spacer"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="status status-active"><span></span>Auto-saving</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3);">— / — done</span>
+      </div>
+    </div>
+
+    <!-- Mark sheet -->
+    <div class="table-wrap">
+      <table class="tbl entry-tbl">
+        <thead>
+          <tr>
+            <th style="width:38px;">#</th>
+            <th>Learner</th>
+            <th class="c" style="width:120px;">Score</th>
+            <th class="c" style="width:80px;">/ 100</th>
+            <th class="c" style="width:80px;">Band</th>
+            <th class="r" style="width:140px;">Prev. assessment</th>
+            <th class="r" style="width:90px;">Δ</th>
+          </tr>
+        </thead>
+        <tbody id="marksBody"></tbody>
+      </table>
+    </div>
+
+    <div class="mass-bar">
+      <button class="btn"><i class="fas fa-undo"></i>Reset row</button>
+      <button class="btn"><i class="far fa-save"></i>Save draft</button>
+      <button class="btn btn-primary"><i class="fas fa-paper-plane"></i>Publish marks</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="shroud" id="shroud"></div>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path, opts={}){ const r=await fetch(path,{credentials:'include',...opts}); const j=await r.json().catch(()=>({})); if(!r.ok||j.success===false) throw new Error(j.message||'Request failed'); return j.data!==undefined?j.data:j; }
+const state = { classes:[], subjects:[], components:[], classId:null, subjectId:null, termId:null, assessmentType:'midterm', componentKey:'exam', max:100, learners:[], marks:new Map(), timers:new Map() };
+const selects = document.querySelectorAll('.context-bar select.input');
+const classSel = selects[0], subjectSel = selects[1], assessSel = selects[2];
+const outOf = document.querySelector('.cb-val');
+const counter = document.querySelector('.context-bar span[style*="JetBrains"], .context-bar span[style*="mono"]') || document.querySelector('.context-bar div[style*="gap:8px"] span:last-child');
+function bandFor(v){ if(v == null || v === '') return ['sb-no','-']; v=Number(v); if(v>=75) return ['sb-ee','EE']; if(v>=60) return ['sb-me','ME']; if(v>=50) return ['sb-ae','AE']; return ['sb-be','BE']; }
+function deltaFor(c,p){ if(c == null || c === '' || p == null) return ['','']; const d=Number(c)-Number(p); if(d>0)return['up','+'+d]; if(d<0)return['dn',String(d)]; return['flat','0']; }
+function updateCounter(){ const done=[...state.marks.values()].filter(v=>v!==null&&v!==''&&v!==undefined).length; if(counter) counter.textContent = done + ' / ' + state.learners.length + ' done'; const pub=document.querySelector('.mass-bar .btn-primary'); if(pub) pub.innerHTML='<i class="fas fa-paper-plane"></i>Publish marks ? '+done+'/'+state.learners.length; }
+function renderRows(){
+  const body=document.getElementById('marksBody');
+  body.innerHTML = state.learners.map((l,i)=>{ const curr=state.marks.get(String(l.id)); const prev=l.previousScore; const b=bandFor(curr); const d=deltaFor(curr,prev); return '<tr data-id="'+l.id+'"><td><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">'+(i+1)+'</span></td><td><div class="person"><div class="ava ava-md" style="'+Joy.avaStyle(l.name)+'">'+Joy.initials(l.name)+'</div><div><div class="nm">'+esc(l.name)+'</div><div class="sub">'+esc(l.admission_no||l.user_id||'-')+'</div></div></div></td><td class="c"><input type="number" min="0" max="'+state.max+'" value="'+(curr ?? '')+'" placeholder="-"/></td><td class="c"><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">'+state.max+'</span></td><td class="c"><span class="score-band '+b[0]+'">'+b[1]+'</span></td><td class="r">'+(prev ?? '-')+'</td><td class="r"><span class="save-state">'+(d[1]?'<span class="tag '+d[0]+'" style="font-family:var(--mono);font-size:10.5px;font-weight:700;">'+d[1]+'</span>':'')+'</span></td></tr>'; }).join('') || '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">Choose a class and subject.</td></tr>';
+  updateCounter();
+}
+async function loadSubjects(){
+  if(!state.classId) return;
+  const rows = await api(API + '/class-subjects?classId=' + state.classId);
+  state.subjects = rows;
+  subjectSel.innerHTML = rows.map(r => '<option value="'+r.subject_id+'">'+esc(r.subject_name)+'</option>').join('');
+  state.subjectId = subjectSel.value || rows[0]?.subject_id;
+}
+async function loadComponents(){
+  if(!state.classId || !state.subjectId) return;
+  const chunks = await Promise.all(['midterm','endterm'].map(async type => { try{ const d=await api(API + '/assessment-components?classId=' + state.classId + '&subjectId=' + state.subjectId + '&assessment_type=' + type); return (d.components||[]).map(c=>({...c,assessment_type:type})); }catch{return [];} }));
+  state.components = chunks.flat();
+  assessSel.innerHTML = state.components.map(c => '<option value="'+c.assessment_type+'|'+c.component_key+'">'+(c.assessment_type==='midterm'?'Midterm':'Endterm')+' ? '+esc(c.component_name)+' / '+c.max_score+'</option>').join('');
+  if(!state.components.length) assessSel.innerHTML = '<option value="midterm|exam">Midterm ? Exam / 100</option>';
+  applyAssessment();
+}
+function applyAssessment(){ const parts=(assessSel.value || 'midterm|exam').split('|'); state.assessmentType=parts[0]; state.componentKey=parts[1] || 'exam'; const comp=state.components.find(c=>c.assessment_type===state.assessmentType && c.component_key===state.componentKey); state.max=Number(comp?.max_score || 100); outOf.textContent=state.max; document.querySelectorAll('thead th')[3].textContent='/ '+state.max; }
+async function loadMarks(){
+  document.getElementById('marksBody').innerHTML = '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">Loading marks...</td></tr>';
+  try{
+    const [roster, marks] = await Promise.all([api(API + '/classes/' + state.classId + '/learners'), api(API + '/marks?classId=' + state.classId + '&termId=' + state.termId + '&subjectId=' + state.subjectId + '&assessmentType=' + state.assessmentType)]);
+    state.learners = roster.learners || [];
+    const byLearner = new Map();
+    marks.forEach(m => { if(m.component_key === state.componentKey) byLearner.set(String(m.learner_id), m.score); });
+    state.marks = new Map(state.learners.map(l => [String(l.id), byLearner.get(String(l.id)) ?? null]));
+    renderRows();
+  }catch(err){ Joy.toast("Couldn't load marks", {type:'danger'}); console.error(err); }
+}
+async function reloadAll(){ await loadSubjects(); await loadComponents(); await loadMarks(); }
+async function init(){
+  try{
+    const [classes, period] = await Promise.all([api(API + '/classes'), api(API + '/current-period')]);
+    state.classes=classes; state.termId=period.term?.id; state.classId=new URLSearchParams(location.search).get('classId') || classes[0]?.id;
+    classSel.innerHTML = classes.map(c => '<option value="'+c.id+'">'+esc(c.name)+'</option>').join(''); classSel.value=state.classId;
+    await reloadAll();
+  }catch(err){ Joy.toast("Couldn't initialize marks", {type:'danger'}); console.error(err); }
+}
+classSel.addEventListener('change', async()=>{ state.classId=classSel.value; await reloadAll(); });
+subjectSel.addEventListener('change', async()=>{ state.subjectId=subjectSel.value; await loadComponents(); await loadMarks(); });
+assessSel.addEventListener('change', async()=>{ applyAssessment(); await loadMarks(); });
+document.getElementById('marksBody').addEventListener('input', e => {
+  const input=e.target.closest('input[type="number"]'); if(!input) return;
+  const tr=input.closest('tr'); const id=tr.dataset.id; const v=input.value === '' ? null : Number(input.value); const band=tr.querySelector('.score-band'); const st=tr.querySelector('.save-state');
+  const b=bandFor(v); band.className='score-band '+b[0]; band.textContent=b[1];
+  if(v !== null && (v < 0 || v > state.max)){ input.style.borderColor='var(--danger)'; st.textContent='Out of range'; return; }
+  input.style.borderColor=''; state.marks.set(String(id), v); st.textContent='saving...'; clearTimeout(state.timers.get(id));
+  state.timers.set(id, setTimeout(async()=>{ try{ await api(API + '/marks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:state.classId,termId:state.termId,assessmentType:state.assessmentType,learnerId:id,subjectId:state.subjectId,componentKey:state.componentKey,score:v})}); st.textContent='?'; updateCounter(); }catch(err){ st.textContent='failed'; Joy.toast(err.message || 'Could not save mark',{type:'danger'}); } }, 800));
+});
+document.querySelector('.mass-bar .btn-primary').addEventListener('click', async()=>{ try{ await api(API + '/marks/publish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:state.classId,subjectId:state.subjectId,assessmentType:state.assessmentType})}); Joy.toast('Marks published'); location.href='/admin/assessments.html'; }catch(err){ Joy.toast(err.message || 'Could not publish marks',{type:'danger'}); } });
+init();
+</script>
+</body>
+</html>
+

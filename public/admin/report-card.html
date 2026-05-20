@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Card · Joyland Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root{--ink:#17201b;--muted:#6f7b73;--line:#dfe6df;--green:#0b5d32;--gold:#c99721;--bg:#f7f8f5;}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;}
+    .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line);}
+    .title{display:flex;align-items:center;gap:11px;min-width:0;}
+    .title .icon{width:38px;height:38px;border-radius:10px;background:#102117;color:#fff;display:grid;place-items:center;}
+    .title h1{font-size:16px;line-height:1.25;margin:0;font-weight:800;}
+    .title p{font-size:12px;color:var(--muted);margin:2px 0 0;}
+    .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:10px 14px;font:700 13px/1 Inter;display:inline-flex;gap:8px;align-items:center;cursor:pointer;text-decoration:none;}
+    .btn.primary{background:#101713;color:#fff;border-color:#101713;}
+    .status{font-size:12px;color:var(--muted);}
+    .wrap{max-width:980px;margin:24px auto;padding:0 14px 40px;}
+    .loading,.error{background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--muted);}
+    .error{color:#9f1239;border-color:#fecdd3;background:#fff1f2;}
+    .report-template-summary{display:none!important;}
+    .report-template-page-stack{width:100%;display:flex;flex-direction:column;align-items:center;gap:18px;--report-template-scale:.45;--report-frame-width:675px;--report-frame-height:955px;}
+    .report-template-sheet-frame{position:relative;width:min(100%,var(--report-frame-width));height:var(--report-frame-height);flex:0 0 auto;overflow:visible;}
+    .report-template-sheet-frame>.te-preview-shell{position:absolute;top:0;left:50%;box-sizing:border-box;width:1500px;min-width:1500px;height:2121px;min-height:2121px;background:#fff;padding:43px 43px 32px;overflow:hidden;box-shadow:0 10px 34px rgba(15,23,42,.16);margin:0!important;transform:translateX(-50%) scale(var(--report-template-scale))!important;transform-origin:top center!important;}
+    .report-template-sheet .template-preview-avatar img{width:100%;height:100%;object-fit:contain;display:block;}
+    @media(max-width:760px){
+      .topbar{align-items:flex-start;flex-direction:column}
+      .actions{width:100%}
+      .btn{flex:1;justify-content:center}
+      .report-template-page-stack{--report-template-scale:.25;--report-frame-width:375px;--report-frame-height:531px;}
+    }
+    @page{size:A4 portrait;margin:0;}
+    @media print{
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;}
+      html,body{width:210mm!important;margin:0!important;padding:0!important;background:#fff!important;}
+      .topbar{display:none!important;}
+      .wrap{max-width:none!important;margin:0!important;padding:0!important;}
+      .report-template-summary{display:none!important;}
+      .report-template-page-stack{display:block!important;width:210mm!important;gap:0!important;margin:0!important;padding:0!important;}
+      .report-template-sheet-frame{
+        position:relative!important;
+        width:210mm!important;height:297mm!important;min-height:297mm!important;
+        margin:0!important;padding:0!important;
+        overflow:hidden!important;
+        box-shadow:none!important;border:none!important;border-radius:0!important;
+        break-after:page;page-break-after:always;
+        break-inside:avoid;page-break-inside:avoid;
+      }
+      .report-template-sheet-frame:last-child{break-after:auto;page-break-after:auto;}
+      .report-template-sheet-frame>.te-preview-shell{
+        position:absolute!important;top:0!important;left:0!important;
+        transform:scale(.529)!important;transform-origin:top left!important;
+        width:1500px!important;min-width:1500px!important;height:2121px!important;min-height:2121px!important;
+        margin:0!important;padding:43px 43px 32px!important;
+        background:#fff!important;
+        box-shadow:none!important;border-radius:0!important;
+        overflow:hidden!important;
+        break-inside:avoid!important;page-break-inside:avoid!important;
+      }
+      .tp-page,.template-preview-report{break-inside:avoid!important;page-break-inside:avoid!important;}
+      .template-preview-background img{opacity:.12!important;}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">
+      <div class="icon"><i class="fas fa-file-lines"></i></div>
+      <div>
+        <h1 id="pageTitle">Report Card</h1>
+        <p id="pageSub">Loading learner report...</p>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="status" id="statusText"></span>
+      <button class="btn" type="button" onclick="location.reload()"><i class="fas fa-rotate"></i>Refresh</button>
+      <button class="btn primary" type="button" onclick="window.print()"><i class="fas fa-print"></i>Print / Save as PDF</button>
+    </div>
+  </header>
+
+  <main class="wrap" id="reportRoot">
+    <div class="loading"><i class="fas fa-spinner fa-spin"></i><br><br>Preparing report card...</div>
+  </main>
+
+  <script src="/app/report-template-renderer.js"></script>
+  <script>
+    const API = '/api/admin';
+    const root = document.getElementById('reportRoot');
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function api(path){
+      const res = await fetch(path, { credentials:'include' });
+      const json = await res.json().catch(() => ({}));
+      if(!res.ok || json.success === false) throw new Error(json.message || 'Request failed');
+      return json.data !== undefined ? json.data : json;
+    }
+    function groupMarks(rows){
+      const grouped = {};
+      (rows || []).forEach(row => {
+        const lid = String(row.learner_id || '');
+        const sid = String(row.subject_id || '');
+        const at = row.assessment_type || '';
+        const key = row.component_key || 'exam';
+        if(!lid || !sid || !at || row.score == null) return;
+        grouped[lid] = grouped[lid] || {};
+        grouped[lid][sid] = grouped[lid][sid] || {};
+        grouped[lid][sid][at] = grouped[lid][sid][at] || {};
+        grouped[lid][sid][at][key] = Number(row.score);
+      });
+      return grouped;
+    }
+    function componentDefs(report){
+      const defs = (report.component_defs || []).map(c => ({
+        key:c.key || c.component_key || c.component_name,
+        name:c.name || c.component_name || c.component_key || c.key,
+        max_score:c.max_score ?? c.max ?? null
+      })).filter(c => c.key);
+      if(defs.length) return defs;
+      const byKey = new Map();
+      (report.subjects || []).forEach(s => (s.components || []).forEach(c => {
+        const key = c.key || c.component_key || c.name;
+        if(key && !byKey.has(key)) byKey.set(key, { key, name:c.name || key, max_score:c.max ?? c.max_score ?? null });
+      }));
+      return Array.from(byKey.values());
+    }
+    function applyStoredComments(report){
+      if(!report.learner) return;
+      const comments = report.comments || {};
+      if(!comments.class_teacher && !comments.headteacher && !comments.director) return;
+      const state = report.template?.state;
+      if(!state) return;
+      state.settings = state.settings || {};
+      if(comments.class_teacher?.text) state.settings.teacher_comment = comments.class_teacher.text;
+      if(comments.headteacher?.text) state.settings.head_comment = comments.headteacher.text;
+      if(comments.director?.text) state.settings.director_comment = comments.director.text;
+      if(report.globals?.commentBank){
+        const overridden = new Set(Object.keys(comments).filter(role => comments[role]?.text));
+        report.globals.commentBank = report.globals.commentBank.filter(row => !overridden.has(row.role));
+      }
+    }
+    async function render(){
+      const params = new URLSearchParams(location.search);
+      const learnerId = params.get('learner_id') || params.get('learnerId');
+      const classId = params.get('class_id') || params.get('classId');
+      const termId = params.get('term_id') || params.get('termId');
+      if((!learnerId && !classId) || !termId){
+        const missing = [];
+        if(!learnerId && !classId) missing.push('learner_id or class_id');
+        if(!termId) missing.push('term_id');
+        throw new Error('Missing required URL parameter(s): ' + missing.join(' and ') + '. URL: ' + (location.search || '(empty)') + ' — if you reached this from the Reports page, hard-refresh (Ctrl+F5) to clear a cached page.');
+      }
+      const qs = new URLSearchParams({ term_id:termId });
+      if(learnerId) qs.set('learner_id', learnerId);
+      if(classId) qs.set('class_id', classId);
+      ['assessment_type','assessmentType','stage','template'].forEach(key => {
+        if(params.get(key)) qs.set(key, params.get(key));
+      });
+      const report = await api(API + '/report-card?' + qs.toString());
+      applyStoredComments(report);
+      const renderer = window.DarajaReportPreview;
+      if(!renderer) throw new Error('Report template engine failed to load');
+      await renderer.ensureStyles();
+      const globals = report.globals || {};
+      renderer.setGlobals({
+        classes:globals.classes || [report.class],
+        learners:globals.learners || report.class_learners || [report.learner],
+        terms:(globals.terms || [report.term]).map(t => ({ ...t, label:t.label || t.term_name || t.name })),
+        classSubjects:globals.classSubjects || (report.subjects || []).map(s => ({ class_id:report.class?.id, subject_id:s.subject_id, subject_name:s.subject_name })),
+        commentBank:globals.commentBank || [],
+        signatures:globals.signatures || {},
+        assessments:[{ value:'midterm', label:'Midterm' }, { value:'endterm', label:'Endterm' }]
+      });
+      const school = {
+        school_name:report.school?.school_name,
+        school_motto:report.school?.school_motto,
+        school_address:report.school?.school_address,
+        school_phone:report.school?.school_phone,
+        school_email:report.school?.school_email,
+        school_logo:report.school?.school_logo
+      };
+      const state = renderer.normalizeState(report.template?.state || null, school, report.template?.name || 'Default Template');
+      const defs = componentDefs(report);
+      const renderLearners = (report.learners && report.learners.length ? report.learners : [report.learner]).filter(Boolean);
+      const html = renderer.renderPages({
+        state,
+        classId:String(report.class?.id || ''),
+        termId:String(report.term?.id || ''),
+        assessment:report.assessment_type || 'midterm',
+        learners:renderLearners,
+        subjects:report.subjects || [],
+        grouped:groupMarks(report.all_marks || []),
+        componentKeys:defs.map(c => c.key),
+        componentDefs:defs,
+        componentNames:defs.map(c => c.name),
+        strict:true,
+        classLearners:report.class_learners || [report.learner].filter(Boolean),
+        attendanceSummary:report.attendance_summary || { opened:null, learners:{} },
+        skillRatings:report.skill_ratings || {}
+      });
+      document.getElementById('pageTitle').textContent = report.learner?.name || ((report.class?.name || 'Class') + ' Report Cards');
+      document.getElementById('pageSub').textContent = [report.class?.name, report.term?.name || report.term?.term_name, report.assessment_type, renderLearners.length + ' learner' + (renderLearners.length === 1 ? '' : 's')].filter(Boolean).join(' · ');
+      document.getElementById('statusText').textContent = report.template?.name || 'Default Template';
+      root.innerHTML = html;
+      requestAnimationFrame(() => renderer.fitSheets?.(root));
+    }
+    render().catch(err => {
+      root.innerHTML = '<div class="error"><i class="fas fa-triangle-exclamation"></i><br><br>' + esc(err.message || 'Could not load report card') + '</div>';
+      document.getElementById('pageSub').textContent = 'Could not load report card';
+    });
+  </script>
+</body>
+</html>

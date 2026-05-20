@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Classes · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.cls-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.cls-tile{display:block;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sh-1);text-decoration:none;color:inherit;transition:.18s var(--ease);position:relative;overflow:hidden;}
+.cls-tile:hover{box-shadow:var(--sh-2);transform:translateY(-2px);border-color:var(--ink-4);}
+.cls-tile::before{content:'';position:absolute;top:0;right:0;width:140px;height:140px;background:radial-gradient(circle at 100% 0%,rgba(201,151,50,.07),transparent 60%);pointer-events:none;}
+.cls-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+.cls-crest{width:50px;height:50px;border-radius:12px;background:linear-gradient(135deg,var(--ink),#2e3331);position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cls-crest::before{content:'';position:absolute;inset:1px;border-radius:11px;background:linear-gradient(135deg,rgba(201,151,50,.18),transparent 60%);}
+.cls-crest .n{position:relative;font-family:var(--display);font-weight:700;font-size:24px;color:#fff;line-height:1;}
+.cls-info{flex:1;min-width:0;}
+.cls-name{font-family:var(--display);font-weight:600;font-size:17px;color:var(--ink);letter-spacing:-.014em;line-height:1.2;}
+.cls-stream{font-size:11px;color:var(--ink-3);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+.cls-teacher{display:flex;align-items:center;gap:7px;margin-bottom:10px;font-size:12px;color:var(--ink-2);}
+.cls-teacher b{color:var(--ink);font-weight:600;}
+.cls-mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:10px;border-top:1px solid var(--line-2);}
+.cms-cell{text-align:center;}
+.cms-v{font-family:var(--display);font-weight:600;font-size:18px;color:var(--ink);line-height:1;letter-spacing:-.014em;}
+.cms-l{font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.cls-bottom{margin-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:11px;}
+.cls-mean{font-family:var(--mono);font-weight:700;color:var(--ink);}
+.cls-trend{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-weight:700;}
+.cls-trend.up{color:var(--ok);} .cls-trend.dn{color:var(--danger);} .cls-trend.flat{color:var(--ink-3);}
+.cls-spark{position:absolute;right:18px;bottom:14px;width:60px;height:24px;opacity:.6;}
+
+.add-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;border:1.5px dashed var(--line);border-radius:var(--r-lg);padding:24px;color:var(--ink-3);cursor:pointer;text-decoration:none;transition:.18s var(--ease);min-height:230px;}
+.add-tile:hover{border-color:var(--ink-3);color:var(--ink);background:var(--surface-2);}
+.add-tile i{font-size:28px;margin-bottom:10px;}
+.add-tile .t{font-family:var(--display);font-weight:600;font-size:15px;}
+.add-tile .s{font-size:11px;color:var(--ink-3);margin-top:3px;}
+</style>
+</head>
+<body data-page="classes" data-title="Classes">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Classes"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">CBC Grades 2 – 9 · 8 classes · 238 learners</div>
+        <h1 class="h1">Classes <em>· Term 2 · 2026</em></h1>
+        <div class="h-sub">A workspace per class. Open any tile to see roster, marks, attendance, photos and broadcasts.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="exportClassesBtn" title="Download all classes as CSV"><i class="fas fa-download"></i>Export</button>
+        <button class="btn btn-primary" id="addClassBtn"><i class="fas fa-plus"></i>Add class</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="input-wrap">
+        <i class="fas fa-search"></i>
+        <input class="input input-search" placeholder="Search class, teacher, stream…"/>
+      </div>
+      <select class="input" id="levelFilter">
+        <option value="">All levels</option>
+        <option value="Senior">Senior</option>
+        <option value="Junior">Junior</option>
+        <option value="Upper Primary">Upper Primary</option>
+        <option value="Lower Primary">Lower Primary</option>
+      </select>
+      <select class="input" id="teacherFilter">
+        <option value="">Any teacher</option>
+      </select>
+    </div>
+
+    <div class="cls-grid" id="classGrid"></div>
+
+  </div>
+</div>
+
+<div class="shroud" id="shroud"></div>
+
+<!-- ═══ Add class slide-over ═══ -->
+<aside class="slide" id="addClassSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">Add a class</div>
+      <div class="slide-sub">New class · saved to the live database</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field"><label class="field-label">Class name</label><input class="input" id="cName" placeholder="e.g. GRADE 10 or PP3"/></div>
+    <div class="field"><label class="field-label">Grade level (display label)</label><input class="input" id="cGrade" placeholder="Defaults to class name"/></div>
+    <div class="field"><label class="field-label">Class teacher</label><select class="input" id="cTeacher"><option value="">Unassigned</option></select></div>
+    <div class="field"><label class="field-label">Capacity</label><input class="input" id="cCap" type="number" min="1" value="40"/></div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct">Live save · Joyland database</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="cSave"><i class="fas fa-check"></i>Create class</button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') + '%' : '-';
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || j.error || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+const grid = document.getElementById('classGrid');
+let classRows = [];
+const trendColor = { up:'var(--ok)', dn:'var(--danger)', flat:'var(--ink-3)' };
+const trendIcon  = { up:'fa-caret-up', dn:'fa-caret-down', flat:'fa-minus' };
+function gradeNum(name){ return (String(name).match(/\d+/)||[''])[0]; }
+function levelFor(name){ const n=Number(gradeNum(name)); return n>=9?'Senior':n>=7?'Junior':n>=4?'Upper Primary':'Lower Primary'; }
+function sparkPath(vals){
+  vals = (vals||[]).filter(v=>Number.isFinite(Number(v))).map(Number);
+  if(vals.length < 2) return '';
+  const min=Math.min(...vals), max=Math.max(...vals), span=Math.max(1,max-min), step=60/(vals.length-1);
+  return vals.map((v,i)=>(i?'L':'M') + Math.round(i*step) + ' ' + Math.round(22-((v-min)/span)*18)).join(' ');
+}
+function classTile(c){
+  const hasTeacher = !!c.teacher;
+  const teacherLabel = hasTeacher ? c.teacher : 'Unassigned';
+  const teacherAvatar = hasTeacher
+    ? '<div class="ava ava-sm" style="' + Joy.avaStyle(c.teacher) + '">' + Joy.initials(c.teacher) + '</div>'
+    : '<div class="ava ava-sm" style="background:var(--surface-2);color:var(--ink-3);"><i class="fas fa-user-slash" style="font-size:10px;"></i></div>';
+  return '<a class="cls-tile" href="/admin/class.html?id=' + encodeURIComponent(c.id) + '">' +
+    '<div class="cls-head"><div class="cls-crest"><span class="n">' + gradeNum(c.name) + '</span></div><div class="cls-info"><div class="cls-name">' + esc(c.name) + '</div><div class="cls-stream">' + esc(c.stream) + '</div></div></div>' +
+    '<div class="cls-teacher">' + teacherAvatar + '<span>Class teacher: <b>' + esc(teacherLabel) + '</b></span></div>' +
+    '<div class="cls-mini-stats"><div class="cms-cell"><div class="cms-v">' + c.learners + '</div><div class="cms-l">Learners</div></div><div class="cms-cell"><div class="cms-v">' + Math.round(c.attn) + '<span style="font-size:11px;color:var(--ink-3);">%</span></div><div class="cms-l">Attend</div></div><div class="cms-cell"><div class="cms-v">' + c.ee + '</div><div class="cms-l">EE band</div></div></div>' +
+    '<div class="cls-bottom"><span class="cls-mean">' + pct(c.mean) + '</span><span class="cls-trend ' + c.trendCls + '"><i class="fas ' + trendIcon[c.trendCls] + '"></i>' + c.trend + '</span></div>' +
+    (c.spark ? '<svg class="cls-spark" viewBox="0 0 60 24" preserveAspectRatio="none"><path d="' + c.spark + '" fill="none" stroke="' + trendColor[c.trendCls] + '" stroke-width="1.8" stroke-linecap="round"/></svg>' : '') + '</a>';
+}
+let teachers = [];
+function render(){
+  const q = (document.querySelector('.input-search')?.value || '').toLowerCase().trim();
+  const lvl = document.getElementById('levelFilter')?.value || '';
+  const teacher = document.getElementById('teacherFilter')?.value || '';
+  const rows = classRows.filter(c => {
+    if(q && ![c.name,c.teacher,c.stream].join(' ').toLowerCase().includes(q)) return false;
+    if(lvl && c.stream !== lvl) return false;
+    if(teacher && c.teacher !== teacher) return false;
+    return true;
+  });
+  grid.innerHTML = rows.map(classTile).join('') +
+    '<a class="add-tile" id="addClassTile" href="#"><i class="fas fa-plus"></i><div class="t">Add a class</div><div class="s">For new intake or stream</div></a>';
+  document.getElementById('addClassTile')?.addEventListener('click', e => { e.preventDefault(); openAddClass(); });
+}
+function fillTeacherFilter(){
+  const sel = document.getElementById('teacherFilter');
+  sel.innerHTML = '<option value="">Any teacher</option>' +
+    teachers.filter(t => t.status !== 'inactive').map(t => '<option value="' + esc(t.name) + '">' + esc(t.name) + '</option>').join('');
+}
+function fillTeacherPicker(){
+  const sel = document.getElementById('cTeacher');
+  sel.innerHTML = '<option value="">Unassigned</option>' +
+    teachers.filter(t => t.status !== 'inactive').map(t => '<option value="' + t.id + '">' + esc(t.name) + '</option>').join('');
+}
+async function loadClasses(){
+  grid.innerHTML = '<div class="cls-tile">Loading classes...</div>';
+  try{
+    const [classes, analysis, teacherList] = await Promise.all([
+      api(API + '/classes'),
+      api(API + '/marks/analysis'),
+      api(API + '/teachers')
+    ]);
+    teachers = teacherList || [];
+    fillTeacherFilter();
+    fillTeacherPicker();
+    const analysisById = new Map((analysis.classes || []).map(c => [String(c.class_id), c]));
+    classRows = await Promise.all(classes.map(async c => {
+      const a = analysisById.get(String(c.id));
+      const averages = (a?.ranked || []).map(l => Number(l.average || 0));
+      const mean = averages.length ? averages.reduce((s,v)=>s+v,0)/averages.length : null;
+      const ee = averages.filter(v => v >= 75).length;
+      let attn = 0;
+      try { attn = (await api(API + '/attendance/summary?range=today&classId=' + c.id)).percent || 0; } catch {}
+      return { id:c.id, name:c.name, stream:levelFor(c.name), teacher:c.class_teacher_name || '', learners:c.enrollment_count || c.learner_count || 0, attn, mean, ee, trend:'live', trendCls:'flat', spark:sparkPath((a?.subject_averages || []).map(s=>s.average)) };
+    }));
+    render();
+  }catch(err){ Joy.toast("Couldn't load classes", {type:'danger'}); console.error(err); }
+}
+
+/* ── Filters ── */
+document.querySelector('.input-search')?.addEventListener('input', render);
+document.getElementById('levelFilter')?.addEventListener('change', render);
+document.getElementById('teacherFilter')?.addEventListener('change', render);
+
+/* ── Export classes ── */
+function csvCell(v){ const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+document.getElementById('exportClassesBtn')?.addEventListener('click', () => {
+  if(!classRows.length){ Joy.toast('Nothing to export', { type:'warn' }); return; }
+  const headers = ['Class','Stream/Level','Class Teacher','Learners','Attendance %','Mean %','EE band count'];
+  const lines = [headers.join(',')];
+  classRows.forEach(c => {
+    lines.push([c.name, c.stream, c.teacher, c.learners, Math.round(c.attn), c.mean!=null?c.mean.toFixed(1):'', c.ee].map(csvCell).join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'joyland-classes-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  Joy.toast('Exported ' + classRows.length + ' classes');
+});
+
+/* ── Add class ── */
+function openAddClass(){
+  document.getElementById('cName').value = '';
+  document.getElementById('cGrade').value = '';
+  document.getElementById('cTeacher').value = '';
+  document.getElementById('cCap').value = 40;
+  Joy.openSlide('addClassSlide');
+  setTimeout(() => document.getElementById('cName').focus(), 100);
+}
+document.getElementById('addClassBtn')?.addEventListener('click', openAddClass);
+document.getElementById('cSave')?.addEventListener('click', async () => {
+  const name = document.getElementById('cName').value.trim();
+  const grade_level = document.getElementById('cGrade').value.trim() || name;
+  const class_teacher_id = document.getElementById('cTeacher').value || null;
+  const capacity = parseInt(document.getElementById('cCap').value, 10) || 40;
+  if(!name){ Joy.toast('Class name is required', { type:'warn' }); return; }
+  const btn = document.getElementById('cSave');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try {
+    await api(API + '/classes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, grade_level, capacity, class_teacher_id })
+    });
+    Joy.closeSlide();
+    Joy.toast('Class "' + name + '" created');
+    loadClasses();
+    Joy.refreshSidebarCounts?.();
+  } catch(e){
+    Joy.toast(e.message || "Couldn't create class", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Create class';
+  }
+});
+
+loadClasses();
+</script>
+</body>
+</html>

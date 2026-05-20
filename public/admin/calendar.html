@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Calendar · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;}
+.cal-h{background:var(--surface-2);padding:10px 12px;font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;text-align:center;}
+.cal-cell{background:var(--surface);min-height:118px;padding:8px 9px;display:flex;flex-direction:column;gap:5px;position:relative;cursor:pointer;transition:.12s var(--ease);}
+.cal-cell:hover{background:#fdfdfa;}
+.cal-cell.muted{background:var(--surface-2);}
+.cal-cell.muted .num{color:var(--ink-4);}
+.cal-cell.today{background:linear-gradient(135deg,var(--gold-tint),#fff);}
+.cal-cell.today .num{color:var(--gold);font-weight:700;}
+.cal-cell .num{font-family:var(--display);font-weight:600;font-size:15px;color:var(--ink);letter-spacing:-.01em;}
+.cal-event{font-size:10.5px;font-weight:600;padding:3px 7px;border-radius:5px;cursor:pointer;line-height:1.2;}
+.cal-event.assess{background:rgba(245,158,11,.12);color:#b45309;}
+.cal-event.event{background:rgba(59,130,246,.12);color:var(--d1);}
+.cal-event.meet{background:rgba(139,92,246,.12);color:#7c3aed;}
+.cal-event.term{background:rgba(201,151,50,.18);color:var(--gold-2);font-weight:700;}
+.cal-event.hol{background:rgba(16,163,74,.10);color:var(--ok);}
+
+.month-nav{display:flex;align-items:center;gap:10px;}
+.month-nav button{width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:9px;color:var(--ink-2);cursor:pointer;}
+.month-nav button:hover{background:var(--surface-2);color:var(--ink);}
+.month-nav .label{font-family:var(--display);font-weight:600;font-size:18px;color:var(--ink);letter-spacing:-.014em;padding:0 8px;min-width:170px;text-align:center;}
+
+/* Week view — same grid, taller cells, no muted out-of-month styling */
+.cal-grid.week .cal-cell{min-height:240px;}
+.cal-grid.week .cal-cell.muted{background:var(--surface);}
+.cal-grid.week .cal-cell.muted .num{color:var(--ink);}
+
+/* List view */
+.list-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;}
+.list-day{display:grid;grid-template-columns:120px 1fr;gap:18px;padding:14px 18px;border-bottom:1px solid var(--line-2);align-items:flex-start;}
+.list-day:last-child{border-bottom:none;}
+.list-day:hover{background:var(--surface-2);}
+.list-day.today{background:linear-gradient(135deg,var(--gold-tint),#fff);}
+.list-date{font-family:var(--display);font-weight:600;color:var(--ink);}
+.list-date .d{font-size:22px;line-height:1;letter-spacing:-.02em;}
+.list-date .dow{font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;font-family:var(--body);}
+.list-events{display:flex;flex-direction:column;gap:6px;}
+.list-event{display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:6px 10px;border-radius:7px;}
+.list-event:hover{background:rgba(0,0,0,.03);}
+.list-event .dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.list-event .dot.assess{background:#f59e0b;}
+.list-event .dot.event{background:#3b82f6;}
+.list-event .dot.meet{background:#8b5cf6;}
+.list-event .dot.term{background:var(--gold);}
+.list-event .dot.hol{background:#10b981;}
+.list-event .ttl{font-weight:600;color:var(--ink);}
+.list-event .meta{font-size:11.5px;color:var(--ink-3);font-family:var(--mono);margin-left:auto;}
+.list-empty{padding:48px 20px;text-align:center;color:var(--ink-3);}
+.list-empty i{font-size:28px;color:var(--ink-4);margin-bottom:10px;display:block;}
+</style>
+</head>
+<body data-page="calendar" data-title="Calendar">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Calendar"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow" id="calEyebrow">Loading current term…</div>
+        <h1 class="h1">Calendar <em id="calTitleEm">· loading…</em></h1>
+        <div class="h-sub">Term events, assessments, meetings and holidays — visible across roles.</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="month-nav">
+          <button id="navPrev" type="button" title="Previous"><i class="fas fa-chevron-left"></i></button>
+          <span class="label" id="navLabel">—</span>
+          <button id="navNext" type="button" title="Next"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="toggle-pair" id="viewToggle">
+          <button class="on" data-view="month" type="button">Month</button>
+          <button data-view="week" type="button">Week</button>
+          <button data-view="list" type="button">List</button>
+        </div>
+        <button class="btn btn-primary" id="newEventBtn" type="button"><i class="fas fa-plus"></i>New event</button>
+      </div>
+    </div>
+
+    <div id="calBody">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Event slide-over -->
+<div class="shroud" id="shroud"></div>
+<aside class="slide" id="eventSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">Calendar event</div>
+      <div class="slide-sub">School-wide or class-specific</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field"><label class="field-label">Title</label><input class="input" id="evTitle"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field"><label class="field-label">Date</label><input class="input" id="evDate" type="date"/></div>
+      <div class="field"><label class="field-label">End date</label><input class="input" id="evEnd" type="date"/></div>
+    </div>
+    <div class="field">
+      <label class="field-label">Type</label>
+      <select class="input" id="evType">
+        <option value="event">Event</option>
+        <option value="assess">Assessment</option>
+        <option value="meet">Meeting</option>
+        <option value="term">Term</option>
+        <option value="hol">Holiday</option>
+      </select>
+    </div>
+    <div class="field"><label class="field-label">Description</label><textarea class="input" id="evDesc" style="min-height:90px;"></textarea></div>
+  </div>
+  <div class="slide-foot">
+    <button class="btn" id="evDelete" style="color:var(--danger);display:none;"><i class="fas fa-trash"></i>Delete</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="evSave"><i class="far fa-save"></i>Save</button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+
+const state = { cursor: new Date(), view: 'month', editing: null, events: [] };
+state.cursor.setHours(0,0,0,0);
+
+const grid     = document.getElementById('calGrid');
+const body     = document.getElementById('calBody');
+const navLabel = document.getElementById('navLabel');
+const titleEm  = document.getElementById('calTitleEm');
+const eyebrow  = document.getElementById('calEyebrow');
+
+function iso(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return y+'-'+m+'-'+day; }
+function sameDay(a,b){ return iso(a) === iso(b); }
+function monthName(d){ return d.toLocaleDateString('en-GB', { month:'long', year:'numeric' }); }
+function eventHits(e, date){
+  const i = iso(date);
+  return String(e.date) <= i && String(e.endDate || e.date) >= i;
+}
+function shiftDate(d, n){ const c = new Date(d); c.setDate(c.getDate() + n); return c; }
+function startOfWeek(d){ const c = new Date(d); c.setDate(c.getDate() - ((c.getDay()+6) % 7)); c.setHours(0,0,0,0); return c; }
+
+/* Range the user is looking at — drives both the API window and the navigation */
+function visibleRange(){
+  if(state.view === 'week'){
+    const start = startOfWeek(state.cursor);
+    const end   = shiftDate(start, 6);
+    return { start, end, anchor: start };
+  }
+  /* month + list both walk the calendar month grid */
+  const y = state.cursor.getFullYear(), m = state.cursor.getMonth();
+  const first = new Date(y, m, 1);
+  const last  = new Date(y, m + 1, 0);
+  const start = startOfWeek(first);
+  const end   = shiftDate(startOfWeek(last), 6);
+  return { start, end, anchor: first };
+}
+
+/* ─── Renderers ──────────────────────────────────────────────── */
+function renderMonth(){
+  body.innerHTML = '<div class="cal-grid" id="calGrid"></div>';
+  const g = document.getElementById('calGrid');
+  g.innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => '<div class="cal-h">'+d+'</div>').join('');
+  const r = visibleRange();
+  const today = new Date(); today.setHours(0,0,0,0);
+  for(let d = new Date(r.start); d <= r.end; d = shiftDate(d, 1)){
+    const cur = new Date(d);
+    const dayEvents = state.events.filter(e => eventHits(e, cur));
+    const muted = cur.getMonth() !== state.cursor.getMonth();
+    const isToday = sameDay(cur, today);
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (muted ? ' muted' : '') + (isToday ? ' today' : '');
+    cell.innerHTML = '<span class="num">' + cur.getDate() + '</span>' +
+      dayEvents.map(e => '<span class="cal-event ' + esc(e.type) + '" data-id="' + e.id + '">' + esc(e.title) + '</span>').join('');
+    cell.dataset.date = iso(cur);
+    g.appendChild(cell);
+  }
+}
+
+function renderWeek(){
+  body.innerHTML = '<div class="cal-grid week" id="calGrid"></div>';
+  const g = document.getElementById('calGrid');
+  g.innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => '<div class="cal-h">'+d+'</div>').join('');
+  const r = visibleRange();
+  const today = new Date(); today.setHours(0,0,0,0);
+  for(let i = 0; i < 7; i++){
+    const cur = shiftDate(r.start, i);
+    const dayEvents = state.events.filter(e => eventHits(e, cur));
+    const isToday = sameDay(cur, today);
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isToday ? ' today' : '');
+    cell.innerHTML = '<span class="num">' + cur.getDate() + ' <span style="font-size:11px;font-weight:600;color:var(--ink-3);font-family:var(--mono);margin-left:4px;">' + cur.toLocaleDateString('en-GB', { month:'short' }) + '</span></span>' +
+      (dayEvents.length
+        ? dayEvents.map(e => '<span class="cal-event ' + esc(e.type) + '" data-id="' + e.id + '">' + esc(e.title) + '</span>').join('')
+        : '<span style="font-size:11px;color:var(--ink-3);margin-top:4px;">No events</span>');
+    cell.dataset.date = iso(cur);
+    g.appendChild(cell);
+  }
+}
+
+function renderList(){
+  body.innerHTML = '<div class="list-wrap" id="calGrid"></div>';
+  const g = document.getElementById('calGrid');
+  const r = visibleRange();
+  /* Build day → events map only for days that have at least one event */
+  const map = new Map();
+  for(let d = new Date(r.start); d <= r.end; d = shiftDate(d, 1)){
+    const cur = new Date(d);
+    const evs = state.events.filter(e => eventHits(e, cur));
+    if(evs.length) map.set(iso(cur), { date: cur, events: evs });
+  }
+  if(!map.size){
+    g.innerHTML = '<div class="list-empty"><i class="fas fa-calendar"></i>No events between <b>' + r.start.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + '</b> and <b>' + r.end.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + '</b>. <br>Click <b>New event</b> to add one.</div>';
+    return;
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  g.innerHTML = [...map.entries()].sort((a,b) => a[0].localeCompare(b[0])).map(([key, { date, events }]) => {
+    const isToday = sameDay(date, today);
+    return '<div class="list-day' + (isToday ? ' today' : '') + '" data-date="' + key + '">' +
+      '<div class="list-date"><div class="d">' + date.getDate() + ' ' + date.toLocaleDateString('en-GB',{month:'short'}) + '</div><div class="dow">' + date.toLocaleDateString('en-GB',{weekday:'long'}) + '</div></div>' +
+      '<div class="list-events">' +
+        events.map(e => '<div class="list-event" data-id="' + e.id + '"><span class="dot ' + esc(e.type) + '"></span><span class="ttl">' + esc(e.title) + '</span>' + (e.endDate && e.endDate !== e.date ? '<span class="meta">→ ' + esc(e.endDate) + '</span>' : '<span class="meta">' + esc(e.type) + '</span>') + '</div>').join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function render(){
+  if(state.view === 'week')      renderWeek();
+  else if(state.view === 'list') renderList();
+  else                            renderMonth();
+}
+
+/* ─── Header labels ──────────────────────────────────────────── */
+function updateHeader(){
+  if(state.view === 'week'){
+    const r = visibleRange();
+    const sameMonth = r.start.getMonth() === r.end.getMonth();
+    const label = sameMonth
+      ? r.start.toLocaleDateString('en-GB',{day:'numeric'}) + ' – ' + r.end.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+      : r.start.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' – ' + r.end.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    navLabel.textContent = label;
+    titleEm.textContent  = '· ' + label;
+  } else {
+    navLabel.textContent = monthName(state.cursor);
+    titleEm.textContent  = '· ' + monthName(state.cursor);
+  }
+}
+
+async function refreshEyebrow(){
+  try {
+    const p = await api(API + '/current-period');
+    const sessionName = p?.term?.session_name || '';
+    const termName    = p?.term?.name || p?.term?.term_name || '';
+    const parts = [];
+    if(sessionName) parts.push('Academic year · ' + sessionName);
+    if(termName)    parts.push(termName);
+    eyebrow.textContent = parts.length ? parts.join(' · ') : 'Calendar';
+  } catch(_) { eyebrow.textContent = 'Calendar'; }
+}
+
+/* ─── Load + glue ────────────────────────────────────────────── */
+async function load(){
+  updateHeader();
+  const r = visibleRange();
+  try {
+    const events = await api(API + '/calendar/events?from=' + iso(r.start) + '&to=' + iso(r.end));
+    state.events = Array.isArray(events) ? events : [];
+    render();
+  } catch(e) {
+    Joy.toast("Couldn't load calendar", { type:'danger' });
+    state.events = [];
+    render();
+  }
+}
+
+/* ─── Navigation ─────────────────────────────────────────────── */
+function step(n){
+  if(state.view === 'week'){
+    state.cursor = shiftDate(startOfWeek(state.cursor), n * 7);
+  } else {
+    /* month + list both navigate by month */
+    state.cursor = new Date(state.cursor.getFullYear(), state.cursor.getMonth() + n, 1);
+  }
+  load();
+}
+document.getElementById('navPrev').addEventListener('click', () => step(-1));
+document.getElementById('navNext').addEventListener('click', () => step(1));
+
+/* ─── View toggle (wired for real now) ───────────────────────── */
+document.getElementById('viewToggle').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-view]'); if(!btn) return;
+  if(btn.classList.contains('on')) return;
+  document.querySelectorAll('#viewToggle button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  state.view = btn.dataset.view;
+  load();
+});
+
+/* ─── Cell + event clicks ────────────────────────────────────── */
+body.addEventListener('click', e => {
+  /* Event chip → open editor for that event */
+  const chip = e.target.closest('.cal-event, .list-event');
+  if(chip && chip.dataset.id){
+    e.stopPropagation();
+    const ev = state.events.find(x => String(x.id) === String(chip.dataset.id));
+    if(ev) openEvent(ev);
+    return;
+  }
+  /* Empty cell → open editor with that date preselected */
+  const cell = e.target.closest('.cal-cell, .list-day');
+  if(cell && cell.dataset.date){ openEvent(null, new Date(cell.dataset.date + 'T00:00:00')); }
+});
+
+/* ─── New event button ───────────────────────────────────────── */
+document.getElementById('newEventBtn').addEventListener('click', () => openEvent(null, state.cursor));
+
+/* ─── Editor ─────────────────────────────────────────────────── */
+function openEvent(ev, date){
+  state.editing = ev || null;
+  document.getElementById('evTitle').value = ev?.title || '';
+  document.getElementById('evDate').value  = ev?.date   || iso(date || state.cursor);
+  document.getElementById('evEnd').value   = ev?.endDate || '';
+  document.getElementById('evType').value  = ev?.type   || 'event';
+  document.getElementById('evDesc').value  = ev?.description || '';
+  document.getElementById('evDelete').style.display = ev ? 'inline-flex' : 'none';
+  Joy.openSlide('eventSlide');
+}
+
+document.getElementById('evSave').addEventListener('click', async () => {
+  const body = {
+    title: document.getElementById('evTitle').value.trim(),
+    date:  document.getElementById('evDate').value,
+    endDate: document.getElementById('evEnd').value || null,
+    type:  document.getElementById('evType').value,
+    description: document.getElementById('evDesc').value.trim()
+  };
+  if(!body.title || !body.date){ Joy.toast('Title and date are required', { type:'warn' }); return; }
+  if(body.endDate && body.endDate < body.date){ Joy.toast('End date must be on or after start date', { type:'warn' }); return; }
+  try {
+    const path = state.editing ? '/calendar/events/' + state.editing.id : '/calendar/events';
+    await api(API + path, { method: state.editing ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    Joy.closeSlide();
+    Joy.toast(state.editing ? 'Event updated' : 'Event added');
+    load();
+  } catch(e) { Joy.toast(e.message || 'Could not save event', { type:'danger' }); }
+});
+
+document.getElementById('evDelete').addEventListener('click', async () => {
+  if(!state.editing) return;
+  if(!confirm('Delete "' + (state.editing.title || 'this event') + '"?')) return;
+  try {
+    await api(API + '/calendar/events/' + state.editing.id, { method:'DELETE' });
+    Joy.closeSlide();
+    Joy.toast('Event deleted');
+    load();
+  } catch(e) { Joy.toast(e.message || 'Could not delete event', { type:'danger' }); }
+});
+
+/* ─── Boot ───────────────────────────────────────────────────── */
+refreshEyebrow();
+load();
+</script>
+</body>
+</html>

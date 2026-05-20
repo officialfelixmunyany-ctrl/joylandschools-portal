@@ -106,6 +106,45 @@ router.get('/dashboard', (req, res) => {
   res.json({ success:true, data:{ active_session:active, terms }});
 });
 
+router.get('/timetable', (req, res) => {
+  const db = getDB();
+  const learnerId = req.session.user.id;
+  const learner = db.prepare("SELECT class_name FROM users WHERE id=? AND role='learner'").get(learnerId);
+  if (!learner || !learner.class_name) return res.json({ success:false, message:'No class assigned' });
+  const cls = db.prepare('SELECT id FROM classes WHERE lower(name)=lower(?)').get(learner.class_name);
+  if (!cls) return res.json({ success:false, message:'Class not found' });
+  const active = db.prepare("SELECT id FROM timetable_generations WHERE status='active' ORDER BY id DESC LIMIT 1").get();
+  if (!active) return res.json({ success:true, data:{ slots:[], periods:[], class_name:learner.class_name } });
+  const today = todayInSchoolTime();
+  const slots = db.prepare(`
+    SELECT ts.id, ts.day_of_week, ts.period_no,
+           sub.name AS subject_name, u.name AS teacher_name
+    FROM timetable_slots ts
+    JOIN subjects sub ON sub.id=ts.subject_id
+    LEFT JOIN users u ON u.id=ts.teacher_id
+    WHERE ts.generation_id=? AND ts.class_id=?
+    ORDER BY ts.day_of_week, ts.period_no
+  `).all(active.id, cls.id);
+  const covers = db.prepare(`
+    SELECT sa.slot_id, u.name AS substitute_name
+    FROM substitution_assignments sa
+    LEFT JOIN users u ON u.id=sa.substitute_teacher_id
+    WHERE sa.date=?
+  `).all(today);
+  const coverMap = new Map(covers.map(c => [Number(c.slot_id), c]));
+  slots.forEach(slot => {
+    const cover = coverMap.get(Number(slot.id));
+    if (!cover || !cover.substitute_name) return;
+    slot.teacher_name = cover.substitute_name + ' (cover)';
+    slot.is_substitution = 1;
+  });
+  const periods = db.prepare('SELECT * FROM bell_periods WHERE schedule_id=1 ORDER BY period_no').all().map(p => ({
+    ...p,
+    active_days:(() => { try { return JSON.parse(p.active_days || '[]'); } catch { return []; } })()
+  }));
+  res.json({ success:true, data:{ slots, periods, today, class_name:learner.class_name } });
+});
+
 // ═══════════════ LEARNER READ-ONLY DATA ═══════════════
 // All endpoints scope to req.session.user.id — a learner CANNOT view another learner's data.
 
@@ -319,6 +358,61 @@ router.get('/comments', (req, res) => {
   const roleLabel = { class_teacher:'Class Teacher', headteacher:'Headteacher', director:'Director' };
   const comments = rows.map(r => ({ role: r.role, role_label: roleLabel[r.role] || r.role, text: r.comment_text || '' }));
   res.json({ success:true, data:{ term:{ id: term.id, name: term.name }, assessment_type: assessment, comments } });
+});
+
+router.post('/games/score', (req, res) => {
+  const db = getDB();
+  const learnerId = req.session.user.id;
+  const gameKey = String(req.body?.game_key || '').trim().toLowerCase().replace(/[^a-z0-9_:-]+/g, '_').slice(0, 60);
+  const score = Number(req.body?.score);
+  if (!gameKey) return res.status(400).json({ success:false, message:'game_key is required' });
+  if (!Number.isFinite(score)) return res.status(400).json({ success:false, message:'score is required' });
+  db.prepare(`
+    INSERT INTO game_scores (learner_id, game_key, score, played_at)
+    VALUES (?, ?, ?, datetime('now'))
+  `).run(learnerId, gameKey, Math.max(0, Math.round(score)));
+  res.json({ success:true, message:'Score saved' });
+});
+
+router.get('/games/scores', (req, res) => {
+  const db = getDB();
+  const learnerId = req.session.user.id;
+  const bestRows = db.prepare(`
+    SELECT game_key, MAX(score) AS score
+    FROM game_scores
+    WHERE learner_id=?
+    GROUP BY game_key
+  `).all(learnerId);
+  const best = {};
+  bestRows.forEach(row => { best[row.game_key] = row.score; });
+  const recent = db.prepare(`
+    SELECT id, game_key, score, played_at
+    FROM game_scores
+    WHERE learner_id=?
+    ORDER BY datetime(played_at) DESC, id DESC
+    LIMIT 20
+  `).all(learnerId);
+  res.json({ success:true, data:{ best, recent } });
+});
+
+router.get('/notifications', (req, res) => {
+  const db = getDB();
+  const rows = db.prepare(`
+    SELECT n.id, n.title, n.body, n.created_at, nr.read_at
+    FROM notification_recipients nr
+    JOIN notifications n ON n.id=nr.notification_id
+    WHERE nr.user_role='learner' AND nr.user_id=?
+    ORDER BY datetime(n.created_at) DESC, n.id DESC
+    LIMIT 100
+  `).all(req.session.user.id);
+  const items = rows.map(row => ({
+    id:row.id,
+    title:row.title,
+    body:row.body,
+    created_at:row.created_at,
+    read:!!row.read_at
+  }));
+  res.json({ success:true, data:{ items } });
 });
 
 router.put('/change-password', (req, res) => {

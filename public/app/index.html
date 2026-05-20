@@ -470,6 +470,15 @@ html,body{font-family:var(--f7-font-family);-webkit-font-smoothing:antialiased;-
 .att-save-btn{border:none;background:linear-gradient(135deg,var(--d-green2),var(--d-green3));color:#fff;font-family:inherit;font-size:12.5px;font-weight:900;padding:11px 14px;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(46,125,50,.32);letter-spacing:0;flex-shrink:0;min-width:74px;}
 .att-save-btn:disabled{opacity:.62;}
 .att-note{font-size:11px;color:#98a2b3;text-align:center;padding:14px 20px;line-height:1.5;}
+.att-daygate{margin-top:14px;padding:18px 16px;border-radius:14px;background:linear-gradient(135deg,#fffaf0,#fff);border:1px solid #f3e0b6;display:flex;align-items:flex-start;gap:12px;box-shadow:var(--d-card-shadow);}
+.att-daygate i{color:#b78b2a;font-size:18px;margin-top:1px;flex-shrink:0;}
+.att-daygate .title{font-size:13.5px;font-weight:900;color:var(--d-text);}
+.att-daygate .sub{font-size:11.5px;color:var(--d-muted);margin-top:4px;line-height:1.55;}
+.att-daygate.holiday{background:linear-gradient(135deg,#f3f9ff,#fff);border-color:#c7defc;}
+.att-daygate.holiday i{color:#3578d8;}
+.att-daygate.weekend{background:linear-gradient(135deg,#f6f6f9,#fff);border-color:#d9d9e5;}
+.att-daygate.weekend i{color:#6e6e8a;}
+.att-date-input.blocked{outline:2px solid #f3c373;}
 .att-summary-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:16px;box-shadow:var(--d-card-shadow);margin-top:12px;display:flex;align-items:center;gap:16px;}
 .att-sm-ring{width:74px;height:74px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--d-green3) 0% var(--pct,0%),var(--d-border) var(--pct,0%) 100%);}
 .att-sm-ring-inner{width:58px;height:58px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -836,6 +845,195 @@ html.ios body, html.md body { -webkit-overflow-scrolling:touch; }
   .bs-fit-scale{transform:none!important;width:auto!important;}
   .app-tabbar,.navbar,.rep-filter-bar,.rep-actions,.rep-batch-count,.rep-build-bar{display:none!important;}
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MORE TAB v2 — Tabler-polished
+   ═══════════════════════════════════════════════════════════════════ */
+.more-hero{background:linear-gradient(135deg,var(--d-green2) 0%,var(--d-green) 70%,#0f2419 130%);color:#fff;border-radius:0 0 28px 28px;margin:-15px -15px 0;padding:24px 18px 22px;position:relative;overflow:hidden;box-shadow:0 8px 24px -10px rgba(27,94,32,.45);}
+.more-hero::after{content:'';position:absolute;width:240px;height:240px;background:radial-gradient(circle,rgba(255,193,7,.12),transparent 70%);bottom:-100px;right:-60px;}
+.more-hero-row{display:flex;align-items:center;gap:14px;position:relative;z-index:1;}
+.more-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--d-gold2),var(--d-gold));color:#1d273b;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;letter-spacing:-.03em;flex-shrink:0;box-shadow:0 6px 14px rgba(0,0,0,.22), inset 0 -3px 0 rgba(0,0,0,.1);}
+.more-who{flex:1;min-width:0;}
+.more-name{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.2;}
+.more-role{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.16);color:#fff;padding:3px 9px;border-radius:99px;margin-top:6px;border:1px solid rgba(255,255,255,.2);}
+.more-stats{display:flex;gap:18px;margin-top:14px;position:relative;z-index:1;font-family:inherit;}
+.more-stat{display:flex;align-items:center;gap:5px;font-size:11.5px;color:rgba(255,255,255,.82);font-weight:600;}
+.more-stat b{color:#fff;font-size:13px;font-weight:800;}
+
+.more-content{padding:0 18px 24px;}
+.more-section-label{font-size:11px;font-weight:700;color:var(--d-text-2);letter-spacing:.06em;text-transform:uppercase;margin:22px 4px 9px;display:flex;align-items:center;gap:7px;}
+.more-section-label i{color:var(--d-green3);font-size:12px;}
+
+/* Workflow tiles (Skills + Comments — 2-up grid) */
+.more-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.more-tile{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:16px 12px 14px;box-shadow:var(--d-card-shadow);text-align:left;cursor:pointer;font-family:inherit;color:var(--d-text);transition:all .2s cubic-bezier(.4,0,.2,1);position:relative;}
+.more-tile:active{transform:scale(.98);}
+.more-tile-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;margin-bottom:9px;box-shadow:0 4px 10px -2px rgba(0,0,0,.18);}
+.more-tile-icon.purple{background:linear-gradient(135deg,#6b46c1,#805ad5);}
+.more-tile-icon.blue{background:linear-gradient(135deg,#2b6cb0,#3182ce);}
+.more-tile-name{font-size:14px;font-weight:700;color:var(--d-text);letter-spacing:-.01em;}
+.more-tile-sub{font-size:10.5px;color:var(--d-muted);font-weight:500;margin-top:2px;}
+
+/* Card-style list rows */
+.more-list{background:#fff;border:1px solid var(--d-border);border-radius:14px;box-shadow:var(--d-card-shadow);overflow:hidden;}
+.more-row{width:100%;border:none;background:transparent;display:flex;align-items:center;gap:13px;padding:13px 15px;cursor:pointer;font-family:inherit;color:var(--d-text);text-align:left;border-bottom:1px solid var(--d-border);transition:background .15s;}
+.more-row:last-child{border-bottom:none;}
+.more-row:active{background:rgba(46,125,50,.04);}
+.more-row-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex-shrink:0;}
+.more-row-icon.green{background:linear-gradient(135deg,var(--d-green2),var(--d-green3));}
+.more-row-icon.blue{background:linear-gradient(135deg,#2b6cb0,#3182ce);}
+.more-row-icon.amber{background:linear-gradient(135deg,#dd6b20,#f76707);}
+.more-row-icon.purple{background:linear-gradient(135deg,#6b46c1,#805ad5);}
+.more-row-icon.teal{background:linear-gradient(135deg,#0987a0,#0bc5ea);}
+.more-row-icon.gray{background:linear-gradient(135deg,#64748b,#475569);}
+.more-row-text{flex:1;min-width:0;}
+.more-row-title{font-size:13.5px;font-weight:700;color:var(--d-text);letter-spacing:-.01em;}
+.more-row-sub{font-size:10.5px;color:var(--d-muted);font-weight:500;margin-top:1px;}
+.more-row-badge{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;min-width:20px;text-align:center;flex-shrink:0;letter-spacing:.02em;}
+.more-row-chev{color:var(--d-muted-2);font-size:12px;flex-shrink:0;}
+
+.more-signout{width:100%;background:#fff;border:1px solid rgba(214,57,57,.22);border-radius:14px;padding:14px 15px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;font-family:inherit;color:var(--d-danger);font-size:14px;font-weight:800;letter-spacing:.02em;box-shadow:var(--d-card-shadow);margin-top:18px;}
+.more-signout:active{transform:scale(.99);background:rgba(214,57,57,.04);}
+.more-signout i{font-size:14px;}
+
+.more-foot{text-align:center;padding:18px 12px 8px;color:var(--d-muted-2);font-size:11px;font-weight:600;letter-spacing:.02em;}
+
+/* Notifications v2 */
+.notif-list{display:flex;flex-direction:column;gap:9px;}
+.notif-row{display:flex;align-items:flex-start;gap:12px;background:#fff;border:1px solid var(--d-border);border-radius:13px;padding:13px 14px;box-shadow:var(--d-card-shadow);cursor:pointer;text-align:left;font-family:inherit;color:var(--d-text);position:relative;transition:background .15s;width:100%;}
+.notif-row:active{background:rgba(46,125,50,.03);}
+.notif-row.unread{border-left:4px solid var(--d-green2);padding-left:10px;}
+.notif-row.unread::after{content:'';position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--d-green2);box-shadow:0 0 0 3px rgba(46,125,50,.18);}
+.notif-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;background:linear-gradient(135deg,#dd6b20,#f76707);}
+.notif-icon.marks{background:linear-gradient(135deg,#2b6cb0,#3182ce);}
+.notif-icon.attendance{background:linear-gradient(135deg,var(--d-green2),var(--d-green3));}
+.notif-icon.report{background:linear-gradient(135deg,#6b46c1,#805ad5);}
+.notif-icon.event{background:linear-gradient(135deg,var(--d-gold2),var(--d-gold));color:#1d273b;}
+.notif-body{flex:1;min-width:0;padding-right:14px;}
+.notif-title{font-size:13.5px;font-weight:700;color:var(--d-text);letter-spacing:-.01em;}
+.notif-text{font-size:12px;color:var(--d-text-2);font-weight:500;margin-top:2px;line-height:1.45;}
+.notif-date{font-size:10px;color:var(--d-muted-2);font-weight:600;margin-top:5px;text-transform:uppercase;letter-spacing:.04em;}
+
+/* About Daraja */
+.about-card{background:linear-gradient(135deg,var(--d-green2),var(--d-green));color:#fff;border-radius:18px;padding:24px 18px;text-align:center;margin-top:6px;box-shadow:0 10px 24px -10px rgba(27,94,32,.5);position:relative;overflow:hidden;}
+.about-card::after{content:'';position:absolute;width:200px;height:200px;background:radial-gradient(circle,rgba(255,193,7,.14),transparent 70%);bottom:-80px;right:-50px;}
+.about-logo{font-size:56px;margin-bottom:8px;position:relative;z-index:1;}
+.about-name{font-family:'Inter',sans-serif;font-size:28px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#fff,#ffd54f);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;position:relative;z-index:1;}
+.about-tag{font-size:12px;color:rgba(255,255,255,.78);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;position:relative;z-index:1;}
+.about-version{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);color:#fff;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.04em;margin-top:14px;position:relative;z-index:1;}
+.about-school{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:16px;margin-top:14px;text-align:center;box-shadow:var(--d-card-shadow);}
+.about-school-logo{width:60px;height:60px;border-radius:50%;background:#fff;border:2px solid var(--d-border);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--d-green2);margin:0 auto 10px;overflow:hidden;}
+.about-school-logo img{width:100%;height:100%;object-fit:cover;}
+.about-school-name{font-size:15px;font-weight:800;color:var(--d-text);letter-spacing:.02em;}
+.about-school-motto{font-size:11.5px;color:var(--d-muted);font-style:italic;margin-top:3px;}
+.about-credits{text-align:center;padding:18px 18px 8px;color:var(--d-muted);font-size:11.5px;line-height:1.6;font-weight:500;}
+.about-credits b{color:var(--d-text-2);}
+
+/* ── Teacher timetable ─────────────────────────────────────── */
+.tt-now{background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;border-radius:18px;padding:18px 18px 16px;margin:14px 14px 0;position:relative;overflow:hidden;box-shadow:0 8px 24px -8px rgba(27,94,32,.35);}
+.tt-now::before{content:'';position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at 100% 0%,rgba(255,255,255,.16),transparent 60%);pointer-events:none;}
+.tt-now .eye{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.tt-now .eye .dot{width:7px;height:7px;border-radius:50%;background:#86efac;animation:tt-pulse 2s ease-in-out infinite;}
+.tt-now .subj{font-size:22px;font-weight:800;letter-spacing:-.01em;line-height:1.1;}
+.tt-now .meta{font-size:12.5px;opacity:.92;margin-top:6px;}
+.tt-now .meta b{font-weight:700;}
+.tt-now .time{position:absolute;top:14px;right:16px;text-align:right;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:700;opacity:.9;}
+.tt-now .progress{margin-top:12px;height:4px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden;}
+.tt-now .progress > div{height:100%;background:#fff;border-radius:2px;transition:width 1s linear;}
+.tt-now.idle{background:linear-gradient(135deg,#374151,#1f2937);}
+.tt-now.next .eye .dot{background:#fbbf24;animation:none;}
+@keyframes tt-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.25);}}
+
+.tt-view-toggle{display:flex;gap:0;background:#f4f4f0;border:1px solid var(--d-border);border-radius:11px;padding:3px;margin:14px;}
+.tt-view-toggle button{flex:1;height:36px;border:none;background:transparent;font-family:inherit;font-weight:700;font-size:12px;color:var(--d-muted);border-radius:8px;cursor:pointer;}
+.tt-view-toggle button.on{background:#fff;color:var(--d-text);box-shadow:var(--d-card-shadow);}
+
+.tt-section{margin:14px;}
+.tt-section h3{font-size:11px;font-weight:800;color:var(--d-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+.tt-day-list{display:flex;flex-direction:column;gap:8px;}
+.tt-lesson{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:12px 14px;box-shadow:var(--d-card-shadow);}
+.tt-lesson.now{border-color:var(--d-green2);background:#f3faf4;box-shadow:0 4px 14px -4px rgba(46,125,50,.22);}
+.tt-lesson.past{opacity:.5;}
+.tt-lesson.cover{border-left:3px solid #f59e0b;}
+.tt-lesson .time-col{text-align:center;}
+.tt-lesson .time-col .start{font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;font-weight:800;color:var(--d-text);line-height:1;}
+.tt-lesson .time-col .end{font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;color:var(--d-muted);margin-top:3px;}
+.tt-lesson .info{min-width:0;}
+.tt-lesson .info .subj{font-size:14px;font-weight:700;color:var(--d-text);line-height:1.2;}
+.tt-lesson .info .cls{font-size:11.5px;color:var(--d-muted);margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.tt-lesson .info .cover-tag{font-size:9.5px;font-weight:800;background:rgba(245,158,11,.15);color:#b45309;padding:2px 6px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase;}
+.tt-lesson .info .now-tag{font-size:9.5px;font-weight:800;background:rgba(46,125,50,.15);color:#1B5E20;padding:2px 6px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase;}
+.tt-lesson .actions{display:flex;flex-direction:column;gap:4px;}
+.tt-lesson .actions button{width:32px;height:32px;border:1px solid var(--d-border);background:#fff;border-radius:8px;color:var(--d-muted);font-size:12px;}
+.tt-lesson .break-row{grid-column:1/-1;text-align:center;padding:7px;font-size:11px;color:var(--d-muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:repeating-linear-gradient(45deg,#f4f4f0,#f4f4f0 4px,transparent 4px,transparent 8px);border-radius:8px;}
+
+.tt-week-grid{overflow-x:auto;margin:0 -14px;padding:0 14px;}
+.tt-week-table{width:100%;min-width:520px;border-collapse:separate;border-spacing:4px;}
+.tt-week-table th{font-size:9.5px;font-weight:700;color:var(--d-muted);text-transform:uppercase;letter-spacing:.05em;padding:4px;}
+.tt-week-table td{background:#fff;border:1px solid var(--d-border);border-radius:8px;padding:6px;font-size:11px;height:54px;vertical-align:top;}
+.tt-week-table td.lesson{background:#f3faf4;border-color:#a7d4ab;}
+.tt-week-table td.lesson.now{background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;border-color:#1B5E20;}
+.tt-week-table td.break{background:repeating-linear-gradient(45deg,#f4f4f0,#f4f4f0 3px,transparent 3px,transparent 6px);font-size:9px;color:var(--d-muted);}
+.tt-week-table td .s{font-weight:700;font-size:11px;line-height:1.1;}
+.tt-week-table td .c{font-size:9.5px;color:var(--d-muted);margin-top:2px;}
+.tt-week-table td.lesson.now .c{color:rgba(255,255,255,.85);}
+.tt-week-table td.time-col{background:#f4f4f0;border-color:transparent;text-align:center;font-family:'JetBrains Mono','SF Mono',monospace;font-size:9.5px;color:var(--d-muted);font-weight:700;}
+
+.tt-empty{text-align:center;padding:32px 18px;color:var(--d-muted);background:#fff;border:1px dashed var(--d-border);border-radius:14px;}
+.tt-empty i{font-size:32px;color:#cbd5e1;margin-bottom:8px;display:block;}
+.tt-empty .t{font-size:14px;font-weight:700;color:var(--d-text);margin-bottom:4px;}
+.tt-empty .s{font-size:12px;line-height:1.5;}
+.tt-empty a{color:var(--d-green2);font-weight:700;text-decoration:none;}
+
+/* Book-a-slot page */
+.book-class-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.book-class-card{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:13px 16px;box-shadow:var(--d-card-shadow);cursor:pointer;}
+.book-class-card.selected{border-color:var(--d-green2);background:#f3faf4;}
+.book-class-card .nm{font-size:14px;font-weight:700;color:var(--d-text);}
+.book-class-card .meta{font-size:11px;color:var(--d-muted);margin-top:2px;}
+.book-class-card .free-count{font-family:'JetBrains Mono','SF Mono',monospace;font-size:11.5px;font-weight:800;color:var(--d-green2);}
+.book-class-card .chev{color:var(--d-muted);font-size:13px;}
+
+.book-grid-day{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.book-slot{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:11px 14px;border-radius:11px;border:1px solid var(--d-border);background:#fff;font-size:12.5px;}
+.book-slot.taken{opacity:.58;background:#f8fafc;}
+.book-slot.free{border-color:#a7d4ab;background:#f3faf4;cursor:pointer;}
+.book-slot.free:active{transform:scale(.99);}
+.book-slot.free.selected{background:#1B5E20;color:#fff;border-color:#1B5E20;}
+.book-slot.free.selected .start, .book-slot.free.selected .end{color:#fff;}
+.book-slot .start{font-family:'JetBrains Mono','SF Mono',monospace;font-weight:800;text-align:center;}
+.book-slot .end{font-family:'JetBrains Mono','SF Mono',monospace;font-size:10px;color:var(--d-muted);text-align:center;}
+.book-slot .label{font-weight:700;}
+.book-slot .sub{font-size:10.5px;color:var(--d-muted);margin-top:2px;}
+.book-slot.free.selected .sub{color:rgba(255,255,255,.8);}
+.book-slot .pill{font-size:9.5px;font-weight:800;padding:3px 7px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase;}
+.book-slot .pill.free{background:rgba(46,125,50,.15);color:#1B5E20;}
+.book-slot .pill.taken{background:#f4f4f0;color:var(--d-muted);}
+
+.book-day-tabs{display:flex;gap:6px;overflow-x:auto;padding:0 14px 4px;margin:0 -14px;}
+.book-day-tab{flex-shrink:0;padding:7px 14px;border-radius:10px;background:#fff;border:1px solid var(--d-border);font-family:inherit;font-weight:700;font-size:12px;color:var(--d-muted);}
+.book-day-tab.on{background:var(--d-green2);color:#fff;border-color:var(--d-green2);}
+
+.book-confirm-card{background:#fff;border:1px solid var(--d-border);border-radius:14px;padding:14px;margin-top:14px;box-shadow:var(--d-card-shadow);}
+.book-confirm-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--d-border);}
+.book-confirm-row:last-of-type{border-bottom:none;}
+.book-confirm-row .k{color:var(--d-muted);}
+.book-confirm-row .v{font-weight:700;color:var(--d-text);}
+.book-confirm-row select,.book-confirm-row input{background:transparent;border:none;text-align:right;font-family:inherit;font-weight:700;color:var(--d-text);font-size:13px;}
+
+.book-foot-bar{position:sticky;bottom:0;background:linear-gradient(180deg,transparent,#fff 30%);padding:14px;display:flex;gap:8px;}
+.book-foot-bar button{flex:1;height:46px;border-radius:12px;border:none;background:var(--d-green2);color:#fff;font-family:inherit;font-weight:800;font-size:13px;}
+.book-foot-bar button:disabled{opacity:.45;background:#cbd5e1;color:#fff;}
+
+.book-mine{display:flex;flex-direction:column;gap:8px;}
+.book-mine-card{background:#fff;border:1px solid var(--d-border);border-radius:12px;padding:11px 14px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;}
+.book-mine-card .nm{font-size:13px;font-weight:700;color:var(--d-text);}
+.book-mine-card .meta{font-size:11px;color:var(--d-muted);margin-top:2px;}
+.book-mine-card .status-pill{font-size:9.5px;font-weight:800;padding:3px 7px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase;}
+.book-mine-card .status-pill.pending{background:rgba(245,158,11,.15);color:#b45309;}
+.book-mine-card .status-pill.approved{background:rgba(46,125,50,.15);color:#1B5E20;}
+.book-mine-card .status-pill.declined{background:rgba(220,38,38,.12);color:#b91c1c;}
 </style>
 </head>
 <body>
@@ -1246,6 +1444,8 @@ function buildRoutes(){
     { path: '/reports/class/:classId/', async: routeReportLearners },
     { path: '/reports/class/:classId/cards/', async: routeReportBatch },
     { path: '/reports/class/:classId/learner/:learnerId/', async: routeReportPreview },
+    { path: '/timetable/', async: routeTeacherTimetable },
+    { path: '/timetable/book/', async: routeTeacherBook },
     { path: '/skills/', async: routeSkills },
     { path: '/skills/class/:classId/', async: routeSkillsEntry },
     { path: '/comments/', async: routeComments },
@@ -1254,6 +1454,7 @@ function buildRoutes(){
     { path: '/help/', async: routeHelp },
     { path: '/profile/', async: routeProfile },
     { path: '/change-password/', async: routeChangePassword },
+    { path: '/about/', async: routeAbout },
     { path: '/coming-soon/', async: routeComingSoon },
     // Catch-all
     { path: '(.*)', async: routeComingSoon }
@@ -1995,6 +2196,22 @@ function scheduleLiveRefresh(payload){
 
 async function handleLiveRefresh(payload){
   if(!state.me) return;
+  if(payload?.kind === 'dev-refresh'){
+    const now = Date.now();
+    if(hasUnsavedAppWork()){
+      if(now - state.liveSync.noticeAt > 6000){
+        toast('App update ready. Save your changes, then refresh this screen.');
+        state.liveSync.noticeAt = now;
+      }
+      return;
+    }
+    if(now - state.liveSync.noticeAt > 6000){
+      toast('Refreshing this screen...', 'success');
+      state.liveSync.noticeAt = now;
+    }
+    setTimeout(() => window.location.reload(), 650);
+    return;
+  }
   await refreshAppShell();
   const assignmentChange = ['class-data','people'].includes(payload?.kind);
   if(assignmentChange){
@@ -2094,37 +2311,10 @@ function routeAttendance({ resolve }){
   });
 }
 
-function routeAttendanceClass({ resolve, to }){
-  const classId = to.params.classId;
-  const cls = (state.classes||[]).find(c => String(c.id) === String(classId));
-  const title = cls ? (cls.name || ('Grade '+cls.grade_level)) : 'Attendance';
-  resolve({
-    content: `
-      <div class="page" data-name="attendance-class">
-        <div class="navbar">
-          <div class="navbar-bg"></div>
-          <div class="navbar-inner">
-            <div class="left">
-              <a href="#" class="link back">
-                <i class="icon icon-back"></i>
-                <span class="if-not-md">Back</span>
-              </a>
-            </div>
-            <div class="title">${esc(title)}</div>
-            <div class="subtitle">Mark attendance</div>
-          </div>
-        </div>
-        <div class="page-content">
-          <div class="coming-soon">
-            <div class="icon-circle"><i class="fas fa-clipboard-check"></i></div>
-            <h3>Attendance Module</h3>
-            <p>The full attendance workflow (mark P/A/L, swipe, calendar, summary) lands in the next pass. The endpoint is already live — just needs the F7 UI ported.</p>
-          </div>
-        </div>
-      </div>
-    `
-  });
-}
+/* routeAttendanceClass is defined later in this file (around the full marking-page block).
+   Declared here as a placeholder identifier so buildRoutes() can reference it.
+   The real implementation overrides this — see the routeAttendanceClass = function(...) assignment further down. */
+let routeAttendanceClass = function(){};
 
 /* ════════════════════════════════════════════════════════════════════
    MARKS TAB
@@ -2930,6 +3120,529 @@ function classActionPickerContent({ title, subtitle, icon, actionLabel, actionNa
   `;
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   TEACHER TIMETABLE  (My schedule + ongoing lesson + Week view)
+   ════════════════════════════════════════════════════════════════════ */
+const TT_DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const TT_DAY_NAMES_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+let ttRefreshTimer = null;
+let ttState = { view:'today', data:null };
+
+function routeTeacherTimetable({ resolve }){
+  resolve({
+    content: `
+      <div class="page" data-name="timetable">
+        <div class="navbar">
+          <div class="navbar-bg"></div>
+          <div class="navbar-inner">
+            <div class="left"><a href="#view-more" class="link back"><i class="icon fas fa-chevron-left"></i> Back</a></div>
+            <div class="title">My Timetable</div>
+            <div class="right"><a href="#" class="link icon-only" onclick="event.preventDefault();loadTeacherTimetable();"><i class="icon fas fa-rotate"></i></a></div>
+          </div>
+        </div>
+        <div class="page-content">
+          <div id="tt-content">
+            <div style="padding:18px;"><div class="skel" style="height:96px;border-radius:18px;"></div><div class="skel" style="height:72px;border-radius:14px;margin-top:14px;"></div><div class="skel" style="height:72px;border-radius:14px;margin-top:8px;"></div></div>
+          </div>
+        </div>
+      </div>
+    `,
+    on: {
+      pageInit: () => loadTeacherTimetable(),
+      pageBeforeRemove: () => { if(ttRefreshTimer) clearInterval(ttRefreshTimer); ttRefreshTimer = null; }
+    }
+  });
+}
+
+async function loadTeacherTimetable(){
+  try {
+    const data = await api.get('/api/teacher/timetable');
+    ttState.data = data;
+    renderTeacherTimetable();
+    /* Refresh the "Right now" card every minute */
+    if(ttRefreshTimer) clearInterval(ttRefreshTimer);
+    ttRefreshTimer = setInterval(() => {
+      if(document.getElementById('tt-now-card')) renderRightNowCard();
+    }, 60000);
+  } catch(e) {
+    document.getElementById('tt-content').innerHTML =
+      '<div class="tt-empty" style="margin:18px;"><i class="fas fa-calendar-xmark"></i><div class="t">Timetable unavailable</div><div class="s">' +
+      esc(e.message || 'The admin may not have published a timetable yet.') +
+      '</div></div>';
+  }
+}
+
+function renderTeacherTimetable(){
+  const data = ttState.data || { slots:[], periods:[], covers:[] };
+  const root = document.getElementById('tt-content');
+  if(!root) return;
+
+  const slotsByDay = {};
+  (data.slots || []).forEach(s => {
+    if(!slotsByDay[s.day_of_week]) slotsByDay[s.day_of_week] = [];
+    slotsByDay[s.day_of_week].push(s);
+  });
+  /* Overlay today's covers on top of normal slots when rendering today */
+  const covers = data.covers || [];
+
+  root.innerHTML =
+    '<div id="tt-now-card"></div>' +
+    '<div class="tt-view-toggle">' +
+      '<button class="' + (ttState.view === 'today' ? 'on' : '') + '" data-v="today">Today</button>' +
+      '<button class="' + (ttState.view === 'week' ? 'on' : '') + '" data-v="week">Week</button>' +
+    '</div>' +
+    '<div id="tt-panel"></div>';
+
+  root.querySelectorAll('.tt-view-toggle button').forEach(b => b.addEventListener('click', () => {
+    ttState.view = b.dataset.v;
+    renderTeacherTimetable();
+  }));
+
+  renderRightNowCard();
+  if(ttState.view === 'today') renderTodayPanel(slotsByDay, covers);
+  else renderWeekPanel(slotsByDay);
+}
+
+function todayDayOfWeek(){
+  const d = new Date().getDay();   /* 0..6 */
+  return d === 0 ? 7 : d;          /* convert Sun→7 to match Mon=1..Fri=5 */
+}
+
+function currentTimeHM(){
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function periodForNow(periods){
+  if(!periods) return null;
+  const now = currentTimeHM();
+  const today = todayDayOfWeek();
+  /* Today must be a school day */
+  if(today < 1 || today > 5) return null;
+  return periods.find(p => p.start_time <= now && now < p.end_time);
+}
+
+function renderRightNowCard(){
+  const data = ttState.data || {};
+  const periods = data.periods || [];
+  const slots = data.slots || [];
+  const covers = data.covers || [];
+  const dayNum = todayDayOfWeek();
+
+  const host = document.getElementById('tt-now-card');
+  if(!host) return;
+
+  /* Weekend → idle card */
+  if(dayNum > 5){
+    host.innerHTML = `
+      <div class="tt-now idle">
+        <div class="eye"><i class="fas fa-moon"></i>Weekend</div>
+        <div class="subj">No lessons today</div>
+        <div class="meta">Enjoy the break.</div>
+      </div>`;
+    return;
+  }
+
+  const nowPeriod = periodForNow(periods);
+  /* Find today's slot for that period — covers take priority */
+  let activeSlot = null, isCover = false;
+  if(nowPeriod){
+    const cover = covers.find(c => c.day_of_week === dayNum && c.period_no === nowPeriod.period_no);
+    if(cover){ activeSlot = cover; isCover = true; }
+    else activeSlot = slots.find(s => s.day_of_week === dayNum && s.period_no === nowPeriod.period_no);
+  }
+
+  if(activeSlot && nowPeriod){
+    /* Compute progress through the period */
+    const [sh, sm] = nowPeriod.start_time.split(':').map(Number);
+    const [eh, em] = nowPeriod.end_time.split(':').map(Number);
+    const now = new Date();
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const pct = Math.max(0, Math.min(100, Math.round((nowMin - startMin) / (endMin - startMin) * 100)));
+    const remaining = Math.max(0, endMin - nowMin);
+    host.innerHTML = `
+      <div class="tt-now">
+        <div class="time">${nowPeriod.start_time} – ${nowPeriod.end_time}</div>
+        <div class="eye"><span class="dot"></span>${isCover ? 'COVERING NOW' : 'NOW · ' + esc(nowPeriod.label || 'Period')}</div>
+        <div class="subj">${esc(activeSlot.subject_name)}</div>
+        <div class="meta"><i class="fas fa-school"></i> <b>${esc(activeSlot.class_name)}</b>${isCover ? ' · for ' + esc(activeSlot.original_teacher_name || 'absent teacher') : ''} · ${remaining} min left</div>
+        <div class="progress"><div style="width:${pct}%"></div></div>
+      </div>`;
+    return;
+  }
+
+  /* Find the next lesson today */
+  const upcoming = slots
+    .filter(s => s.day_of_week === dayNum)
+    .map(s => ({ slot:s, period: periods.find(p => p.period_no === s.period_no) }))
+    .filter(x => x.period && x.period.start_time > currentTimeHM())
+    .sort((a,b) => a.period.start_time.localeCompare(b.period.start_time));
+
+  if(upcoming.length){
+    const next = upcoming[0];
+    host.innerHTML = `
+      <div class="tt-now next">
+        <div class="time">at ${next.period.start_time}</div>
+        <div class="eye"><span class="dot"></span>UP NEXT</div>
+        <div class="subj">${esc(next.slot.subject_name)}</div>
+        <div class="meta"><i class="fas fa-school"></i> <b>${esc(next.slot.class_name)}</b></div>
+      </div>`;
+    return;
+  }
+
+  /* No more lessons today */
+  host.innerHTML = `
+    <div class="tt-now idle">
+      <div class="eye"><i class="fas fa-check-circle"></i>DONE FOR TODAY</div>
+      <div class="subj">No more lessons today</div>
+      <div class="meta">${slots.filter(s => s.day_of_week === dayNum).length} lesson${slots.filter(s => s.day_of_week === dayNum).length === 1 ? '' : 's'} completed.</div>
+    </div>`;
+}
+
+function renderTodayPanel(slotsByDay, covers){
+  const data = ttState.data || {};
+  const periods = data.periods || [];
+  const panel = document.getElementById('tt-panel');
+  const dayNum = todayDayOfWeek();
+  const todaysName = TT_DAY_NAMES_LONG[new Date().getDay()];
+
+  /* Build a unified list of events: periods + lessons + covers */
+  /* For each lesson period today, find lesson or cover or empty */
+  if(dayNum > 5){
+    panel.innerHTML = `<div class="tt-empty" style="margin:14px;"><i class="fas fa-mug-saucer"></i><div class="t">It's the weekend</div><div class="s">No lessons scheduled today.</div></div>`;
+    return;
+  }
+
+  const todaySlots = slotsByDay[dayNum] || [];
+  const todayCovers = covers.filter(c => c.day_of_week === dayNum);
+  const nowPeriod = periodForNow(periods);
+  const nowHM = currentTimeHM();
+
+  if(!todaySlots.length && !todayCovers.length){
+    panel.innerHTML = `
+      <div class="tt-section">
+        <h3><i class="fas fa-calendar-day"></i> ${esc(todaysName)}</h3>
+        <div class="tt-empty"><i class="fas fa-calendar-check"></i><div class="t">No lessons today</div><div class="s">Your timetable for today is clear. <br><a href="#" onclick="event.preventDefault();navTab('#view-more','/timetable/book/')">Book a free slot →</a></div></div>
+      </div>`;
+    return;
+  }
+
+  let html = '<div class="tt-section"><h3><i class="fas fa-calendar-day"></i> ' + esc(todaysName) + ' · ' + (todaySlots.length + todayCovers.length) + ' lesson' + ((todaySlots.length + todayCovers.length) === 1 ? '' : 's') + '</h3><div class="tt-day-list">';
+  /* Iterate periods in order; if there's a slot or cover, show it; otherwise skip (we don't show empties on Today since the teacher only cares about their own lessons) */
+  periods.forEach(p => {
+    if(p.type === 'break' || p.type === 'lunch'){
+      /* Insert a small break separator between lessons that flank a break */
+      const before = (todaySlots.find(s => s.period_no < p.period_no) || todayCovers.find(c => c.period_no < p.period_no));
+      const after  = (todaySlots.find(s => s.period_no > p.period_no) || todayCovers.find(c => c.period_no > p.period_no));
+      if(before && after){
+        html += `<div class="tt-lesson" style="grid-template-columns:1fr;background:transparent;border:none;box-shadow:none;padding:0;"><div class="break-row">${esc(p.label || 'Break')} · ${p.start_time}–${p.end_time}</div></div>`;
+      }
+      return;
+    }
+    const slot = todaySlots.find(s => s.period_no === p.period_no);
+    const cover = todayCovers.find(c => c.period_no === p.period_no);
+    const item = cover || slot;
+    if(!item) return;
+    const isNow = nowPeriod && nowPeriod.period_no === p.period_no;
+    const isPast = p.end_time <= nowHM && !isNow;
+    const cls = ['tt-lesson', isNow ? 'now' : '', isPast ? 'past' : '', cover ? 'cover' : ''].filter(Boolean).join(' ');
+    html += `
+      <div class="${cls}">
+        <div class="time-col">
+          <div class="start">${p.start_time}</div>
+          <div class="end">${p.end_time}</div>
+        </div>
+        <div class="info">
+          <div class="subj">${esc(item.subject_name)}</div>
+          <div class="cls">
+            <i class="fas fa-school" style="font-size:10px;"></i>
+            <span>${esc(item.class_name)}</span>
+            ${cover ? '<span class="cover-tag">cover · ' + esc(item.original_teacher_name || 'sub') + '</span>' : ''}
+            ${isNow ? '<span class="now-tag"><i class="fas fa-circle"></i> live</span>' : ''}
+          </div>
+        </div>
+        <div class="actions">
+          <button onclick="navTab('#view-attendance','/attendance/${item.class_id}/')" title="Open attendance"><i class="fas fa-clipboard-check"></i></button>
+        </div>
+      </div>`;
+  });
+  html += '</div></div>';
+
+  /* Tomorrow preview */
+  const tomorrowNum = dayNum === 5 ? 1 : dayNum + 1; /* Fri → Mon */
+  const tomorrowSlots = slotsByDay[tomorrowNum] || [];
+  if(tomorrowSlots.length){
+    html += '<div class="tt-section"><h3><i class="fas fa-forward"></i> ' + (tomorrowNum === 1 ? 'Next school day' : 'Tomorrow') + ' · ' + tomorrowSlots.length + ' lesson' + (tomorrowSlots.length === 1 ? '' : 's') + '</h3><div class="tt-day-list">';
+    tomorrowSlots.slice(0, 3).forEach(s => {
+      const p = periods.find(p => p.period_no === s.period_no);
+      if(!p) return;
+      html += `
+        <div class="tt-lesson past">
+          <div class="time-col"><div class="start">${p.start_time}</div><div class="end">${p.end_time}</div></div>
+          <div class="info"><div class="subj">${esc(s.subject_name)}</div><div class="cls"><i class="fas fa-school" style="font-size:10px;"></i> ${esc(s.class_name)}</div></div>
+          <div></div>
+        </div>`;
+    });
+    if(tomorrowSlots.length > 3) html += `<div style="text-align:center;padding:6px;font-size:11px;color:var(--d-muted);">+${tomorrowSlots.length - 3} more</div>`;
+    html += '</div></div>';
+  }
+
+  panel.innerHTML = html;
+}
+
+function renderWeekPanel(slotsByDay){
+  const data = ttState.data || {};
+  const periods = (data.periods || []).filter(p => p.type === 'lesson');
+  const panel = document.getElementById('tt-panel');
+  const dayNum = todayDayOfWeek();
+  const nowPeriod = periodForNow(data.periods || []);
+
+  if(!periods.length){
+    panel.innerHTML = `<div class="tt-empty" style="margin:14px;"><i class="fas fa-calendar-xmark"></i><div class="t">No lesson periods</div><div class="s">The bell schedule has no lesson periods yet.</div></div>`;
+    return;
+  }
+
+  let html = '<div class="tt-section"><h3><i class="fas fa-table-cells"></i> Your week</h3><div class="tt-week-grid"><table class="tt-week-table"><thead><tr><th></th>';
+  for(let d = 1; d <= 5; d++){
+    const isToday = d === dayNum;
+    html += '<th' + (isToday ? ' style="color:var(--d-green2);"' : '') + '>' + TT_DAY_NAMES[d] + (isToday ? ' ·' : '') + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+  periods.forEach(p => {
+    html += '<tr><td class="time-col">' + p.start_time + '</td>';
+    for(let d = 1; d <= 5; d++){
+      const slot = (slotsByDay[d] || []).find(s => s.period_no === p.period_no);
+      const isNow = d === dayNum && nowPeriod && nowPeriod.period_no === p.period_no;
+      if(slot){
+        html += '<td class="lesson' + (isNow ? ' now' : '') + '"><div class="s">' + esc((slot.subject_name || '').slice(0, 14)) + '</div><div class="c">' + esc(slot.class_name) + '</div></td>';
+      } else {
+        html += '<td></td>';
+      }
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* Total summary */
+  const total = Object.values(slotsByDay).reduce((s, arr) => s + arr.length, 0);
+  html += '<div class="tt-section" style="text-align:center;color:var(--d-muted);font-size:12px;"><i class="fas fa-info-circle"></i> ' + total + ' lesson' + (total === 1 ? '' : 's') + ' this week</div>';
+
+  panel.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   BOOK A FREE SLOT  (teacher requests an empty period in a class)
+   ════════════════════════════════════════════════════════════════════ */
+const bookState = { classes:[], selectedClassId:null, selectedDay:1, selectedSlot:null, classGrids:{}, mine:[], subjects:[] };
+
+function routeTeacherBook({ resolve }){
+  resolve({
+    content: `
+      <div class="page" data-name="tt-book">
+        <div class="navbar">
+          <div class="navbar-bg"></div>
+          <div class="navbar-inner">
+            <div class="left"><a href="#view-more" class="link back"><i class="icon fas fa-chevron-left"></i> Back</a></div>
+            <div class="title">Book a slot</div>
+          </div>
+        </div>
+        <div class="page-content">
+          <div id="book-content">
+            <div style="padding:18px;"><div class="skel" style="height:72px;border-radius:14px;"></div><div class="skel" style="height:72px;border-radius:14px;margin-top:8px;"></div></div>
+          </div>
+        </div>
+      </div>
+    `,
+    on: { pageInit: () => loadBookData() }
+  });
+}
+
+async function loadBookData(){
+  try {
+    const [free, mine] = await Promise.all([
+      api.get('/api/teacher/timetable/free-slots').catch(() => ({ classes:[], periods:[], subjects:[] })),
+      api.get('/api/teacher/bookings').catch(() => [])
+    ]);
+    bookState.classes = free.classes || [];
+    bookState.periods = free.periods || [];
+    bookState.subjects = free.subjects || [];
+    bookState.mine = mine || [];
+    bookState.selectedDay = todayDayOfWeek() <= 5 ? todayDayOfWeek() : 1;
+    renderBookPage();
+  } catch(e){
+    document.getElementById('book-content').innerHTML =
+      '<div class="tt-empty" style="margin:18px;"><i class="fas fa-calendar-xmark"></i><div class="t">Booking unavailable</div><div class="s">' +
+      esc(e.message || 'The booking system is not yet enabled.') + '</div></div>';
+  }
+}
+
+function renderBookPage(){
+  const root = document.getElementById('book-content');
+  if(!root) return;
+  const mine = bookState.mine || [];
+  const classes = bookState.classes || [];
+  if(!classes.length){
+    root.innerHTML = `<div class="tt-empty" style="margin:18px;"><i class="fas fa-calendar-xmark"></i><div class="t">No timetable yet</div><div class="s">There's no published timetable, so there are no free slots to book.</div></div>`;
+    return;
+  }
+
+  let html = '<div style="padding:14px;">';
+  /* My recent requests */
+  if(mine.length){
+    html += '<div class="tt-section" style="margin:0 0 14px;"><h3><i class="fas fa-clock-rotate-left"></i> Your recent requests</h3><div class="book-mine">';
+    mine.slice(0, 5).forEach(r => {
+      html += `
+        <div class="book-mine-card">
+          <div>
+            <div class="nm">${esc(r.subject_name)} in ${esc(r.class_name)}</div>
+            <div class="meta">${esc(r.date)} · period ${r.period_no} · requested ${esc(r.created_at || '')}</div>
+          </div>
+          <span class="status-pill ${r.status}">${esc(r.status)}</span>
+        </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  /* Step 1 — pick a class */
+  html += '<div class="tt-section" style="margin:0 0 14px;"><h3><i class="fas fa-school"></i> Pick a class</h3><div class="book-class-list">';
+  classes.forEach(c => {
+    const freeCount = (c.free_slots || []).length;
+    const sel = String(bookState.selectedClassId) === String(c.id) ? 'selected' : '';
+    html += `
+      <div class="book-class-card ${sel}" data-cls="${c.id}">
+        <div>
+          <div class="nm">${esc(c.name)}</div>
+          <div class="meta">${esc(c.teacher_name || 'No class teacher')} · ${esc(c.grade_level || '')}</div>
+        </div>
+        <div class="free-count">${freeCount} free</div>
+        <i class="fas fa-chevron-right chev"></i>
+      </div>`;
+  });
+  html += '</div></div>';
+
+  /* Step 2 — pick a day + slot (if a class is selected) */
+  if(bookState.selectedClassId){
+    const cls = classes.find(c => String(c.id) === String(bookState.selectedClassId));
+    if(cls){
+      html += '<div class="tt-section" style="margin:0 0 14px;"><h3><i class="fas fa-calendar-day"></i> Pick a day</h3><div class="book-day-tabs">';
+      for(let d = 1; d <= 5; d++){
+        html += `<button class="book-day-tab ${d === bookState.selectedDay ? 'on' : ''}" data-d="${d}">${TT_DAY_NAMES[d]}</button>`;
+      }
+      html += '</div></div>';
+
+      /* Slot list for the selected day */
+      const periods = bookState.periods || [];
+      const freeSlots = new Set((cls.free_slots || []).filter(s => s.day_of_week === bookState.selectedDay).map(s => s.period_no));
+      const takenMap = new Map((cls.taken_slots || []).filter(s => s.day_of_week === bookState.selectedDay).map(s => [s.period_no, s]));
+
+      html += '<div class="tt-section" style="margin:0 0 14px;"><h3><i class="fas fa-clock"></i> ' + TT_DAY_NAMES_LONG[bookState.selectedDay === 7 ? 0 : bookState.selectedDay] + ' schedule</h3><div class="book-grid-day">';
+      periods.forEach(p => {
+        if(p.type === 'break' || p.type === 'lunch' || p.type === 'assembly'){
+          html += `<div class="book-slot" style="opacity:.5;justify-content:center;text-align:center;background:repeating-linear-gradient(45deg,#f4f4f0,#f4f4f0 4px,transparent 4px,transparent 8px);"><div class="start">${p.start_time}</div><div class="label" style="font-size:11px;">${esc(p.label || p.type)}</div><div></div></div>`;
+          return;
+        }
+        if(p.type !== 'lesson') return;
+        const isFree = freeSlots.has(p.period_no);
+        const taken = takenMap.get(p.period_no);
+        const isSel = bookState.selectedSlot && bookState.selectedSlot.period_no === p.period_no;
+        const cls2 = ['book-slot', isFree ? 'free' : 'taken', isSel ? 'selected' : ''].filter(Boolean).join(' ');
+        html += `
+          <div class="${cls2}" ${isFree ? 'data-period="' + p.period_no + '"' : ''}>
+            <div><div class="start">${p.start_time}</div><div class="end">${p.end_time}</div></div>
+            <div>
+              <div class="label">${isFree ? 'Free slot' : esc(taken?.subject_name || 'In use')}</div>
+              ${!isFree && taken ? '<div class="sub">' + esc(taken.teacher_name || '—') + '</div>' : ''}
+            </div>
+            <span class="pill ${isFree ? 'free' : 'taken'}">${isFree ? 'free' : 'taken'}</span>
+          </div>`;
+      });
+      html += '</div></div>';
+
+      if(bookState.selectedSlot){
+        const p = periods.find(p => p.period_no === bookState.selectedSlot.period_no);
+        html += `
+          <div class="tt-section" style="margin:0 0 14px;">
+            <h3><i class="fas fa-check-double"></i> Confirm booking</h3>
+            <div class="book-confirm-card">
+              <div class="book-confirm-row"><span class="k">Class</span><span class="v">${esc(cls.name)}</span></div>
+              <div class="book-confirm-row"><span class="k">When</span><span class="v">${TT_DAY_NAMES_LONG[bookState.selectedDay === 7 ? 0 : bookState.selectedDay]} · ${p?.start_time || ''}–${p?.end_time || ''}</span></div>
+              <div class="book-confirm-row"><span class="k">Subject</span><select id="book-subj">
+                ${(bookState.subjects || []).map(s => '<option value="' + s.id + '">' + esc(s.name) + '</option>').join('')}
+              </select></div>
+              <div class="book-confirm-row"><span class="k">Date</span><input type="date" id="book-date"/></div>
+              <div class="book-confirm-row"><span class="k">Reason</span><input type="text" id="book-reason" placeholder="e.g. revision, make-up lesson"/></div>
+            </div>
+          </div>`;
+      }
+    }
+  }
+  html += '</div>';
+
+  /* Sticky submit bar */
+  if(bookState.selectedSlot){
+    html += `<div class="book-foot-bar"><button id="book-submit"><i class="fas fa-paper-plane"></i> Send to admin for approval</button></div>`;
+  }
+
+  root.innerHTML = html;
+
+  /* Wire interactions */
+  root.querySelectorAll('.book-class-card').forEach(card => card.addEventListener('click', () => {
+    bookState.selectedClassId = card.dataset.cls;
+    bookState.selectedSlot = null;
+    renderBookPage();
+  }));
+  root.querySelectorAll('.book-day-tab').forEach(tab => tab.addEventListener('click', () => {
+    bookState.selectedDay = Number(tab.dataset.d);
+    bookState.selectedSlot = null;
+    renderBookPage();
+  }));
+  root.querySelectorAll('.book-slot.free[data-period]').forEach(s => s.addEventListener('click', () => {
+    const periodNo = Number(s.dataset.period);
+    bookState.selectedSlot = { period_no: periodNo };
+    renderBookPage();
+    /* Set a sensible default date — the next occurrence of selectedDay */
+    setTimeout(() => {
+      const dateInput = document.getElementById('book-date');
+      if(dateInput){
+        const today = new Date();
+        const offset = (bookState.selectedDay - todayDayOfWeek() + 7) % 7 || 7;
+        const target = new Date(today.getTime() + offset * 86400000);
+        dateInput.value = target.getFullYear() + '-' + String(target.getMonth()+1).padStart(2,'0') + '-' + String(target.getDate()).padStart(2,'0');
+      }
+    }, 50);
+  }));
+  document.getElementById('book-submit')?.addEventListener('click', submitBooking);
+}
+
+async function submitBooking(){
+  if(!bookState.selectedClassId || !bookState.selectedSlot){ toast('Pick a class and slot first'); return; }
+  const subjId = Number(document.getElementById('book-subj')?.value);
+  const date = document.getElementById('book-date')?.value;
+  const reason = document.getElementById('book-reason')?.value || '';
+  if(!subjId){ toast('Pick a subject'); return; }
+  if(!date){ toast('Pick a date'); return; }
+  const btn = document.getElementById('book-submit');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+  try {
+    await api.post('/api/teacher/bookings', {
+      class_id: Number(bookState.selectedClassId),
+      subject_id: subjId,
+      day_of_week: bookState.selectedDay,
+      period_no: bookState.selectedSlot.period_no,
+      date,
+      reason
+    });
+    toast('Sent to admin · awaiting approval');
+    bookState.selectedSlot = null;
+    await loadBookData();
+  } catch(e){
+    toast(e.message || 'Could not send request');
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to admin for approval';
+  }
+}
+
 function routeSkills({ resolve }){
   resolve({
     content: classActionPickerContent({
@@ -3149,6 +3862,10 @@ function routeMore({ resolve }){
   const fullName = state.me?.full_name || state.me?.name || 'User';
   const role = (state.me?.role || 'teacher').toUpperCase();
   const initials = fullName.split(' ').map(s=>s[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || 'D';
+  const classesN = (state.classes || []).length;
+  const subjectsN = (state.subjectClasses || []).length;
+  const schoolName = state.school?.school_name || state.school?.name || 'School';
+  const unread = Number(state.notifications || 0);
   resolve({
     content: `
       <div class="page" data-name="more-home">
@@ -3159,82 +3876,100 @@ function routeMore({ resolve }){
           </div>
         </div>
         <div class="page-content">
-          <div class="d-profile-head">
-            <div class="d-avatar">${esc(initials)}</div>
-            <div>
-              <div class="d-profile-name">${esc(fullName)}</div>
-              <div class="d-profile-role">${esc(role)}</div>
+          <div class="more-hero">
+            <div class="more-hero-row">
+              <div class="more-avatar">${esc(initials)}</div>
+              <div class="more-who">
+                <div class="more-name">${esc(fullName)}</div>
+                <div class="more-role"><i class="fas fa-chalkboard-user" style="font-size:9px;"></i> ${esc(role)}</div>
+              </div>
+            </div>
+            <div class="more-stats">
+              <div class="more-stat"><i class="fas fa-school"></i> <b>${classesN}</b> class${classesN === 1 ? '' : 'es'}</div>
+              <div class="more-stat"><i class="fas fa-book-open"></i> <b>${subjectsN}</b> subject${subjectsN === 1 ? '' : 's'}</div>
+              <div class="more-stat"><i class="fas fa-building-columns"></i> <b style="font-size:11px;">${esc(schoolName)}</b></div>
             </div>
           </div>
 
-          <div class="list inset" style="margin-top:0;">
-            <ul>
-              <li>
-                <a href="#" class="item-link item-content" onclick="event.preventDefault();navTab('#view-more','/skills/');">
-                  <div class="item-media"><i class="fas fa-star-half-alt" style="color:#6b46c1;"></i></div>
-                  <div class="item-inner">
-                    <div class="item-title">Rate Skills</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="#" class="item-link item-content" onclick="event.preventDefault();navTab('#view-more','/comments/');">
-                  <div class="item-media"><i class="fas fa-comment-dots" style="color:#2b6cb0;"></i></div>
-                  <div class="item-inner">
-                    <div class="item-title">My Comments</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="#" class="item-link item-content" onclick="event.preventDefault();navTab('#view-more','/profile/');">
-                  <div class="item-media"><i class="fas fa-user" style="color:var(--d-green2);"></i></div>
-                  <div class="item-inner">
-                    <div class="item-title">Profile</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="#" class="item-link item-content" onclick="event.preventDefault();navTab('#view-more','/change-password/');">
-                  <div class="item-media"><i class="fas fa-lock" style="color:#3182ce;"></i></div>
-                  <div class="item-inner">
-                    <div class="item-title">Change Password</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="#" class="item-link item-content" onclick="event.preventDefault();navTab('#view-more','/notifications/');">
-                  <div class="item-media"><i class="fas fa-bell" style="color:#dd6b20;"></i></div>
-                  <div class="item-inner">
-                    <div class="item-title">Notifications</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="#" class="item-link item-content" onclick="event.preventDefault();navTab('#view-more','/help/');">
-                  <div class="item-media"><i class="fas fa-circle-question" style="color:#6b46c1;"></i></div>
-                  <div class="item-inner">
-                    <div class="item-title">Help &amp; Support</div>
-                  </div>
-                </a>
-              </li>
-            </ul>
-          </div>
+          <div class="more-content">
+            <div class="more-section-label"><i class="fas fa-bolt"></i> Workflows</div>
+            <div class="more-tile-grid">
+              <button class="more-tile" onclick="navTab('#view-more','/timetable/')">
+                <div class="more-tile-icon green"><i class="fas fa-table-cells"></i></div>
+                <div class="more-tile-name">My Timetable</div>
+                <div class="more-tile-sub">Today &amp; the week</div>
+              </button>
+              <button class="more-tile" onclick="navTab('#view-more','/skills/')">
+                <div class="more-tile-icon purple"><i class="fas fa-star-half-alt"></i></div>
+                <div class="more-tile-name">Rate Skills</div>
+                <div class="more-tile-sub">CBC values &amp; conduct</div>
+              </button>
+              <button class="more-tile" onclick="navTab('#view-more','/comments/')">
+                <div class="more-tile-icon blue"><i class="fas fa-comment-dots"></i></div>
+                <div class="more-tile-name">My Comments</div>
+                <div class="more-tile-sub">Term remarks</div>
+              </button>
+              <button class="more-tile" onclick="navTab('#view-more','/timetable/book/')">
+                <div class="more-tile-icon amber"><i class="fas fa-calendar-plus"></i></div>
+                <div class="more-tile-name">Book a slot</div>
+                <div class="more-tile-sub">Free periods</div>
+              </button>
+            </div>
 
-          <div class="list inset">
-            <ul>
-              <li>
-                <a href="#" class="item-content" onclick="event.preventDefault();confirmLogout();">
-                  <div class="item-media"><i class="fas fa-right-from-bracket" style="color:#d63939;"></i></div>
-                  <div class="item-inner">
-                    <div class="item-title" style="color:#d63939;">Sign Out</div>
-                  </div>
-                </a>
-              </li>
-            </ul>
-          </div>
+            <div class="more-section-label"><i class="fas fa-user-shield"></i> Account</div>
+            <div class="more-list">
+              <button class="more-row" onclick="navTab('#view-more','/profile/')">
+                <div class="more-row-icon green"><i class="fas fa-user"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Profile</div>
+                  <div class="more-row-sub">Name, phone, email</div>
+                </div>
+                <i class="fas fa-chevron-right more-row-chev"></i>
+              </button>
+              <button class="more-row" onclick="navTab('#view-more','/change-password/')">
+                <div class="more-row-icon blue"><i class="fas fa-lock"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Change Password</div>
+                  <div class="more-row-sub">Update your sign-in</div>
+                </div>
+                <i class="fas fa-chevron-right more-row-chev"></i>
+              </button>
+            </div>
 
-          <div style="text-align:center;padding:18px;color:var(--d-muted);font-size:11px;">
-            Daraja v2.0 &middot; ${esc(state.school?.school_name || state.school?.name || 'School')}
+            <div class="more-section-label"><i class="fas fa-circle-info"></i> App</div>
+            <div class="more-list">
+              <button class="more-row" onclick="navTab('#view-more','/notifications/')">
+                <div class="more-row-icon amber"><i class="fas fa-bell"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Notifications</div>
+                  <div class="more-row-sub">${unread > 0 ? unread + ' unread' : 'School announcements'}</div>
+                </div>
+                ${unread > 0 ? `<div class="more-row-badge">${unread}</div>` : ''}
+                <i class="fas fa-chevron-right more-row-chev"></i>
+              </button>
+              <button class="more-row" onclick="navTab('#view-more','/help/')">
+                <div class="more-row-icon teal"><i class="fas fa-circle-question"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Help &amp; Support</div>
+                  <div class="more-row-sub">Contact the school office</div>
+                </div>
+                <i class="fas fa-chevron-right more-row-chev"></i>
+              </button>
+              <button class="more-row" onclick="navTab('#view-more','/about/')">
+                <div class="more-row-icon gray"><i class="fas fa-info"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">About Daraja</div>
+                  <div class="more-row-sub">Version &amp; credits</div>
+                </div>
+                <i class="fas fa-chevron-right more-row-chev"></i>
+              </button>
+            </div>
+
+            <button class="more-signout" onclick="confirmLogout()">
+              <i class="fas fa-right-from-bracket"></i> Sign Out
+            </button>
+
+            <div class="more-foot">Daraja v2.0 &middot; ${esc(schoolName)}</div>
           </div>
         </div>
       </div>
@@ -3374,27 +4109,40 @@ function routeNotifications({ resolve }){
         </div></div>
       </div>
     `,
-    on:{
-      pageInit: async () => {
-        const root = document.getElementById('notification-list');
-        if(!root) return;
-        try{
-          const data = await api.get('/api/notifications/inbox');
-          const notices = data.notifications || [];
-          root.innerHTML = notices.length ? notices.map(n => `
-            <button class="notice-card ${n.read_at ? '' : 'unread'}" onclick="markNotificationRead(${n.id}, this)">
-              <div class="notice-title">${esc(n.title || 'Notification')}</div>
-              <div class="notice-body">${esc(n.body || '')}</div>
-              <div class="notice-date">${esc(n.created_at || '')}</div>
-            </button>
-          `).join('') : '<div class="empty-card"><i class="fas fa-bell"></i><p>No notifications yet.</p></div>';
-        }catch(err){
-          root.innerHTML = `<div class="empty-card"><i class="fas fa-triangle-exclamation"></i><p>${esc(err.message || 'Could not load notifications')}</p></div>`;
-        }
-      }
-    }
+    on:{ pageInit: () => loadNotifications() }
   });
   setTimeout(loadNotifications, 0);
+}
+
+function notifTypeFor(title, body){
+  const t = (String(title || '') + ' ' + String(body || '')).toLowerCase();
+  if(/mark|score|grade|exam|cat|midterm|endterm/.test(t)) return 'marks';
+  if(/attendance|absent|present|late/.test(t)) return 'attendance';
+  if(/report|card|broadsheet/.test(t)) return 'report';
+  if(/event|trip|sport|holiday|meeting/.test(t)) return 'event';
+  return '';
+}
+function notifIconFor(type){
+  return type === 'marks' ? 'fa-pen-alt'
+    : type === 'attendance' ? 'fa-clipboard-check'
+    : type === 'report' ? 'fa-file-alt'
+    : type === 'event' ? 'fa-calendar-day'
+    : 'fa-bell';
+}
+function formatNotifDate(s){
+  if(!s) return '';
+  const d = new Date(s.replace(' ','T') + (s.includes('Z') ? '' : 'Z'));
+  if(Number.isNaN(d.getTime())) return String(s);
+  const now = new Date();
+  const ms = now - d;
+  const mins = Math.round(ms / 60000);
+  if(mins < 1) return 'Just now';
+  if(mins < 60) return mins + ' min ago';
+  const hrs = Math.round(mins / 60);
+  if(hrs < 24) return hrs + ' hr ago';
+  const days = Math.round(hrs / 24);
+  if(days < 7) return days + ' day' + (days===1?'':'s') + ' ago';
+  return d.toLocaleDateString();
 }
 
 async function loadNotifications(){
@@ -3404,13 +4152,30 @@ async function loadNotifications(){
   try{
     const data = await api.get('/api/notifications/inbox');
     const notices = data.notifications || [];
-    root.innerHTML = notices.length ? notices.map(n => `
-      <button class="notice-card ${n.read_at ? '' : 'unread'}" onclick="markNotificationRead(${n.id}, this)">
-        <div class="notice-title">${esc(n.title || 'Notification')}</div>
-        <div class="notice-body">${esc(n.body || '')}</div>
-        <div class="notice-date">${esc(n.created_at || '')}</div>
-      </button>
-    `).join('') : '<div class="empty-card"><i class="fas fa-bell"></i><p>No notifications yet.</p></div>';
+    if(!notices.length){
+      root.innerHTML = `<div class="empty-card"><i class="fas fa-bell"></i><p>No notifications yet.<br/>School announcements will appear here.</p></div>`;
+      return;
+    }
+    const unread = notices.filter(n => !n.read_at).length;
+    root.innerHTML = `
+      <div class="rep-list-head" style="padding:4px 4px 12px;">
+        <span>${notices.length} notification${notices.length===1?'':'s'}</span>
+        ${unread > 0 ? `<span class="rep-ready-count" style="color:var(--d-warning);">${unread} unread</span>` : ''}
+      </div>
+      <div class="notif-list">
+        ${notices.map(n => {
+          const type = notifTypeFor(n.title, n.body);
+          return `<button class="notif-row ${n.read_at ? '' : 'unread'}" onclick="markNotificationRead(${n.id}, this)">
+            <div class="notif-icon ${type}"><i class="fas ${notifIconFor(type)}"></i></div>
+            <div class="notif-body">
+              <div class="notif-title">${esc(n.title || 'Notification')}</div>
+              <div class="notif-text">${esc(n.body || '')}</div>
+              <div class="notif-date">${esc(formatNotifDate(n.created_at))}</div>
+            </div>
+          </button>`;
+        }).join('')}
+      </div>
+    `;
   }catch(err){
     root.dataset.loaded = '';
     root.innerHTML = `<div class="empty-card"><i class="fas fa-triangle-exclamation"></i><p>${esc(err.message || 'Could not load notifications')}</p></div>`;
@@ -3418,7 +4183,13 @@ async function loadNotifications(){
 }
 
 async function markNotificationRead(id, el){
-  if(el) el.classList.remove('unread');
+  if(el){
+    el.classList.remove('unread');
+    // recount unread on this page
+    const remaining = document.querySelectorAll('.notif-row.unread').length;
+    const head = document.querySelector('#notification-list .rep-ready-count');
+    if(head){ head.textContent = remaining > 0 ? remaining + ' unread' : ''; head.style.display = remaining > 0 ? '' : 'none'; }
+  }
   try{
     const data = await api.post(`/api/notifications/read/${id}`, {});
     state.notifications = data.unread_count || 0;
@@ -3455,6 +4226,78 @@ function routeHelp({ resolve }){
                   <div class="item-inner"><div class="item-title">Address</div><div class="item-after">${esc(school.school_address || '-')}</div></div>
                 </li>
               </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  });
+}
+
+function routeAbout({ resolve }){
+  const school = state.school || {};
+  const schoolName = school.school_name || school.name || 'School';
+  const schoolMotto = school.school_motto || '';
+  const schoolLogo = school.school_logo || '';
+  const me = state.me || {};
+  const role = (me.role || 'teacher');
+  resolve({
+    content: `
+      <div class="page" data-name="about">
+        <div class="navbar"><div class="navbar-bg"></div><div class="navbar-inner">
+          <div class="left"><a href="#" class="link back"><i class="icon icon-back"></i></a></div>
+          <div class="title">About Daraja</div>
+        </div></div>
+        <div class="page-content">
+          <div class="more-content">
+            <div class="about-card">
+              <div class="about-logo">🌉</div>
+              <div class="about-name">Daraja</div>
+              <div class="about-tag">School Portal</div>
+              <div class="about-version">v2.0 &middot; ${esc(role)}</div>
+            </div>
+
+            <div class="about-school">
+              <div class="about-school-logo">${schoolLogo ? `<img src="${esc(schoolLogo)}" alt=""/>` : '<i class="fas fa-school"></i>'}</div>
+              <div class="about-school-name">${esc(schoolName)}</div>
+              ${schoolMotto ? `<div class="about-school-motto">"${esc(schoolMotto)}"</div>` : ''}
+            </div>
+
+            <div class="more-section-label" style="margin-top:22px;"><i class="fas fa-star"></i> What's inside</div>
+            <div class="more-list">
+              <div class="more-row" style="cursor:default;">
+                <div class="more-row-icon green"><i class="fas fa-clipboard-check"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Attendance</div>
+                  <div class="more-row-sub">Daily marking, term history &amp; absentees</div>
+                </div>
+              </div>
+              <div class="more-row" style="cursor:default;">
+                <div class="more-row-icon blue"><i class="fas fa-pen-alt"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Marks &amp; Grades</div>
+                  <div class="more-row-sub">Live CBC bands, "Not sat" states, progress</div>
+                </div>
+              </div>
+              <div class="more-row" style="cursor:default;">
+                <div class="more-row-icon purple"><i class="fas fa-file-alt"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Reports</div>
+                  <div class="more-row-sub">Official report cards &amp; class broadsheet</div>
+                </div>
+              </div>
+              <div class="more-row" style="cursor:default;">
+                <div class="more-row-icon amber"><i class="fas fa-chart-column"></i></div>
+                <div class="more-row-text">
+                  <div class="more-row-title">Home Analytics</div>
+                  <div class="more-row-sub">Distribution, trend, champions, watchlist</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="about-credits">
+              <b>Daraja</b> &mdash; built for ${esc(schoolName)}.<br/>
+              Made with <span style="color:#dc2626;">❤</span> for Kenyan classrooms.
             </div>
           </div>
         </div>
@@ -3685,7 +4528,36 @@ async function loadAttendanceClass(classId, title, date=todayLocal()){
     ]);
     const learners = rosterData.learners || [];
     const existing = attendanceData.entries || {};
-    window.f7Attendance = { classId, title, date, learners, yesterday:yesterdayData.entries || {}, dirty:false, swipeX:null };
+    const canMark = attendanceData.can_mark !== false; /* default true if older backend */
+    const dayStatus = attendanceData.day_status || {};
+    window.f7Attendance = { classId, title, date, learners, yesterday:yesterdayData.entries || {}, dirty:false, swipeX:null, canMark, dayStatus };
+    if(!canMark){
+      const reason = dayStatus.reason || 'non_school_day';
+      const flavor = (reason === 'holiday' || reason === 'public_holiday') ? 'holiday'
+                   : (reason === 'weekend' || reason === 'non_school_weekday') ? 'weekend'
+                   : '';
+      const icon = flavor === 'holiday' ? 'fa-umbrella-beach'
+                 : flavor === 'weekend' ? 'fa-mug-saucer'
+                 : 'fa-circle-info';
+      const headline = dayStatus.message || 'No attendance needed for this day';
+      const detail = dayStatus.holiday?.name
+        ? `${esc(dayStatus.holiday.name)} · ${esc(dayStatus.holiday.start_date || date)}${dayStatus.holiday.end_date && dayStatus.holiday.end_date !== dayStatus.holiday.start_date ? ` → ${esc(dayStatus.holiday.end_date)}` : ''}`
+        : (dayStatus.term?.name ? `Outside ${esc(dayStatus.term.name)}` : '');
+      root.innerHTML = `
+        ${attendanceTopSwitch('mark', classId)}
+        ${attendanceDateNav(classId, date)}
+        <div class="att-daygate ${flavor}">
+          <i class="fas ${icon}"></i>
+          <div>
+            <div class="title">${esc(headline)}</div>
+            ${detail ? `<div class="sub">${detail}</div>` : ''}
+            <div class="sub">Pick another day with the calendar or arrows above to mark attendance.</div>
+          </div>
+        </div>`;
+      const picker = document.getElementById(`att-date-picker-${classId}`);
+      if(picker) picker.classList.add('blocked');
+      return;
+    }
     root.innerHTML = `
       ${attendanceTopSwitch('mark', classId)}
       ${attendanceDateNav(classId, date)}
@@ -3855,6 +4727,10 @@ function markAttendanceDirty(){
   if(stateEl){ stateEl.innerHTML = 'Unsaved changes'; stateEl.classList.add('dirty'); }
 }
 function setAttendanceStatus(learnerId, status){
+  if(window.f7Attendance && window.f7Attendance.canMark === false){
+    toast(window.f7Attendance.dayStatus?.message || 'No attendance needed for this day');
+    return;
+  }
   const row = document.querySelector(`.att-learner-row[data-learner-id="${learnerId}"]`);
   if(!row) return;
   row.dataset.status = status;
@@ -3865,8 +4741,18 @@ function setAttendanceStatus(learnerId, status){
   markAttendanceDirty();
   recountAttendance();
 }
-function setAllAttendance(status){ document.querySelectorAll('.att-learner-row').forEach(row=>setAttendanceStatus(row.dataset.learnerId, status)); }
+function setAllAttendance(status){
+  if(window.f7Attendance && window.f7Attendance.canMark === false){
+    toast(window.f7Attendance.dayStatus?.message || 'No attendance needed for this day');
+    return;
+  }
+  document.querySelectorAll('.att-learner-row').forEach(row=>setAttendanceStatus(row.dataset.learnerId, status));
+}
 function copyYesterdayAttendance(){
+  if(window.f7Attendance && window.f7Attendance.canMark === false){
+    toast(window.f7Attendance.dayStatus?.message || 'No attendance needed for this day');
+    return;
+  }
   const entries = window.f7Attendance?.yesterday || {};
   const ids = Object.keys(entries);
   if(!ids.length) return toast('No attendance found for yesterday');
@@ -3892,6 +4778,10 @@ function attendanceSwipeEnd(e, learnerId){
 async function saveAttendance(){
   const ctx = window.f7Attendance;
   if(!ctx) return;
+  if(ctx.canMark === false){
+    toast(ctx.dayStatus?.message || 'No attendance needed for this day');
+    return;
+  }
   const btn = document.getElementById('att-save-btn');
   btn.disabled = true;
   const entries = Array.from(document.querySelectorAll('.att-learner-row')).map(row=>{

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sessions · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.sess-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-1);margin-bottom:14px;overflow:hidden;}
+.sess-card.active{border-color:rgba(201,151,50,.4);}
+.sess-card.active .sess-head{background:linear-gradient(135deg,var(--gold-tint),#fff);}
+.sess-head{display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.sess-head .crest{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1a1d1c,#2e3331);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:-.01em;flex-shrink:0;}
+.sess-head.active-head .crest{background:linear-gradient(135deg,#C99732,#a47915);color:#1a1d1c;}
+.sess-head .info{flex:1;min-width:0;}
+.sess-head .nm{font-family:var(--display);font-weight:600;font-size:18px;color:var(--ink);letter-spacing:-.014em;line-height:1.2;}
+.sess-head .sub{font-size:11.5px;color:var(--ink-3);margin-top:3px;font-family:var(--mono);}
+.sess-head .pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.04em;}
+.sess-head .pill.active{background:rgba(201,151,50,.15);color:#a47915;}
+.sess-head .pill.active::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold);}
+.sess-head .actions{display:flex;gap:6px;}
+
+.term-list{padding:8px 12px 12px;}
+.term-row{display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:14px;align-items:center;padding:10px 8px;border-radius:9px;}
+.term-row:hover{background:var(--surface-2);}
+.term-row .badge{font-family:var(--display);font-weight:600;font-size:13px;color:var(--ink);width:36px;text-align:center;}
+.term-row .name{font-size:13px;font-weight:600;color:var(--ink);}
+.term-row .name .sub{font-size:11px;color:var(--ink-3);margin-top:2px;font-family:var(--mono);font-weight:500;}
+.term-row .dates{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);font-weight:600;text-align:right;}
+.term-row .weeks{font-family:var(--mono);font-size:11px;color:var(--ink-3);min-width:70px;text-align:right;}
+.term-row .stage{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.04em;}
+.term-row .stage.past{background:var(--surface-2);color:var(--ink-3);}
+.term-row .stage.now{background:rgba(22,163,74,.12);color:var(--ok);}
+.term-row .stage.now::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok);}
+.term-row .stage.upcoming{background:rgba(59,130,246,.10);color:var(--d1);}
+.term-row .term-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s var(--ease);}
+.term-row:hover .term-actions{opacity:1;}
+.term-row .term-actions button{width:28px;height:28px;border:1px solid var(--line);background:var(--surface);border-radius:6px;color:var(--ink-3);cursor:pointer;font-size:11px;}
+.term-row .term-actions button:hover{background:var(--surface-3);color:var(--ink);}
+.term-row .term-actions button.danger:hover{background:rgba(185,28,28,.08);color:var(--danger);border-color:rgba(185,28,28,.18);}
+
+.add-term-btn{margin-top:6px;padding:8px 14px;border:1px dashed var(--line);background:transparent;border-radius:9px;color:var(--ink-3);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;width:100%;}
+.add-term-btn:hover{border-color:var(--ink-3);color:var(--ink);background:var(--surface-2);}
+
+/* Year tabs */
+.year-tabs{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:3px;margin-bottom:14px;width:fit-content;}
+.year-tab{padding:7px 14px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink-3);border:none;background:transparent;border-radius:8px;cursor:pointer;}
+.year-tab.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1);}
+
+/* Inline term editor */
+.term-editor{display:grid;grid-template-columns:auto 1fr 130px 130px auto auto;gap:10px;align-items:center;padding:10px 8px;}
+.term-editor input{height:32px;padding:4px 10px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12.5px;}
+.term-editor input.mono{font-family:var(--mono);}
+.term-editor input:focus{border-color:var(--ink);outline:none;}
+.term-editor button{height:32px;padding:0 12px;border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--line);}
+.term-editor button.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+.term-editor button.primary:hover{background:#000;}
+
+/* Breaks & Holidays */
+.hol-block{margin:2px 0 6px 52px;padding:8px 10px 4px;border-left:2px solid var(--line);background:linear-gradient(180deg,rgba(255,247,224,.4),transparent);border-radius:0 8px 8px 0;}
+.hol-head{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.hol-head i{color:var(--gold);font-size:10px;}
+.hol-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:5px 6px;border-radius:6px;font-size:12px;}
+.hol-row:hover{background:rgba(255,255,255,.7);}
+.hol-row .nm{color:var(--ink);font-weight:600;}
+.hol-row .dates{font-family:var(--mono);font-size:11px;color:var(--ink-2);}
+.hol-row .ndays{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);background:var(--surface-2);padding:1px 7px;border-radius:4px;font-weight:700;}
+.hol-row .h-acts{display:flex;gap:3px;opacity:0;transition:opacity .15s var(--ease);}
+.hol-row:hover .h-acts{opacity:1;}
+.hol-row .h-acts button{width:24px;height:24px;border:1px solid var(--line);background:var(--surface);border-radius:5px;color:var(--ink-3);cursor:pointer;font-size:10px;}
+.hol-row .h-acts button:hover{background:var(--surface-3);color:var(--ink);}
+.hol-row .h-acts button.danger:hover{background:rgba(185,28,28,.08);color:var(--danger);border-color:rgba(185,28,28,.18);}
+.hol-editor{display:grid;grid-template-columns:1fr 130px 130px auto auto;gap:8px;align-items:center;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:7px;}
+.hol-editor input{height:30px;padding:3px 9px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:12px;}
+.hol-editor input.mono{font-family:var(--mono);}
+.hol-editor input:focus{border-color:var(--ink);outline:none;}
+.hol-editor button{height:30px;padding:0 10px;border-radius:6px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);}
+.hol-editor button.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+.add-hol-btn{margin-top:4px;padding:5px 10px;border:1px dashed var(--line);background:transparent;border-radius:6px;color:var(--ink-3);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;}
+.add-hol-btn:hover{border-color:var(--ink-3);color:var(--ink);background:var(--surface-2);}
+.hol-empty{font-size:11px;color:var(--ink-3);font-style:italic;padding:3px 4px;}
+
+/* Between-term holidays (school-wide, not tied to a single term) */
+.btw-block{margin:6px 12px 14px;padding:10px 12px;border-top:1px solid var(--line-2);}
+.btw-head{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.btw-head i{color:var(--ink-3);font-size:10px;}
+.btw-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:6px 8px;border-radius:7px;font-size:12px;}
+.btw-row:hover{background:var(--surface-2);}
+.btw-row .nm{color:var(--ink);font-weight:600;}
+.btw-row .dates{font-family:var(--mono);font-size:11px;color:var(--ink-2);}
+.btw-row .ndays{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);background:var(--surface-2);padding:1px 7px;border-radius:4px;font-weight:700;}
+.btw-row .b-acts{display:flex;gap:3px;opacity:0;transition:opacity .15s var(--ease);}
+.btw-row:hover .b-acts{opacity:1;}
+.btw-row .b-acts button{width:24px;height:24px;border:1px solid var(--line);background:var(--surface);border-radius:5px;color:var(--ink-3);cursor:pointer;font-size:10px;}
+.btw-row .b-acts button:hover{background:var(--surface-3);color:var(--ink);}
+.btw-row .b-acts button.danger:hover{background:rgba(185,28,28,.08);color:var(--danger);border-color:rgba(185,28,28,.18);}
+.btw-empty{font-size:11px;color:var(--ink-3);font-style:italic;padding:4px 4px 0;}
+</style>
+</head>
+<body data-page="sessions" data-title="Sessions">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Sessions"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow" id="sEyebrow">Loading…</div>
+        <h1 class="h1">Sessions <em>· academic calendar</em></h1>
+        <div class="h-sub">A session is an academic year. Each session contains terms. Marks, attendance and reports are scoped to a term.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" id="newSessionBtn"><i class="fas fa-plus"></i>New session</button>
+      </div>
+    </div>
+
+    <div class="year-tabs" id="yearTabs">
+      <button class="year-tab on" data-year="all">All sessions</button>
+    </div>
+
+    <div id="sessList"><div class="empty" style="text-align:center;color:var(--ink-3);font-size:13px;padding:30px;">Loading…</div></div>
+
+  </div>
+</div>
+
+<!-- New session slide-over -->
+<div class="shroud" id="shroud"></div>
+<aside class="slide" id="newSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">New academic session</div>
+      <div class="slide-sub">Creates the session and three terms with sensible default dates</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field">
+      <label class="field-label">Year</label>
+      <input class="input" id="newYear" type="number" min="2020" max="2099" placeholder="e.g. 2027"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Session name</label>
+      <input class="input" id="newName" placeholder="e.g. 2027 Academic Year"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Auto-create terms</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="checkbox" id="autoTerms" checked style="width:18px;height:18px;cursor:pointer;"/>
+        <label for="autoTerms" style="font-size:12.5px;color:var(--ink-2);cursor:pointer;">Add Term 1, 2, 3 with default Kenyan term dates (you can adjust after).</label>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding:12px 14px;background:var(--surface-2);border-radius:10px;font-size:11.5px;color:var(--ink-2);line-height:1.6;">
+      <b style="color:var(--ink)">Note</b> — creating a session does NOT activate it. After creating, click <b>Activate</b> on the card to make it the live session for marks/attendance.
+    </div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct">Saved live to the database</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="newSave"><i class="fas fa-check"></i>Create session</button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+
+const state = { sessions:[], yearFilter:'all', currentTermId:null, editingTermId:null, editingHolidayId:null, addingHolidayForTerm:null, editingBetweenId:null, addingBetweenForSession:null };
+
+function daysBetween(a, b){
+  if(!a || !b) return 0;
+  const A = new Date(a + 'T00:00:00'), B = new Date(b + 'T00:00:00');
+  if(isNaN(A) || isNaN(B)) return 0;
+  return Math.max(1, Math.round((B - A) / 86400000) + 1);
+}
+
+function fmtDate(s){
+  if(!s) return '—';
+  const d = new Date(s + 'T00:00:00');
+  return isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+function weeksBetween(a, b){
+  const A = new Date(a + 'T00:00:00'), B = new Date(b + 'T00:00:00');
+  return Math.max(1, Math.round((B - A) / (7 * 86400000)));
+}
+function termStage(term){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(term.start_date + 'T00:00:00');
+  const end = new Date(term.end_date + 'T00:00:00');
+  if(today < start) return 'upcoming';
+  if(today > end) return 'past';
+  return 'now';
+}
+
+function renderYearTabs(){
+  const years = [...new Set(state.sessions.map(s => String(s.year)))].sort((a, b) => b.localeCompare(a));
+  const host = document.getElementById('yearTabs');
+  host.innerHTML = '<button class="year-tab ' + (state.yearFilter === 'all' ? 'on' : '') + '" data-year="all">All sessions</button>' +
+    years.map(y => '<button class="year-tab ' + (state.yearFilter === y ? 'on' : '') + '" data-year="' + y + '">' + esc(y) + '</button>').join('');
+  host.querySelectorAll('.year-tab').forEach(t => t.addEventListener('click', () => {
+    state.yearFilter = t.dataset.year;
+    renderYearTabs();
+    renderSessions();
+  }));
+}
+
+function renderSessions(){
+  const list = document.getElementById('sessList');
+  const sessions = state.sessions.filter(s => state.yearFilter === 'all' || String(s.year) === state.yearFilter);
+  if(!sessions.length){
+    list.innerHTML = '<div style="text-align:center;color:var(--ink-3);font-size:13px;padding:40px;background:var(--surface);border:1px dashed var(--line);border-radius:14px;">' +
+      'No sessions for this filter. <button class="card-link" onclick="document.getElementById(\'newSessionBtn\').click()">Create one →</button></div>';
+    return;
+  }
+  list.innerHTML = sessions.map(s => {
+    const isActive = Number(s.is_active) === 1;
+    const terms = (s.terms || []).slice().sort((a, b) => Number(a.term_number) - Number(b.term_number));
+    return '<div class="sess-card ' + (isActive ? 'active' : '') + '">' +
+      '<div class="sess-head ' + (isActive ? 'active-head' : '') + '">' +
+        '<div class="crest">' + esc(String(s.year)) + '</div>' +
+        '<div class="info">' +
+          '<div class="nm">' + esc(s.name || ('Academic Year ' + s.year)) + '</div>' +
+          '<div class="sub">' + terms.length + ' term' + (terms.length === 1 ? '' : 's') + ' · session id ' + s.id + '</div>' +
+        '</div>' +
+        (isActive ? '<span class="pill active">Active session</span>' : '') +
+        '<div class="actions">' +
+          (isActive ? '' : '<button class="btn btn-sm" data-act="activate" data-sid="' + s.id + '" title="Make this the live session"><i class="fas fa-bolt"></i>Activate</button>') +
+          '<button class="btn btn-sm" data-act="rename" data-sid="' + s.id + '" title="Rename"><i class="fas fa-pen"></i></button>' +
+          (isActive ? '' : '<button class="btn btn-sm btn-danger" data-act="delete-session" data-sid="' + s.id + '" title="Delete session"><i class="fas fa-trash"></i></button>') +
+        '</div>' +
+      '</div>' +
+      '<div class="term-list" data-sid="' + s.id + '">' +
+        (terms.length
+          ? terms.map(termRowHTML).join('')
+          : '<div style="font-size:12px;color:var(--ink-3);padding:16px;text-align:center;">No terms yet — add the first one below.</div>'
+        ) +
+        '<button class="add-term-btn" data-act="add-term" data-sid="' + s.id + '"><i class="fas fa-plus"></i> Add term to ' + esc(s.name || s.year) + '</button>' +
+      '</div>' +
+      betweenBlockHTML(s) +
+    '</div>';
+  }).join('');
+}
+
+function termRowHTML(term){
+  if(state.editingTermId === term.id){
+    return '<div class="term-editor" data-tid="' + term.id + '">' +
+      '<span class="badge">T' + (term.term_number || '?') + '</span>' +
+      '<input data-f="term_name" value="' + esc(term.term_name || '') + '" placeholder="Term name"/>' +
+      '<input class="mono" type="date" data-f="start_date" value="' + esc(term.start_date || '') + '"/>' +
+      '<input class="mono" type="date" data-f="end_date" value="' + esc(term.end_date || '') + '"/>' +
+      '<button data-act="cancel-edit">Cancel</button>' +
+      '<button class="primary" data-act="save-edit">Save</button>' +
+    '</div>' + holidayBlockHTML(term);
+  }
+  const weeks = weeksBetween(term.start_date, term.end_date);
+  const stage = termStage(term);
+  const stageLabel = stage === 'past' ? 'Past' : stage === 'now' ? 'In session' : 'Upcoming';
+  return '<div class="term-row" data-tid="' + term.id + '">' +
+    '<span class="badge">T' + (term.term_number || '?') + '</span>' +
+    '<div class="name">' + esc(term.term_name || ('Term ' + term.term_number)) + '<div class="sub">' + esc(term.start_date || '—') + ' → ' + esc(term.end_date || '—') + '</div></div>' +
+    '<span class="dates">' + fmtDate(term.start_date) + ' → ' + fmtDate(term.end_date) + '</span>' +
+    '<span class="weeks">' + weeks + ' weeks</span>' +
+    '<span class="stage ' + stage + '">' + stageLabel + '</span>' +
+    '<div class="term-actions">' +
+      '<button data-act="edit-term" title="Edit dates"><i class="fas fa-pen"></i></button>' +
+      '<button data-act="delete-term" class="danger" title="Delete term"><i class="fas fa-trash"></i></button>' +
+    '</div>' +
+  '</div>' + holidayBlockHTML(term);
+}
+
+function holidayRowHTML(h){
+  if(state.editingHolidayId === h.id){
+    return '<div class="hol-editor" data-hid="' + h.id + '" data-tid="' + h.term_id + '">' +
+      '<input data-f="name" value="' + esc(h.name || '') + '" placeholder="Half-Term · Mid-term break · Public holiday…"/>' +
+      '<input class="mono" type="date" data-f="start_date" value="' + esc(h.start_date || '') + '"/>' +
+      '<input class="mono" type="date" data-f="end_date" value="' + esc(h.end_date || '') + '"/>' +
+      '<button data-act="cancel-holiday">Cancel</button>' +
+      '<button class="primary" data-act="save-holiday">Save</button>' +
+    '</div>';
+  }
+  const days = daysBetween(h.start_date, h.end_date);
+  const range = (h.start_date === h.end_date)
+    ? fmtDate(h.start_date)
+    : (fmtDate(h.start_date) + ' → ' + fmtDate(h.end_date));
+  return '<div class="hol-row" data-hid="' + h.id + '" data-tid="' + h.term_id + '">' +
+    '<span class="nm">' + esc(h.name || 'Holiday') + '</span>' +
+    '<span class="dates">' + range + '</span>' +
+    '<span class="ndays">' + days + ' day' + (days === 1 ? '' : 's') + '</span>' +
+    '<div class="h-acts">' +
+      '<button data-act="edit-holiday" title="Edit"><i class="fas fa-pen"></i></button>' +
+      '<button data-act="delete-holiday" class="danger" title="Delete"><i class="fas fa-trash"></i></button>' +
+    '</div>' +
+  '</div>';
+}
+
+function holidayBlockHTML(term){
+  const holidays = (term.holidays || []).slice().sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+  const isAdding = state.addingHolidayForTerm === term.id;
+  const today = new Date().toISOString().slice(0,10);
+  const adderHTML = isAdding
+    ? '<div class="hol-editor" data-tid="' + term.id + '" data-new="true">' +
+        '<input data-f="name" placeholder="e.g. Half-Term, Public Holiday" autofocus/>' +
+        '<input class="mono" type="date" data-f="start_date" value="' + esc(term.start_date || today) + '"/>' +
+        '<input class="mono" type="date" data-f="end_date" value="' + esc(term.start_date || today) + '"/>' +
+        '<button data-act="cancel-add-holiday">Cancel</button>' +
+        '<button class="primary" data-act="create-holiday">Add</button>' +
+      '</div>'
+    : '<button class="add-hol-btn" data-act="add-holiday" data-tid="' + term.id + '"><i class="fas fa-plus"></i> Add break / holiday</button>';
+  return '<div class="hol-block" data-tid="' + term.id + '">' +
+    '<div class="hol-head"><i class="fas fa-umbrella-beach"></i> Breaks &amp; holidays · ' + holidays.length + '</div>' +
+    (holidays.length
+      ? holidays.map(holidayRowHTML).join('')
+      : (isAdding ? '' : '<div class="hol-empty">No breaks logged — add half-terms or public holidays so school-day counts stay correct.</div>')
+    ) +
+    adderHTML +
+  '</div>';
+}
+
+/* Pull holidays for every term in parallel and attach them */
+async function loadHolidaysForAllTerms(){
+  const tasks = [];
+  state.sessions.forEach(s => (s.terms || []).forEach(t => {
+    tasks.push(
+      api(API + '/terms/' + t.id + '/holidays')
+        .then(rows => { t.holidays = Array.isArray(rows) ? rows : []; })
+        .catch(() => { t.holidays = []; })
+    );
+  }));
+  await Promise.all(tasks);
+}
+
+/* ── Between-term holidays (school_events type='hol', term_id NULL) ── */
+function betweenWindow(session){
+  /* Conservative window: Jan 1 of session year → Mar 1 of next year, covers Long Holiday spill-over */
+  const y = Number(session.year);
+  if(!y) return null;
+  return { from: y + '-01-01', to: (y + 1) + '-03-01' };
+}
+
+async function loadBetweenTermHolidaysForAll(){
+  const tasks = state.sessions.map(s => {
+    const w = betweenWindow(s);
+    if(!w){ s.between_holidays = []; return Promise.resolve(); }
+    return api(API + '/calendar/events?from=' + w.from + '&to=' + w.to)
+      .then(rows => {
+        /* Only between-term holidays: type='hol' AND not tied to a term AND not class-scoped */
+        const all = Array.isArray(rows) ? rows : [];
+        s.between_holidays = all
+          .filter(ev => String(ev.type || '').toLowerCase() === 'hol' && !ev.termId && !ev.classId)
+          .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      })
+      .catch(() => { s.between_holidays = []; });
+  });
+  await Promise.all(tasks);
+}
+
+function betweenRowHTML(ev){
+  if(state.editingBetweenId === ev.id){
+    return '<div class="hol-editor" data-eid="' + ev.id + '" data-sid="' + (ev.sessionId || '') + '">' +
+      '<input data-f="title" value="' + esc(ev.title || '') + '" placeholder="e.g. April Holiday, August Holiday, Long Holiday…"/>' +
+      '<input class="mono" type="date" data-f="date" value="' + esc(ev.date || '') + '"/>' +
+      '<input class="mono" type="date" data-f="endDate" value="' + esc(ev.endDate || ev.date || '') + '"/>' +
+      '<button data-act="cancel-between">Cancel</button>' +
+      '<button class="primary" data-act="save-between">Save</button>' +
+    '</div>';
+  }
+  const end = ev.endDate || ev.date;
+  const days = daysBetween(ev.date, end);
+  const range = (ev.date === end || !end) ? fmtDate(ev.date) : (fmtDate(ev.date) + ' → ' + fmtDate(end));
+  return '<div class="btw-row" data-eid="' + ev.id + '">' +
+    '<span class="nm">' + esc(ev.title || 'Holiday') + '</span>' +
+    '<span class="dates">' + range + '</span>' +
+    '<span class="ndays">' + days + ' day' + (days === 1 ? '' : 's') + '</span>' +
+    '<div class="b-acts">' +
+      '<button data-act="edit-between" title="Edit"><i class="fas fa-pen"></i></button>' +
+      '<button data-act="delete-between" class="danger" title="Delete"><i class="fas fa-trash"></i></button>' +
+    '</div>' +
+  '</div>';
+}
+
+function betweenBlockHTML(session){
+  const list = (session.between_holidays || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const isAdding = state.addingBetweenForSession === session.id;
+  const defaultStart = suggestNextBetweenDate(session);
+  const adderHTML = isAdding
+    ? '<div class="hol-editor" data-sid="' + session.id + '" data-new="true">' +
+        '<input data-f="title" placeholder="e.g. April Holiday, August Holiday" autofocus/>' +
+        '<input class="mono" type="date" data-f="date" value="' + esc(defaultStart) + '"/>' +
+        '<input class="mono" type="date" data-f="endDate" value="' + esc(defaultStart) + '"/>' +
+        '<button data-act="cancel-add-between">Cancel</button>' +
+        '<button class="primary" data-act="create-between">Add</button>' +
+      '</div>'
+    : '<button class="add-hol-btn" data-act="add-between" data-sid="' + session.id + '"><i class="fas fa-plus"></i> Add between-term holiday</button>';
+  return '<div class="btw-block" data-sid="' + session.id + '">' +
+    '<div class="btw-head"><i class="fas fa-calendar-xmark"></i> Between-term holidays · ' + list.length + '</div>' +
+    (list.length
+      ? list.map(betweenRowHTML).join('')
+      : (isAdding ? '' : '<div class="btw-empty">No between-term holidays logged for ' + esc(session.year) + ' — add April / August / Long holiday so attendance and timetable blocks update.</div>')
+    ) +
+    adderHTML +
+  '</div>';
+}
+
+/**
+ * Suggest the start date for the next between-term holiday.
+ * Walk the gaps between consecutive terms in chronological order — the first
+ * gap (term_n.end_date+1 … term_{n+1}.start_date-1, or after the final term
+ * to ~Dec 31) that doesn't already contain a between-term holiday wins.
+ * Returns YYYY-MM-DD. Falls back to a sensible date if there are no terms.
+ */
+function suggestNextBetweenDate(session){
+  const addDays = (iso, n) => {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  const terms = (session.terms || [])
+    .filter(t => t.start_date && t.end_date)
+    .slice()
+    .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+  if(!terms.length) return (session.year || new Date().getFullYear()) + '-04-07';
+
+  const existing = (session.between_holidays || []).map(ev => ({
+    from: ev.date,
+    to: ev.endDate || ev.date
+  }));
+  const overlaps = (gapFrom, gapTo) => existing.some(h => !(h.to < gapFrom || h.from > gapTo));
+
+  /* Gaps between consecutive terms */
+  for(let i = 0; i < terms.length - 1; i++){
+    const gapFrom = addDays(terms[i].end_date, 1);
+    const gapTo   = addDays(terms[i + 1].start_date, -1);
+    if(gapFrom > gapTo) continue;
+    if(!overlaps(gapFrom, gapTo)) return gapFrom;
+  }
+  /* Gap after the last term — bounded to end of session year */
+  const lastEnd = terms[terms.length - 1].end_date;
+  const gapFrom = addDays(lastEnd, 1);
+  const gapTo   = (session.year ? session.year + '-12-31' : addDays(lastEnd, 70));
+  if(gapFrom <= gapTo && !overlaps(gapFrom, gapTo)) return gapFrom;
+
+  /* All gaps already covered — default to day after the last term so the user can still add an out-of-sequence entry */
+  return addDays(lastEnd, 1);
+}
+
+async function refreshBetweenForSession(sessionId){
+  const session = state.sessions.find(s => String(s.id) === String(sessionId));
+  if(!session) return;
+  const w = betweenWindow(session);
+  if(!w) return;
+  try {
+    const rows = await api(API + '/calendar/events?from=' + w.from + '&to=' + w.to);
+    const all = Array.isArray(rows) ? rows : [];
+    session.between_holidays = all
+      .filter(ev => String(ev.type || '').toLowerCase() === 'hol' && !ev.termId && !ev.classId)
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  } catch(_){ /* leave previous list in place */ }
+}
+
+/* Delegate all clicks within the list */
+document.getElementById('sessList').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-act]'); if(!btn) return;
+  const act = btn.dataset.act;
+  const sid = btn.dataset.sid;
+  const termRow = btn.closest('[data-tid]');
+  const tid = termRow?.dataset.tid;
+
+  if(act === 'activate'){
+    if(!confirm('Activate this session?\n\nThe current active session will be deactivated. Marks and attendance will be scoped to the new active session.')) return;
+    try {
+      await api(API + '/sessions/' + sid + '/activate', { method:'PATCH' });
+      Joy.toast('Session activated');
+      load();
+    } catch(err) { Joy.toast(err.message || "Couldn't activate", { type:'danger' }); }
+  }
+  else if(act === 'rename'){
+    const session = state.sessions.find(x => String(x.id) === String(sid)); if(!session) return;
+    const newName = prompt('Rename session', session.name || '');
+    if(newName == null) return;
+    try {
+      await api(API + '/sessions/' + sid, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ year: session.year, name: newName.trim() }) });
+      Joy.toast('Session renamed');
+      load();
+    } catch(err) { Joy.toast(err.message || "Couldn't rename", { type:'danger' }); }
+  }
+  else if(act === 'delete-session'){
+    const session = state.sessions.find(x => String(x.id) === String(sid)); if(!session) return;
+    if(!confirm('Delete "' + (session.name || session.year) + '" PERMANENTLY?\n\nThis removes the session and all its terms. Any marks or attendance tied to those terms will be orphaned. This is not reversible.')) return;
+    try {
+      await api(API + '/sessions/' + sid, { method:'DELETE' });
+      Joy.toast('Session deleted');
+      load();
+    } catch(err) { Joy.toast(err.message || "Couldn't delete", { type:'danger' }); }
+  }
+  else if(act === 'add-term'){
+    const session = state.sessions.find(x => String(x.id) === String(sid)); if(!session) return;
+    const nextNo = ((session.terms || []).reduce((m, t) => Math.max(m, Number(t.term_number) || 0), 0)) + 1;
+    const termName = prompt('Term name', 'Term ' + nextNo); if(termName == null) return;
+    /* Defaults: start date = today, end = +13 weeks */
+    const today = new Date();
+    const start = today.toISOString().slice(0,10);
+    const end = new Date(today.getTime() + 13 * 7 * 86400000).toISOString().slice(0,10);
+    try {
+      await api(API + '/sessions/' + sid + '/terms', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ term_number: nextNo, term_name: termName.trim() || ('Term ' + nextNo), start_date: start, end_date: end })
+      });
+      Joy.toast('Term added · click the pen to set dates');
+      load();
+    } catch(err) { Joy.toast(err.message || "Couldn't add term", { type:'danger' }); }
+  }
+  else if(act === 'edit-term'){
+    state.editingTermId = Number(tid);
+    renderSessions();
+  }
+  else if(act === 'cancel-edit'){
+    state.editingTermId = null;
+    renderSessions();
+  }
+  else if(act === 'save-edit'){
+    const editor = e.target.closest('.term-editor');
+    const inputs = editor.querySelectorAll('input');
+    const body = {};
+    inputs.forEach(i => body[i.dataset.f] = i.value);
+    const term = state.sessions.flatMap(s => s.terms || []).find(t => String(t.id) === String(tid));
+    body.term_number = term?.term_number || 1;
+    body.weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+    if(!body.term_name || !body.start_date || !body.end_date){
+      Joy.toast('Name and both dates are required', { type:'warn' }); return;
+    }
+    if(body.start_date >= body.end_date){
+      Joy.toast('End date must be after start date', { type:'warn' }); return;
+    }
+    try {
+      await api(API + '/terms/' + tid, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      Joy.toast('Term updated');
+      state.editingTermId = null;
+      load();
+    } catch(err) { Joy.toast(err.message || "Couldn't save", { type:'danger' }); }
+  }
+  else if(act === 'delete-term'){
+    const term = state.sessions.flatMap(s => s.terms || []).find(t => String(t.id) === String(tid)); if(!term) return;
+    if(!confirm('Delete ' + (term.term_name || 'this term') + '?\n\nMarks and attendance tied to this term will be orphaned. This is not reversible.')) return;
+    try {
+      await api(API + '/terms/' + tid, { method:'DELETE' });
+      Joy.toast('Term deleted');
+      load();
+    } catch(err) { Joy.toast(err.message || "Couldn't delete", { type:'danger' }); }
+  }
+
+  /* ── Holidays ───────────────────────────────────────────────── */
+  else if(act === 'add-holiday'){
+    state.addingHolidayForTerm = Number(btn.dataset.tid);
+    state.editingHolidayId = null;
+    renderSessions();
+  }
+  else if(act === 'cancel-add-holiday'){
+    state.addingHolidayForTerm = null;
+    renderSessions();
+  }
+  else if(act === 'create-holiday'){
+    const editor = e.target.closest('.hol-editor');
+    const termId = editor.dataset.tid;
+    const body = {};
+    editor.querySelectorAll('input').forEach(i => body[i.dataset.f] = i.value);
+    if(!body.name?.trim() || !body.start_date || !body.end_date){
+      Joy.toast('Name and both dates are required', { type:'warn' }); return;
+    }
+    if(body.start_date > body.end_date){
+      Joy.toast('End date must be on or after start date', { type:'warn' }); return;
+    }
+    try {
+      await api(API + '/terms/' + termId + '/holidays', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      Joy.toast('Holiday added');
+      state.addingHolidayForTerm = null;
+      await refreshTermHolidays(termId);
+      renderSessions();
+    } catch(err) { Joy.toast(err.message || "Couldn't add holiday", { type:'danger' }); }
+  }
+  else if(act === 'edit-holiday'){
+    state.editingHolidayId = Number(btn.closest('.hol-row').dataset.hid);
+    state.addingHolidayForTerm = null;
+    renderSessions();
+  }
+  else if(act === 'cancel-holiday'){
+    state.editingHolidayId = null;
+    renderSessions();
+  }
+  else if(act === 'save-holiday'){
+    const editor = e.target.closest('.hol-editor');
+    const hid = editor.dataset.hid;
+    const termId = editor.dataset.tid;
+    const body = {};
+    editor.querySelectorAll('input').forEach(i => body[i.dataset.f] = i.value);
+    if(!body.name?.trim() || !body.start_date || !body.end_date){
+      Joy.toast('Name and both dates are required', { type:'warn' }); return;
+    }
+    if(body.start_date > body.end_date){
+      Joy.toast('End date must be on or after start date', { type:'warn' }); return;
+    }
+    try {
+      await api(API + '/holidays/' + hid, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      Joy.toast('Holiday updated');
+      state.editingHolidayId = null;
+      await refreshTermHolidays(termId);
+      renderSessions();
+    } catch(err) { Joy.toast(err.message || "Couldn't save", { type:'danger' }); }
+  }
+  else if(act === 'delete-holiday'){
+    const row = btn.closest('.hol-row');
+    const hid = row.dataset.hid;
+    const termId = row.dataset.tid;
+    const term = state.sessions.flatMap(s => s.terms || []).find(t => String(t.id) === String(termId));
+    const hol = (term?.holidays || []).find(h => String(h.id) === String(hid));
+    if(!confirm('Delete "' + (hol?.name || 'this holiday') + '"?\n\nSchool-day counts and attendance gating for this term will update immediately.')) return;
+    try {
+      await api(API + '/holidays/' + hid, { method:'DELETE' });
+      Joy.toast('Holiday deleted');
+      await refreshTermHolidays(termId);
+      renderSessions();
+    } catch(err) { Joy.toast(err.message || "Couldn't delete", { type:'danger' }); }
+  }
+
+  /* ── Between-term holidays (calendar events, type='hol', term_id NULL) ── */
+  else if(act === 'add-between'){
+    state.addingBetweenForSession = Number(btn.dataset.sid);
+    state.editingBetweenId = null;
+    renderSessions();
+  }
+  else if(act === 'cancel-add-between'){
+    state.addingBetweenForSession = null;
+    renderSessions();
+  }
+  else if(act === 'create-between'){
+    const editor = e.target.closest('.hol-editor');
+    const sessionId = editor.dataset.sid;
+    const body = { type: 'hol' };
+    editor.querySelectorAll('input').forEach(i => body[i.dataset.f] = i.value);
+    if(!body.title?.trim() || !body.date || !body.endDate){
+      Joy.toast('Name and both dates are required', { type:'warn' }); return;
+    }
+    if(body.date > body.endDate){
+      Joy.toast('End date must be on or after start date', { type:'warn' }); return;
+    }
+    try {
+      await api(API + '/calendar/events', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      Joy.toast('Holiday added');
+      state.addingBetweenForSession = null;
+      await refreshBetweenForSession(sessionId);
+      renderSessions();
+    } catch(err) { Joy.toast(err.message || "Couldn't add holiday", { type:'danger' }); }
+  }
+  else if(act === 'edit-between'){
+    state.editingBetweenId = Number(btn.closest('.btw-row').dataset.eid);
+    state.addingBetweenForSession = null;
+    renderSessions();
+  }
+  else if(act === 'cancel-between'){
+    state.editingBetweenId = null;
+    renderSessions();
+  }
+  else if(act === 'save-between'){
+    const editor = e.target.closest('.hol-editor');
+    const eid = editor.dataset.eid;
+    /* Find the session this event belongs to (by id across the model) */
+    const ownerSession = state.sessions.find(s => (s.between_holidays || []).some(ev => String(ev.id) === String(eid)));
+    const body = { type: 'hol' };
+    editor.querySelectorAll('input').forEach(i => body[i.dataset.f] = i.value);
+    if(!body.title?.trim() || !body.date || !body.endDate){
+      Joy.toast('Name and both dates are required', { type:'warn' }); return;
+    }
+    if(body.date > body.endDate){
+      Joy.toast('End date must be on or after start date', { type:'warn' }); return;
+    }
+    try {
+      await api(API + '/calendar/events/' + eid, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      Joy.toast('Holiday updated');
+      state.editingBetweenId = null;
+      if(ownerSession) await refreshBetweenForSession(ownerSession.id);
+      renderSessions();
+    } catch(err) { Joy.toast(err.message || "Couldn't save", { type:'danger' }); }
+  }
+  else if(act === 'delete-between'){
+    const row = btn.closest('.btw-row');
+    const eid = row.dataset.eid;
+    const ownerSession = state.sessions.find(s => (s.between_holidays || []).some(ev => String(ev.id) === String(eid)));
+    const ev = (ownerSession?.between_holidays || []).find(x => String(x.id) === String(eid));
+    if(!confirm('Delete "' + (ev?.title || 'this holiday') + '"?\n\nAttendance gating and timetable blocks for these dates will update immediately.')) return;
+    try {
+      await api(API + '/calendar/events/' + eid, { method:'DELETE' });
+      Joy.toast('Holiday deleted');
+      if(ownerSession) await refreshBetweenForSession(ownerSession.id);
+      renderSessions();
+    } catch(err) { Joy.toast(err.message || "Couldn't delete", { type:'danger' }); }
+  }
+});
+
+async function refreshTermHolidays(termId){
+  try {
+    const rows = await api(API + '/terms/' + termId + '/holidays');
+    const term = state.sessions.flatMap(s => s.terms || []).find(t => String(t.id) === String(termId));
+    if(term) term.holidays = Array.isArray(rows) ? rows : [];
+  } catch(_){ /* leave previous list in place */ }
+}
+
+/* New session slide */
+document.getElementById('newSessionBtn').addEventListener('click', () => {
+  const nextYear = String(new Date().getFullYear() + 1);
+  document.getElementById('newYear').value = nextYear;
+  document.getElementById('newName').value = nextYear + ' Academic Year';
+  document.getElementById('autoTerms').checked = true;
+  Joy.openSlide('newSlide');
+});
+
+document.getElementById('newSave').addEventListener('click', async () => {
+  const year = Number(document.getElementById('newYear').value);
+  const name = document.getElementById('newName').value.trim();
+  const auto = document.getElementById('autoTerms').checked;
+  if(!year || !name){ Joy.toast('Year and name are required', { type:'warn' }); return; }
+  const btn = document.getElementById('newSave');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating…';
+  try {
+    const result = await api(API + '/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ year, name }) });
+    const sid = result.id;
+    if(auto && sid){
+      /* Kenyan school calendar — defaults based on the 2026 official shape (3 terms, ~13/14 weeks each) */
+      const ymd = (y, m, d) => year + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const terms = [
+        { term_number:1, term_name:'Term 1', start_date: ymd(year, 1, 6),  end_date: ymd(year, 4, 2)  },
+        { term_number:2, term_name:'Term 2', start_date: ymd(year, 4, 27), end_date: ymd(year, 7, 31) },
+        { term_number:3, term_name:'Term 3', start_date: ymd(year, 8, 24), end_date: ymd(year, 10, 23) }
+      ];
+      for(const t of terms){
+        try { await api(API + '/sessions/' + sid + '/terms', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(t) }); } catch {}
+      }
+    }
+    Joy.toast('Session created' + (auto ? ' with 3 terms' : ''));
+    Joy.closeSlide();
+    load();
+  } catch(err) {
+    Joy.toast(err.message || "Couldn't create session", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Create session';
+  }
+});
+
+async function load(){
+  try {
+    const [sessions, period] = await Promise.all([
+      api(API + '/sessions'),
+      api(API + '/current-period').catch(() => ({}))
+    ]);
+    state.sessions = sessions || [];
+    state.currentTermId = period?.term?.id || null;
+    const activeSession = state.sessions.find(s => Number(s.is_active) === 1);
+    document.getElementById('sEyebrow').textContent = 'Joyland Schools · ' + (activeSession ? 'Active: ' + (activeSession.name || activeSession.year) : 'No active session');
+    renderYearTabs();
+    renderSessions();
+    /* Holidays come from separate endpoints — fetch in parallel, then re-render */
+    await Promise.all([
+      loadHolidaysForAllTerms(),
+      loadBetweenTermHolidaysForAll()
+    ]);
+    renderSessions();
+  } catch(e){
+    Joy.toast("Couldn't load sessions", { type:'danger' });
+    document.getElementById('sessList').innerHTML = '<div style="text-align:center;color:var(--ink-3);padding:30px;">Failed to load.</div>';
+  }
+}
+load();
+</script>
+</body>
+</html>

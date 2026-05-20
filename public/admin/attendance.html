@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Attendance · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.attendance-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.att-tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;position:relative;transition:.15s var(--ease);}
+.att-tile:hover{box-shadow:var(--sh-2);border-color:var(--ink-4);}
+.att-row{display:flex;align-items:center;gap:10px;}
+.att-info{flex:1;min-width:0;}
+.att-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.att-id{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:2px;}
+.att-status{display:flex;gap:4px;margin-top:10px;}
+.st-btn{flex:1;padding:7px 4px;border:1px solid var(--line);background:var(--surface);border-radius:7px;color:var(--ink-3);font-size:11px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:.12s var(--ease);}
+.st-btn:hover{background:var(--surface-2);}
+.st-btn.on.p{background:var(--ok);border-color:var(--ok);color:#fff;}
+.st-btn.on.a{background:var(--danger);border-color:var(--danger);color:#fff;}
+.st-btn.on.l{background:var(--warn);border-color:var(--warn);color:#fff;}
+.att-tile.saving{outline:1px solid rgba(59,130,246,.3);outline-offset:-1px;}
+
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+
+.date-pick{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px;cursor:pointer;}
+.date-pick i{color:var(--ink-3);font-size:12px;}
+.date-pick .d{font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);letter-spacing:-.01em;}
+.date-pick .y{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-left:4px;}
+
+.tab-panel{display:none;}
+.tab-panel.show{display:block;}
+
+/* Class summary table */
+.cls-progress{display:inline-block;width:90px;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;vertical-align:middle;margin-right:8px;}
+.cls-progress > div{height:100%;border-radius:4px;background:linear-gradient(90deg,#10b981,#059669);}
+
+/* Trends chart */
+.trend-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--sh-1);}
+.trend-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-2);margin-bottom:10px;}
+.trend-legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+
+/* Absences list */
+.abs-row{display:flex;align-items:center;gap:11px;padding:10px 8px;border-radius:9px;text-decoration:none;color:inherit;}
+.abs-row:hover{background:var(--surface-2);}
+.abs-info{flex:1;min-width:0;}
+.abs-name{font-size:13px;font-weight:600;color:var(--ink);}
+.abs-meta{font-size:11px;color:var(--ink-3);margin-top:1px;font-family:var(--mono);}
+.abs-pill{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.04em;text-transform:uppercase;}
+.abs-pill.absent{background:rgba(185,28,28,.10);color:var(--danger);}
+.abs-pill.late{background:rgba(245,158,11,.10);color:var(--warn);}
+
+.empty-state{padding:36px 18px;text-align:center;color:var(--ink-3);font-size:13px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;line-height:1.6;}
+.empty-state i{font-size:24px;color:var(--ink-4);margin-bottom:10px;display:block;}
+.empty-state a{color:var(--ink);font-weight:600;}
+
+.day-gate{margin-bottom:18px;padding:14px 18px;border-radius:14px;background:linear-gradient(135deg,#fffaf0,#fff);border:1px solid #f3e0b6;display:flex;align-items:flex-start;gap:12px;box-shadow:var(--sh-1);}
+.day-gate i.lead{color:#b78b2a;font-size:16px;margin-top:2px;flex-shrink:0;}
+.day-gate .body{flex:1;}
+.day-gate .title{font-family:var(--display);font-size:14px;font-weight:600;color:var(--ink);letter-spacing:-.01em;}
+.day-gate .sub{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.5;}
+.day-gate .sub b{color:var(--ink);font-weight:600;}
+.day-gate.holiday{background:linear-gradient(135deg,#f3f9ff,#fff);border-color:#c7defc;}
+.day-gate.holiday i.lead{color:#3578d8;}
+.day-gate.weekend{background:linear-gradient(135deg,#f6f6f9,#fff);border-color:#d9d9e5;}
+.day-gate.weekend i.lead{color:#6e6e8a;}
+.date-pick.blocked{outline:2px solid #f3c373;outline-offset:1px;}
+.date-pick.blocked-holiday{outline-color:#7faff0;}
+.date-pick.blocked-weekend{outline-color:#a5a5b8;}
+</style>
+</head>
+<body data-page="attendance" data-title="Attendance">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Attendance"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow" id="aEyebrow">Loading…</div>
+        <h1 class="h1">Attendance <em>· <span id="aDateTitle">today</span></em></h1>
+        <div class="h-sub">Mark, review, and report on school attendance. <b id="aHsub">—</b></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="date-pick" id="datePick"><i class="far fa-calendar"></i><span class="d">—</span><span class="y">—</span></button>
+        <select class="input" id="classSelect" style="height:36px;min-width:200px;">
+          <option value="">All classes (overview)</option>
+        </select>
+        <button class="btn" id="exportBtn"><i class="fas fa-file-export"></i>Export</button>
+        <button class="btn btn-primary" id="markAllBtn"><i class="fas fa-check-double"></i>Mark all present</button>
+      </div>
+    </div>
+
+    <!-- School-day gate banner (shown when picked date is a non-school day) -->
+    <div class="day-gate" id="dayGate" hidden>
+      <i class="fas fa-circle-info lead"></i>
+      <div class="body">
+        <div class="title" id="dayGateTitle">No attendance needed</div>
+        <div class="sub" id="dayGateSub">—</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="mark">Mark today</div>
+      <div class="tab" data-tab="summary">Class summary</div>
+      <div class="tab" data-tab="trends">Trends</div>
+      <div class="tab" data-tab="absences">Absences <span class="count" id="absCount">—</span></div>
+    </div>
+
+    <!-- Summary strip -->
+    <div class="summary">
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon gr"><i class="fas fa-user-check"></i></span>Present</div>
+        <div class="stat-value" id="sPresent">—</div>
+        <div class="stat-delta flat" id="sPresentSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon or"><i class="fas fa-user-clock"></i></span>Late</div>
+        <div class="stat-value" id="sLate">—</div>
+        <div class="stat-delta flat" id="sLateSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon"><i class="fas fa-user-xmark" style="color:var(--danger);"></i></span>Absent</div>
+        <div class="stat-value" id="sAbsent">—</div>
+        <div class="stat-delta flat" id="sAbsentSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon bl"><i class="fas fa-clipboard-check"></i></span>Classes marked</div>
+        <div class="stat-value" id="sMarked">—</div>
+        <div class="stat-delta flat" id="sMarkedSub">Loading…</div>
+      </div>
+    </div>
+
+    <!-- ─── MARK TAB ──────────────────────────────────────────── -->
+    <div class="tab-panel show" data-panel="mark">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title" id="mkTitle">Pick a class to mark</div>
+            <div class="card-sub" id="mkSub">Use the class dropdown above</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="status status-active" id="mkAutosave" style="display:none;"><span></span>Saving · auto</span>
+            <button class="btn btn-sm" id="refreshBtn"><i class="fas fa-rotate"></i>Refresh</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="attendance-grid" id="attGrid">
+            <div class="empty-state" style="grid-column:1/-1;">
+              <i class="fas fa-school"></i>
+              Select a class above to start marking attendance.<br>
+              Or check the <b>Class summary</b> tab for the school-wide view.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CLASS SUMMARY TAB ─────────────────────────────────── -->
+    <div class="tab-panel" data-panel="summary">
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th class="r">Roster</th>
+              <th class="r">Marked</th>
+              <th class="r">Present</th>
+              <th class="r">Absent</th>
+              <th class="r">Late</th>
+              <th>Rate</th>
+              <th class="r" style="width:60px;"></th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody">
+            <tr><td colspan="8" style="padding:18px;color:var(--ink-3);">Loading classes…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── TRENDS TAB ────────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="trends">
+      <div class="trend-card">
+        <div class="card-head" style="padding:0 0 14px;">
+          <div>
+            <div class="card-title">School-wide attendance · last 14 school days</div>
+            <div class="card-sub" id="trendSub">Daily attendance rate</div>
+          </div>
+        </div>
+        <div class="trend-legend">
+          <span><span class="dot" style="background:#1B5E20;"></span>Present</span>
+          <span><span class="dot" style="background:rgba(245,158,11,.6);"></span>Late</span>
+          <span><span class="dot" style="background:rgba(185,28,28,.6);"></span>Absent</span>
+        </div>
+        <div id="trendChart"></div>
+      </div>
+    </div>
+
+    <!-- ─── ABSENCES TAB ──────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="absences">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Absent &amp; late learners</div>
+            <div class="card-sub" id="absSub">For the selected day</div>
+          </div>
+          <button class="btn btn-sm" id="msgAbsentBtn"><i class="far fa-envelope"></i>Message parents</button>
+        </div>
+        <div class="card-body">
+          <div id="absList"><div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i>Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="shroud" id="shroud"></div>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') + '%' : '—';
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function csvCell(v){ const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }
+
+const state = {
+  classes: [],
+  classId: '',          // '' means school-wide overview
+  termId: null,
+  termName: 'Current term',
+  date: ymd(new Date()),
+  learners: [],
+  statuses: new Map(),  // learnerId → 'p'|'a'|'l'
+  summaryByClass: [],
+  trend14: [],
+  daygate: null         // { is_school_day, reason, message, holiday, term, weekday }
+};
+
+/* ─── School-day gate ───────────────────────────────────────── */
+async function loadDayGate(date){
+  try {
+    state.daygate = await api(API + '/school-day?date=' + date);
+  } catch(_) {
+    state.daygate = null; /* if endpoint fails, leave gate off — backend still rejects bad saves */
+  }
+  renderDayGate();
+}
+
+function renderDayGate(){
+  const banner = document.getElementById('dayGate');
+  const pick = document.getElementById('datePick');
+  pick.classList.remove('blocked','blocked-holiday','blocked-weekend');
+  const d = state.daygate;
+  /* Treat as blocked only when the backend explicitly says so */
+  if(!d || d.is_school_day !== false){ banner.hidden = true; return; }
+  const reason = d.reason || 'non_school_day';
+  const flavor = (reason === 'holiday' || reason === 'public_holiday' || reason === 'half_term') ? 'holiday'
+               : (reason === 'weekend' || reason === 'non_school_weekday') ? 'weekend'
+               : '';
+  banner.className = 'day-gate' + (flavor ? ' ' + flavor : '');
+  banner.hidden = false;
+  pick.classList.add('blocked');
+  if(flavor === 'holiday') pick.classList.add('blocked-holiday');
+  if(flavor === 'weekend') pick.classList.add('blocked-weekend');
+  const icon = flavor === 'holiday' ? 'fa-umbrella-beach'
+             : flavor === 'weekend' ? 'fa-mug-saucer'
+             : 'fa-circle-info';
+  banner.querySelector('i.lead').className = 'fas ' + icon + ' lead';
+  document.getElementById('dayGateTitle').textContent = d.message || 'No attendance needed for this day';
+  const bits = [];
+  if(d.holiday?.name){
+    const range = (d.holiday.start_date && d.holiday.end_date && d.holiday.start_date !== d.holiday.end_date)
+      ? d.holiday.start_date + ' → ' + d.holiday.end_date
+      : (d.holiday.start_date || '');
+    bits.push('<b>' + esc(d.holiday.name) + '</b>' + (range ? ' · ' + esc(range) : ''));
+  }
+  if(d.term?.name) bits.push('Term: <b>' + esc(d.term.name) + '</b>');
+  if(d.weekday)    bits.push(esc(d.weekday));
+  bits.push('Save and "Mark all present" are disabled for this date.');
+  document.getElementById('dayGateSub').innerHTML = bits.join(' · ');
+}
+
+function isDayLocked(){ return !!(state.daygate && state.daygate.is_school_day === false); }
+
+function codeFromStatus(s){ return s === 'absent' ? 'a' : s === 'late' ? 'l' : 'p'; }
+function statusFromCode(c){ return c === 'a' ? 'absent' : c === 'l' ? 'late' : 'present'; }
+
+/* ─── Header date + eyebrow ──────────────────────────────────── */
+function updateDateLabel(){
+  const d = new Date(state.date + 'T00:00:00');
+  document.querySelector('.date-pick .d').textContent = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+  document.querySelector('.date-pick .y').textContent = d.getFullYear();
+  const isToday = state.date === ymd(new Date());
+  document.getElementById('aDateTitle').textContent = isToday ? 'today' : d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+}
+
+/* ─── Summary cards (school-wide for selected day) ───────────── */
+function renderSummary(data){
+  const cards = document.querySelectorAll('.summary .stat-card');
+  const total = data.total || 0;
+  const present = data.present || 0;
+  const late = data.late || 0;
+  const absent = data.absent || 0;
+  cards[0].querySelector('.stat-value').innerHTML = present + '<span class="unit">/ ' + total + '</span>';
+  cards[0].querySelector('.stat-delta').innerHTML = '<i class="fas fa-circle-info"></i>' + pct(data.percent) + ' present';
+  cards[1].querySelector('.stat-value').textContent = late;
+  cards[1].querySelector('.stat-delta').innerHTML = '<i class="fas fa-circle-info"></i>' + (late ? 'Arrived after roll' : 'No late learners');
+  cards[2].querySelector('.stat-value').textContent = absent;
+  cards[2].querySelector('.stat-delta').innerHTML = '<i class="fas fa-circle-info"></i>' + (absent ? 'Not present' : 'None absent');
+  /* "Classes marked" — how many classes have any attendance record this day */
+  const classesMarked = (data.classes || []).length;
+  const totalClasses = state.classes.length;
+  cards[3].querySelector('.stat-value').innerHTML = classesMarked + '<span class="unit">/ ' + totalClasses + '</span>';
+  cards[3].querySelector('.stat-delta').innerHTML = '<i class="fas fa-circle-info"></i>' + (classesMarked === totalClasses && totalClasses ? 'All classes covered' : (totalClasses - classesMarked) + ' remaining');
+
+  /* Hsub: realistic, no fakery */
+  document.getElementById('aHsub').textContent = (total ? present + ' of ' + total + ' present' : 'Not yet marked for this day');
+  state.summaryByClass = data.classes || [];
+}
+
+/* ─── MARK TAB ──────────────────────────────────────────────── */
+function renderMarkGrid(){
+  const className = state.classes.find(c => String(c.id) === String(state.classId))?.name || '';
+  const grid = document.getElementById('attGrid');
+
+  /* Gate first — even before class is picked, show the non-school-day reason */
+  if(isDayLocked()){
+    const d = state.daygate;
+    const icon = (d.reason === 'holiday' || d.reason === 'public_holiday' || d.reason === 'half_term')
+      ? 'fa-umbrella-beach' : (d.reason === 'weekend' || d.reason === 'non_school_weekday') ? 'fa-mug-saucer' : 'fa-circle-info';
+    grid.innerHTML =
+      '<div class="empty-state" style="grid-column:1/-1;">' +
+        '<i class="fas ' + icon + '"></i>' +
+        '<b>' + esc(d.message || 'No attendance needed for this day') + '</b><br>' +
+        'Pick another day with the calendar above to mark attendance.' +
+      '</div>';
+    document.getElementById('mkTitle').textContent = state.classId ? (className + ' · no marking today') : 'No marking today';
+    document.getElementById('mkSub').textContent = d.message || 'Non-school day';
+    return;
+  }
+
+  if(!state.classId){
+    grid.innerHTML =
+      '<div class="empty-state" style="grid-column:1/-1;">' +
+        '<i class="fas fa-school"></i>' +
+        'Select a class above to start marking attendance.<br>' +
+        'Or check the <b>Class summary</b> tab for the school-wide view.' +
+      '</div>';
+    document.getElementById('mkTitle').textContent = 'Pick a class to mark';
+    document.getElementById('mkSub').textContent = 'Use the class dropdown above';
+    return;
+  }
+
+  document.getElementById('mkTitle').textContent = className + ' · register';
+  const counts = { p:0, a:0, l:0 };
+  state.statuses.forEach(v => counts[v]++);
+  document.getElementById('mkSub').textContent =
+    state.learners.length + ' learners · ' + counts.p + ' present · ' + counts.a + ' absent · ' + counts.l + ' late';
+
+  if(!state.learners.length){
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-users-slash"></i>No active learners in this class.</div>';
+    return;
+  }
+  grid.innerHTML = state.learners.map(l => {
+    const code = state.statuses.get(String(l.id)) || 'p';
+    return '<div class="att-tile" data-id="' + l.id + '">' +
+      '<div class="att-row">' +
+        '<div class="ava ava-md" style="' + Joy.avaStyle(l.name) + '">' + Joy.initials(l.name) + '</div>' +
+        '<div class="att-info"><div class="att-name">' + esc(l.name) + '</div><div class="att-id">' + esc(l.admission_no || l.user_id || '—') + '</div></div>' +
+      '</div>' +
+      '<div class="att-status">' +
+        '<button class="st-btn p ' + (code==='p'?'on':'') + '" data-v="p">P</button>' +
+        '<button class="st-btn a ' + (code==='a'?'on':'') + '" data-v="a">A</button>' +
+        '<button class="st-btn l ' + (code==='l'?'on':'') + '" data-v="l">L</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function loadMarkData(){
+  if(!state.classId){
+    state.learners = [];
+    state.statuses = new Map();
+    renderMarkGrid();
+    return;
+  }
+  const grid = document.getElementById('attGrid');
+  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-circle-notch fa-spin"></i>Loading register…</div>';
+  try {
+    const [roster, att] = await Promise.all([
+      api(API + '/classes/' + state.classId + '/learners'),
+      api(API + '/attendance?classId=' + state.classId + '&date=' + state.date).catch(() => null)
+    ]);
+    state.learners = roster.learners || [];
+    state.statuses = new Map((att?.entries || []).map(e => [String(e.learner_id), codeFromStatus(e.status)]));
+    /* Default unset learners to 'p' — admin confirms with Mark all present, or flips per-row */
+    state.learners.forEach(l => { if(!state.statuses.has(String(l.id))) state.statuses.set(String(l.id), 'p'); });
+    renderMarkGrid();
+  } catch(e){
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-triangle-exclamation"></i>Couldn\'t load the register.</div>';
+    console.error(e);
+  }
+}
+
+/* Click handler — per-cell P/A/L with autosave */
+document.getElementById('attGrid').addEventListener('click', async e => {
+  const btn = e.target.closest('.st-btn'); if(!btn) return;
+  if(isDayLocked()){
+    Joy.toast(state.daygate?.message || 'No attendance needed for this day', { type:'warn' });
+    return;
+  }
+  const tile = btn.closest('.att-tile');
+  const id = tile.dataset.id;
+  const old = state.statuses.get(String(id));
+  const next = btn.dataset.v;
+  if(old === next) return;
+  state.statuses.set(String(id), next);
+  tile.querySelectorAll('.st-btn').forEach(x => x.classList.remove('on'));
+  btn.classList.add('on');
+  tile.classList.add('saving');
+  document.getElementById('mkAutosave').style.display = '';
+  try {
+    await api(API + '/attendance', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ classId: state.classId, termId: state.termId, date: state.date, learnerId: id, status: statusFromCode(next) })
+    });
+    /* Refresh summary so the header reflects the change */
+    refreshSummary();
+  } catch(err){
+    state.statuses.set(String(id), old);
+    renderMarkGrid();
+    Joy.toast(err.message || "Couldn't save", { type:'danger' });
+  } finally {
+    setTimeout(() => {
+      tile.classList.remove('saving');
+      document.getElementById('mkAutosave').style.display = 'none';
+    }, 400);
+  }
+});
+
+/* ─── CLASS SUMMARY TAB ─────────────────────────────────────── */
+function renderClassSummary(){
+  const body = document.getElementById('summaryBody');
+  if(!state.classes.length){
+    body.innerHTML = '<tr><td colspan="8" style="padding:18px;color:var(--ink-3);">No classes available.</td></tr>';
+    return;
+  }
+  const byId = new Map(state.summaryByClass.map(c => [String(c.class_id), c]));
+  body.innerHTML = state.classes.map(c => {
+    const s = byId.get(String(c.id));
+    const roster = c.enrollment_count || c.learner_count || 0;
+    const marked = s?.marked || 0;
+    const present = Number(s?.present || 0);
+    const absent = Number(s?.absent || 0);
+    const late = Number(s?.late || 0);
+    const rate = marked ? Math.round(present / marked * 100) : 0;
+    const isMarked = marked > 0;
+    return '<tr>' +
+      '<td><div style="display:flex;align-items:center;gap:11px;"><div class="ava ava-md" style="background:linear-gradient(135deg,#1a1d1c,#2e3331);color:#fff;">' + esc((String(c.name).match(/\d+/) || [c.name.slice(0,2)])[0]) + '</div><div><div style="font-weight:600;color:var(--ink);">' + esc(c.name) + '</div><div style="font-size:11px;color:var(--ink-3);">' + esc(c.class_teacher_name || 'Class teacher unassigned') + '</div></div></div></td>' +
+      '<td class="r">' + roster + '</td>' +
+      '<td class="r">' + (isMarked ? marked : '<span style="color:var(--ink-3);font-weight:500;font-family:var(--body);">not yet</span>') + '</td>' +
+      '<td class="r" style="color:var(--ok);">' + (isMarked ? present : '—') + '</td>' +
+      '<td class="r" style="color:var(--danger);">' + (isMarked ? absent : '—') + '</td>' +
+      '<td class="r" style="color:var(--warn);">' + (isMarked ? late : '—') + '</td>' +
+      '<td>' + (isMarked
+        ? '<span class="cls-progress"><div style="width:' + rate + '%;"></div></span><span style="font-family:var(--mono);font-size:11px;font-weight:700;">' + rate + '%</span>'
+        : '<span style="font-size:11px;color:var(--ink-3);">awaiting roll</span>'
+      ) + '</td>' +
+      '<td class="r"><button class="btn btn-sm btn-icon" data-cls="' + c.id + '" data-act="mark" title="Open register"><i class="fas fa-arrow-right"></i></button></td>' +
+    '</tr>';
+  }).join('');
+}
+document.getElementById('summaryBody').addEventListener('click', e => {
+  const btn = e.target.closest('[data-act="mark"]'); if(!btn) return;
+  state.classId = btn.dataset.cls;
+  document.getElementById('classSelect').value = state.classId;
+  document.querySelector('.tab[data-tab="mark"]').click();
+  loadMarkData();
+});
+
+/* ─── TRENDS TAB ────────────────────────────────────────────── */
+async function loadTrends(){
+  const host = document.getElementById('trendChart');
+  host.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px;"><i class="fas fa-circle-notch fa-spin"></i> Loading 14 days of history…</div>';
+  /* Walk back 14 school days (Mon-Fri only) */
+  const days = [];
+  let cursor = new Date(state.date + 'T00:00:00');
+  while(days.length < 14){
+    const dow = cursor.getDay();
+    if(dow !== 0 && dow !== 6) days.unshift(new Date(cursor));
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  try {
+    const results = await Promise.all(days.map(d =>
+      api(API + '/attendance/summary?date=' + ymd(d))
+        .then(r => ({ date: ymd(d), label: d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }), ...r }))
+        .catch(() => ({ date: ymd(d), label: d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }), total:0, present:0, absent:0, late:0, percent:0 }))
+    ));
+    state.trend14 = results;
+    /* Render: SVG with 3 stacked bars per day */
+    const W = 800, H = 240, M = 40, gap = 5;
+    const colW = (W - M*2) / 14;
+    let bars = '';
+    const totals = results.map(r => r.total || 0);
+    const maxTotal = Math.max(1, ...totals);
+    results.forEach((r, i) => {
+      const x = M + i * colW + gap;
+      const w = colW - gap*2;
+      const pH = r.total ? (r.present / maxTotal) * (H - 70) : 0;
+      const lH = r.total ? (r.late / maxTotal) * (H - 70)    : 0;
+      const aH = r.total ? (r.absent / maxTotal) * (H - 70)  : 0;
+      let y = H - 30;
+      if(aH > 0){ bars += '<rect x="' + x + '" y="' + (y - aH) + '" width="' + w + '" height="' + aH + '" fill="rgba(185,28,28,.6)"><title>Absent: ' + r.absent + '</title></rect>'; y -= aH; }
+      if(lH > 0){ bars += '<rect x="' + x + '" y="' + (y - lH) + '" width="' + w + '" height="' + lH + '" fill="rgba(245,158,11,.6)"><title>Late: ' + r.late + '</title></rect>'; y -= lH; }
+      if(pH > 0){ bars += '<rect x="' + x + '" y="' + (y - pH) + '" width="' + w + '" height="' + pH + '" fill="#1B5E20"><title>Present: ' + r.present + '</title></rect>'; }
+      /* Labels */
+      bars += '<text x="' + (x + w/2) + '" y="' + (H - 14) + '" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink-3)">' + (r.label || '') + '</text>';
+      if(r.total){
+        bars += '<text x="' + (x + w/2) + '" y="' + (H - 30 - aH - lH - pH - 5) + '" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="var(--ink)">' + Math.round(r.percent) + '%</text>';
+      }
+    });
+    /* Y-axis ticks */
+    let ticks = '';
+    [0, 0.25, 0.5, 0.75, 1].forEach(t => {
+      const y = H - 30 - t * (H - 70);
+      ticks += '<line x1="' + M + '" y1="' + y + '" x2="' + (W - M) + '" y2="' + y + '" stroke="var(--line-2)" stroke-dasharray="2 4"/>';
+      ticks += '<text x="' + (M - 6) + '" y="' + (y + 3) + '" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink-3)">' + Math.round(t * maxTotal) + '</text>';
+    });
+    host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:240px;">' + ticks + bars + '</svg>';
+    /* Sub copy */
+    const totalsValid = results.filter(r => r.total > 0);
+    if(totalsValid.length){
+      const avg = totalsValid.reduce((s,r) => s + r.percent, 0) / totalsValid.length;
+      document.getElementById('trendSub').textContent = 'Average attendance: ' + pct(avg) + ' over ' + totalsValid.length + ' day' + (totalsValid.length === 1 ? '' : 's') + ' with records';
+    } else {
+      document.getElementById('trendSub').textContent = 'No attendance records in this window';
+    }
+  } catch(e){
+    host.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);">Couldn\'t load trends.</div>';
+    console.error(e);
+  }
+}
+
+/* ─── ABSENCES TAB ──────────────────────────────────────────── */
+async function loadAbsences(){
+  const list = document.getElementById('absList');
+  list.innerHTML = '<div class="empty-state"><i class="fas fa-circle-notch fa-spin"></i>Loading…</div>';
+  try {
+    /* Need to walk every class's attendance entries for the day and collect absent + late */
+    const results = await Promise.all(state.classes.map(c =>
+      api(API + '/attendance?classId=' + c.id + '&date=' + state.date)
+        .then(att => ({ class: c, entries: att?.entries || [] }))
+        .catch(() => ({ class: c, entries: [] }))
+    ));
+    const flagged = [];
+    results.forEach(({ class:c, entries }) => {
+      entries.forEach(e => {
+        if(e.status === 'absent' || e.status === 'late'){
+          flagged.push({ class_id: c.id, class_name: c.name, ...e });
+        }
+      });
+    });
+    flagged.sort((a,b) => a.class_name.localeCompare(b.class_name) || a.learner_name.localeCompare(b.learner_name));
+    document.getElementById('absCount').textContent = flagged.length;
+    document.getElementById('absSub').textContent = flagged.length + ' learner' + (flagged.length === 1 ? '' : 's') + ' flagged · ' + state.date;
+    if(!flagged.length){
+      list.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--ok);"></i>Everyone marked present so far. <br><br>Either no class has an absentee, or attendance hasn\'t been marked yet for the day.</div>';
+      return;
+    }
+    list.innerHTML = flagged.map(f =>
+      '<a class="abs-row" href="/admin/people.html?learner=' + f.learner_id + '">' +
+        '<div class="ava ava-md" style="' + Joy.avaStyle(f.learner_name) + '">' + Joy.initials(f.learner_name) + '</div>' +
+        '<div class="abs-info"><div class="abs-name">' + esc(f.learner_name) + '</div><div class="abs-meta">' + esc(f.class_name) + ' · ' + esc(f.admission_no || f.learner_user_id || '—') + (f.note ? ' · ' + esc(f.note) : '') + '</div></div>' +
+        '<span class="abs-pill ' + f.status + '">' + f.status + '</span>' +
+      '</a>'
+    ).join('');
+  } catch(e){
+    list.innerHTML = '<div class="empty-state"><i class="fas fa-triangle-exclamation"></i>Couldn\'t load absences.</div>';
+    console.error(e);
+  }
+}
+document.getElementById('msgAbsentBtn').addEventListener('click', () => {
+  location.href = '/admin/notifications.html?compose=1&audience=absent-today';
+});
+
+/* ─── Summary refresh (called from many places) ─────────────── */
+async function refreshSummary(){
+  try {
+    const data = await api(API + '/attendance/summary?range=today&date=' + state.date);
+    renderSummary(data);
+    /* If the summary tab is currently visible, re-render it too */
+    if(document.querySelector('.tab-panel[data-panel="summary"]').classList.contains('show')){
+      renderClassSummary();
+    }
+  } catch(e){
+    console.error(e);
+  }
+}
+
+/* ─── Tabs ──────────────────────────────────────────────────── */
+const tabLoaded = new Set(['mark']);
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  const key = t.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('show'));
+  document.querySelector('.tab-panel[data-panel="' + key + '"]').classList.add('show');
+  if(key === 'summary')      renderClassSummary();
+  if(key === 'trends'  && !tabLoaded.has('trends'))   { loadTrends(); tabLoaded.add('trends'); }
+  if(key === 'absences')     { loadAbsences(); /* always reload — fast on a small school */ }
+}));
+
+/* ─── Toolbar wiring ────────────────────────────────────────── */
+document.getElementById('classSelect').addEventListener('change', e => {
+  state.classId = e.target.value;
+  loadMarkData();
+});
+
+document.getElementById('datePick').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'date'; input.value = state.date;
+  input.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+  document.body.appendChild(input);
+  input.onchange = async () => {
+    state.date = input.value;
+    updateDateLabel();
+    await loadDayGate(state.date);
+    syncLockButtons();
+    refreshSummary();
+    loadMarkData();
+    tabLoaded.delete('trends'); /* invalidate so trends reloads when reopened */
+    input.remove();
+  };
+  input.click();
+});
+
+function syncLockButtons(){
+  const locked = isDayLocked();
+  const markAll = document.getElementById('markAllBtn');
+  markAll.disabled = locked;
+  markAll.style.opacity = locked ? '.55' : '';
+  markAll.title = locked ? (state.daygate?.message || 'Non-school day') : '';
+}
+
+document.getElementById('refreshBtn').addEventListener('click', () => { refreshSummary(); loadMarkData(); Joy.toast('Refreshed'); });
+
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  Joy.toast('Preparing CSV…');
+  /* Build a school-wide CSV for the selected day */
+  try {
+    const results = await Promise.all(state.classes.map(c =>
+      api(API + '/attendance?classId=' + c.id + '&date=' + state.date)
+        .then(att => ({ class: c, entries: att?.entries || [] }))
+        .catch(() => ({ class: c, entries: [] }))
+    ));
+    const lines = ['Date,Class,Learner,Admission No,Status,Note'];
+    results.forEach(({ class:c, entries }) => {
+      entries.forEach(e => {
+        lines.push([state.date, c.name, e.learner_name, e.admission_no || e.learner_user_id || '', e.status, e.note || ''].map(csvCell).join(','));
+      });
+    });
+    if(lines.length === 1) lines.push('—,—,—,—,No attendance recorded for this day,');
+    const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'attendance-' + state.date + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    Joy.toast('Exported attendance for ' + state.date);
+  } catch(e){
+    Joy.toast(e.message || "Couldn't export", { type:'danger' });
+  }
+});
+
+document.getElementById('markAllBtn').addEventListener('click', async () => {
+  if(isDayLocked()){
+    Joy.toast(state.daygate?.message || 'No attendance needed for this day', { type:'warn' });
+    return;
+  }
+  if(!state.classId){
+    Joy.toast('Pick a class first — mark-all applies to one register', { type:'warn' });
+    return;
+  }
+  if(!state.learners.length){ Joy.toast('No learners in this class', { type:'warn' }); return; }
+  const entries = state.learners.map(l => ({ learnerId: l.id, status: 'present' }));
+  try {
+    await api(API + '/attendance/bulk', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ classId: state.classId, termId: state.termId, date: state.date, entries })
+    });
+    state.learners.forEach(l => state.statuses.set(String(l.id), 'p'));
+    renderMarkGrid();
+    refreshSummary();
+    Joy.toast('Marked all ' + state.learners.length + ' present');
+  } catch(e){
+    Joy.toast(e.message || "Couldn't save", { type:'danger' });
+  }
+});
+
+/* ─── Boot ──────────────────────────────────────────────────── */
+async function boot(){
+  try {
+    const [classes, period] = await Promise.all([
+      api(API + '/classes'),
+      api(API + '/current-period').catch(() => ({}))
+    ]);
+    state.classes = (classes || []).filter(c => (c.status || 'active') === 'active');
+    state.termId = period.term?.id || null;
+    state.termName = period.term?.name || 'Current term';
+    const sessionName = period.term?.session_name || '';
+    document.getElementById('aEyebrow').textContent =
+      'School-wide register · ' + (sessionName ? sessionName + ' · ' : '') + state.termName;
+
+    /* Populate class dropdown */
+    const sel = document.getElementById('classSelect');
+    sel.innerHTML =
+      '<option value="">All classes (overview)</option>' +
+      state.classes.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+
+    updateDateLabel();
+    await loadDayGate(state.date);
+    syncLockButtons();
+    await refreshSummary();
+    renderMarkGrid();
+  } catch(e){
+    Joy.toast("Couldn't load attendance", { type:'danger' });
+    console.error(e);
+  }
+}
+boot();
+</script>
+</body>
+</html>

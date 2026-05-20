@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Skills · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.skill-row{display:grid;grid-template-columns:1fr auto;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin-bottom:10px;align-items:center;}
+.skill-info{display:flex;align-items:center;gap:12px;}
+.skill-info .nm{font-size:13px;font-weight:600;color:var(--ink);}
+.skill-info .sub{font-size:11px;color:var(--ink-3);font-family:var(--mono);}
+
+.rating{display:flex;gap:5px;}
+.rate-btn{width:48px;height:38px;border:1px solid var(--line);background:var(--surface);border-radius:8px;color:var(--ink-3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-family:inherit;}
+.rate-btn .v{font-family:var(--mono);font-size:13px;font-weight:700;}
+.rate-btn .b{font-size:8.5px;font-weight:700;letter-spacing:.04em;color:var(--ink-3);}
+.rate-btn:hover{background:var(--surface-2);}
+.rate-btn.on.ee{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-color:#059669;}
+.rate-btn.on.me{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-color:#2563eb;}
+.rate-btn.on.ae{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-color:#d97706;}
+.rate-btn.on.be{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#dc2626;}
+.rate-btn.on .b{color:rgba(255,255,255,.85);}
+
+.skill-banner{padding:14px 18px;background:linear-gradient(135deg,var(--brand-tint),#fff);border:1px solid rgba(27,94,32,.18);border-radius:var(--r-lg);margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+.skill-banner i{color:var(--brand);font-size:16px;}
+.skill-banner .t{font-size:13px;color:var(--ink);}
+.skill-banner .t b{color:var(--brand);font-weight:700;}
+</style>
+</head>
+<body data-page="skills" data-title="Skills">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Skills"></div>
+
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">CBC skill ratings · 4-point scale</div>
+        <h1 class="h1">Skills <em>· rating</em></h1>
+        <div class="h-sub">Rate learners on values, attitudes and competencies — feeds into report cards.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <select class="input" style="height:36px;">
+          <option>Loading…</option>
+        </select>
+        <button class="btn btn-primary"><i class="far fa-save"></i>Save ratings</button>
+      </div>
+    </div>
+
+    <div class="skill-banner">
+      <i class="fas fa-lightbulb"></i>
+      <div class="t">Pick a class and learner to rate CBC core competencies.</div>
+    </div>
+
+    <div class="grid">
+      <div class="card col-7">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Skill ratings</div>
+            <div class="card-sub">Loading…</div>
+          </div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3);">— / — rated</span>
+        </div>
+        <div class="card-body">
+          <div id="skillList"></div>
+        </div>
+      </div>
+
+      <div class="card col-5">
+        <div class="card-head"><div><div class="card-title">Class progress</div><div class="card-sub">Skill ratings completed · Term 2</div></div></div>
+        <div class="card-body">
+          <div id="progressList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="shroud" id="shroud"></div>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API='/api/admin';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,opts={}){const r=await fetch(path,{credentials:'include',...opts});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.message||'Request failed');return j.data!==undefined?j.data:j;}
+const state={classes:[],learners:[],classId:null,learnerId:null,termId:'current',skills:[]};const classSel=document.querySelector('.page-head select');const saveBtn=document.querySelector('.page-head .btn-primary');
+const learnerSel=document.createElement('select');learnerSel.className='input';learnerSel.style.height='36px';classSel.parentElement.insertBefore(learnerSel, saveBtn);
+const bands=[['be',1,'BE'],['ae',2,'AE'],['me',3,'ME'],['ee',4,'EE']]; const bandMap={1:'be',2:'ae',3:'me',4:'ee'};
+function renderSkills(rows){state.skills=rows;document.getElementById('skillList').innerHTML=rows.map((s,i)=>'<div class="skill-row" data-id="'+s.skillId+'"><div class="skill-info"><div style="width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--surface-2),#fff);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:16px;color:var(--gold);">'+(i+1)+'</div><div><div class="nm">'+esc(s.skillName)+'</div><div class="sub">'+esc(s.description||'')+'</div></div></div><div class="rating">'+bands.map(b=>'<button class="rate-btn '+b[0]+' '+(s.rating===b[1]?'on':'')+'" data-rating="'+b[1]+'"><span class="v">'+b[1]+'</span><span class="b">'+b[2]+'</span></button>').join('')+'</div></div>').join('');updateHeader();}
+function updateHeader(){const learner=state.learners.find(l=>String(l.id)===String(state.learnerId));const rated=state.skills.filter(s=>s.rating).length;document.querySelector('.skill-banner .t').innerHTML='Rating <b>'+esc(learner?.name||'-')+'</b> ? '+rated+' of '+state.skills.length+' skills';document.querySelector('.card-title').textContent=(learner?.name||'Learner')+' ? skill ratings';document.querySelector('.card-sub').textContent=(learner?.admission_no||'')+' ? '+(learner?.class_name||'')+' ? '+state.skills.length+' skills';document.querySelector('.card-head span').textContent=rated+' / '+state.skills.length+' rated';}
+async function loadProgress(){const rows=await api(API+'/skills/progress?classId='+state.classId+'&termId=current');document.getElementById('progressList').innerHTML=rows.map(r=>{const p=r.total?Math.round(r.rated/r.total*100):0;return '<div style="display:flex;align-items:center;gap:11px;padding:9px 8px;border-radius:9px;"><div class="ava ava-md" style="'+Joy.avaStyle(r.name)+'">'+Joy.initials(r.name)+'</div><div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--ink);">'+esc(r.name)+'</div><div style="height:6px;background:var(--surface-2);border-radius:3px;margin-top:5px;overflow:hidden;"><div style="height:100%;width:'+p+'%;background:'+(p===100?'linear-gradient(90deg,#10b981,#059669)':p>=50?'linear-gradient(90deg,#3b82f6,#2563eb)':p>0?'linear-gradient(90deg,#f59e0b,#d97706)':'transparent')+';border-radius:3px;"></div></div></div><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink-2);min-width:36px;text-align:right;">'+r.rated+'/'+r.total+'</span></div>';}).join('');}
+async function loadRatings(){if(!state.learnerId)return;const rows=await api(API+'/skills/ratings?learnerId='+state.learnerId+'&termId=current');renderSkills(rows);}
+async function loadLearners(){const r=await api(API+'/classes/'+state.classId+'/learners');state.learners=r.learners||[];learnerSel.innerHTML=state.learners.map(l=>'<option value="'+l.id+'">'+esc(l.name)+'</option>').join('');state.learnerId=learnerSel.value||state.learners[0]?.id;await loadRatings();await loadProgress();}
+async function init(){try{state.classes=await api(API+'/classes');state.classId=state.classes[0]?.id;classSel.innerHTML=state.classes.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');await loadLearners();}catch(e){Joy.toast("Couldn't load skills",{type:'danger'});console.error(e);}}
+classSel.addEventListener('change',async()=>{state.classId=classSel.value;await loadLearners();});learnerSel.addEventListener('change',async()=>{state.learnerId=learnerSel.value;await loadRatings();});
+document.getElementById('skillList').addEventListener('click',async e=>{const btn=e.target.closest('.rate-btn');if(!btn)return;const row=btn.closest('.skill-row');const skillId=row.dataset.id;try{await api(API+'/skills/ratings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({learnerId:state.learnerId,skillId,termId:'current',rating:Number(btn.dataset.rating)})});row.querySelectorAll('.rate-btn').forEach(x=>x.classList.remove('on'));btn.classList.add('on');state.skills.find(s=>String(s.skillId)===String(skillId)).rating=Number(btn.dataset.rating);updateHeader();await loadProgress();Joy.toast('Skill rating saved');}catch(e){Joy.toast(e.message||'Could not save rating',{type:'danger'});}});
+saveBtn.innerHTML='<i class="fas fa-arrow-right"></i>Save & next learner';saveBtn.onclick=()=>{const idx=state.learners.findIndex(l=>String(l.id)===String(state.learnerId));if(idx>=0&&idx<state.learners.length-1){learnerSel.value=state.learners[idx+1].id;state.learnerId=learnerSel.value;loadRatings();}else Joy.toast('Class complete');};
+init();
+</script>
+</body>
+</html>
+

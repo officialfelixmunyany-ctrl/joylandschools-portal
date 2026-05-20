@@ -9,6 +9,7 @@ data/*.db
 data/*.db-*
 data/*.sqlite
 data/*.sqlite3
+data/backups/
 !data/templates/
 !data/templates/*.json
 
@@ -34,3 +35,6 @@ portal-print-check.png
 # Design mocks and QA screenshots
 public/mock-*.html
 public/app-qa-*.png
+
+# Internal Codex prompts — not part of the deployed app
+docs/codex-prompts/

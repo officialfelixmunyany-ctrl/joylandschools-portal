@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Subject · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+.sub-hero{display:flex;align-items:flex-start;gap:22px;padding:22px 24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-2);margin-bottom:18px;position:relative;overflow:hidden;}
+.sub-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(800px circle at 100% -20%,rgba(201,151,50,.04),transparent 50%);pointer-events:none;}
+.sub-crest{width:78px;height:78px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;flex-shrink:0;box-shadow:0 8px 24px -8px rgba(15,17,18,.25);position:relative;}
+.sub-crest::before{content:'';position:absolute;inset:1.5px;border-radius:16.5px;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent 60%);}
+.sub-crest i{position:relative;}
+.sub-info{flex:1;min-width:0;}
+.sub-eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.sub-title{font-family:var(--display);font-weight:600;font-size:30px;color:var(--ink);letter-spacing:-.018em;line-height:1.1;margin-bottom:8px;}
+.sub-meta{display:flex;align-items:center;gap:18px;font-size:13px;color:var(--ink-2);flex-wrap:wrap;}
+.sub-meta-item{display:inline-flex;align-items:center;gap:7px;}
+.sub-meta-item i{color:var(--ink-3);font-size:11px;}
+.sub-meta-item b{font-weight:600;color:var(--ink);}
+
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+
+.perf-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+.perf-row{display:grid;grid-template-columns:140px 1fr 72px 80px;gap:12px;align-items:center;}
+.perf-name{font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.perf-bar{height:14px;background:var(--surface-2);border-radius:7px;overflow:hidden;position:relative;}
+.perf-fill{height:100%;border-radius:7px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;}
+.perf-stat{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);text-align:right;}
+.perf-band{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;padding:0 6px;border-radius:6px;color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;justify-self:end;}
+
+.tlist{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
+.trow{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:9px;}
+.trow:hover{background:var(--surface-2);}
+.tinfo{flex:1;min-width:0;}
+.tname{font-size:13px;font-weight:600;color:var(--ink);}
+.tmeta{font-size:11px;color:var(--ink-3);margin-top:1px;font-family:var(--mono);}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.info-cell{padding:11px 13px;background:var(--surface-2);border-radius:8px;}
+.info-cell .k{font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.info-cell .v{font-size:13px;font-weight:600;color:var(--ink);}
+
+.danger-zone{padding:14px 16px;border:1px solid rgba(185,28,28,.22);background:rgba(185,28,28,.04);border-radius:10px;margin-top:14px;display:flex;align-items:center;gap:12px;}
+.danger-zone i{color:var(--danger);font-size:14px;}
+.danger-zone .dt{flex:1;font-size:12.5px;color:var(--ink-2);}
+.danger-zone .dt b{color:var(--ink);font-weight:600;}
+</style>
+</head>
+<body data-page="subjects" data-title="Subject">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Subjects · Loading…"></div>
+
+  <div class="content">
+
+    <!-- Hero -->
+    <div class="sub-hero">
+      <div class="sub-crest" id="sCrest"><i class="fas fa-book"></i></div>
+      <div class="sub-info">
+        <div class="sub-eyebrow" id="sEyebrow">Loading…</div>
+        <h1 class="sub-title" id="sName">—</h1>
+        <div class="sub-meta" id="sMeta">&nbsp;</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn" id="editBtn"><i class="fas fa-pen"></i>Edit</button>
+        <button class="btn btn-icon" id="moreBtn" title="More"><i class="fas fa-ellipsis-h"></i></button>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stats-strip">
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon bl"><i class="fas fa-chalkboard"></i></span>Classes teaching</div>
+        <div class="stat-value" id="stClasses">—</div>
+        <div class="stat-delta flat" id="stClassesSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon pu"><i class="fas fa-chalkboard-user"></i></span>Teachers</div>
+        <div class="stat-value" id="stTeachers">—</div>
+        <div class="stat-delta flat" id="stTeachersSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon gr"><i class="fas fa-chart-line"></i></span>School mean</div>
+        <div class="stat-value" id="stMean">—</div>
+        <div class="stat-delta flat" id="stMeanSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon or"><i class="fas fa-file-pen"></i></span>Assessments · term</div>
+        <div class="stat-value" id="stAssess">—</div>
+        <div class="stat-delta flat" id="stAssessSub">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Bento -->
+    <div class="grid">
+
+      <!-- Performance by class -->
+      <div class="card col-8">
+        <div class="card-head">
+          <div><div class="card-title">Performance by class</div><div class="card-sub" id="perfSub">Class mean for this subject · current term</div></div>
+          <a class="card-link" href="/admin/analysis.html">Open analysis <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card-body">
+          <div class="perf-list" id="perfList">
+            <div style="font-size:12px;color:var(--ink-3);padding:10px;">Loading performance…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subject info -->
+      <div class="card col-4">
+        <div class="card-head"><div><div class="card-title">About this subject</div><div class="card-sub">Catalogue metadata</div></div></div>
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-cell"><div class="k">Level</div><div class="v" id="iLevel">—</div></div>
+            <div class="info-cell"><div class="k">Status</div><div class="v" id="iStatus">—</div></div>
+            <div class="info-cell"><div class="k">Created</div><div class="v" id="iCreated">—</div></div>
+            <div class="info-cell"><div class="k">Updated</div><div class="v" id="iUpdated">—</div></div>
+          </div>
+          <div id="iDescWrap" style="margin-top:14px;display:none;">
+            <div style="font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Description</div>
+            <div id="iDesc" style="font-size:12.5px;color:var(--ink-2);line-height:1.5;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teachers -->
+      <div class="card col-7">
+        <div class="card-head"><div><div class="card-title">Teachers teaching this</div><div class="card-sub" id="tSub">Across all classes</div></div></div>
+        <div class="card-body">
+          <div class="tlist" id="tList">
+            <div style="font-size:12px;color:var(--ink-3);padding:10px;">Loading teachers…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent assessments -->
+      <div class="card col-5">
+        <div class="card-head">
+          <div><div class="card-title">Recent assessments</div><div class="card-sub">Latest entries in this subject</div></div>
+          <a class="card-link" href="/admin/assessments.html">All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card-body">
+          <div class="tlist" id="aList">
+            <div style="font-size:12px;color:var(--ink-3);padding:10px;">Loading assessments…</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Shroud + Edit slide -->
+<div class="shroud" id="shroud"></div>
+
+<aside class="slide" id="editSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title">Edit subject</div>
+      <div class="slide-sub" id="editSub">—</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field"><label class="field-label">Subject name</label><input class="input" id="eName"/></div>
+    <div class="field">
+      <label class="field-label">Level</label>
+      <select class="input" id="eLevel">
+        <option value="">All levels (taught across school)</option>
+        <option>Lower Primary</option>
+        <option>Upper Primary</option>
+        <option>Junior</option>
+        <option>Senior</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">Status</label>
+      <div style="display:flex;gap:8px;">
+        <span class="chip on" id="eStatusActive" data-v="active">Active</span>
+        <span class="chip" id="eStatusInactive" data-v="inactive">Inactive</span>
+      </div>
+    </div>
+
+    <div class="danger-zone" id="dangerZone">
+      <i class="fas fa-triangle-exclamation"></i>
+      <div class="dt"><b>Delete this subject</b><br>Subjects assigned to classes cannot be deleted until they're removed from those classes.</div>
+      <button class="btn btn-danger" id="delBtn"><i class="fas fa-trash"></i>Delete</button>
+    </div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct">Live save · Joyland database</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn"><i class="fas fa-check"></i>Save changes</button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') + '%' : '—';
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || j.error || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+
+const SUBJECT_ID = new URLSearchParams(location.search).get('id');
+if(!SUBJECT_ID){ document.querySelector('.content').innerHTML = '<div class="empty"><div class="et">No subject selected</div><div class="ed">Open this page from the <a href="/admin/subjects.html">subjects catalogue</a>.</div></div>'; }
+
+/* Icon + colour mapping mirrors the catalogue (subjects.html) — by index-stable hash on name */
+const PALETTE = [
+  { icon:'fa-book',                 a:'#3b82f6', b:'#2563eb' },
+  { icon:'fa-language',             a:'#8b5cf6', b:'#7c3aed' },
+  { icon:'fa-square-root-variable', a:'#f43f5e', b:'#dc2626' },
+  { icon:'fa-flask',                a:'#10b981', b:'#059669' },
+  { icon:'fa-globe-africa',         a:'#f59e0b', b:'#d97706' },
+  { icon:'fa-bible',                a:'#06b6d4', b:'#0e7490' },
+  { icon:'fa-seedling',             a:'#14b8a6', b:'#0f766e' },
+  { icon:'fa-palette',              a:'#ec4899', b:'#be185d' },
+  { icon:'fa-tools',                a:'#4a504e', b:'#1a1d1c' }
+];
+function paletteFor(name){
+  let h = 0; for(let i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
+const BAND_COLORS = { ee:['#10b981','#059669'], me:['#3b82f6','#2563eb'], ae:['#f59e0b','#d97706'], be:['#ef4444','#dc2626'] };
+function bandFor(p){
+  if(p == null) return null;
+  if(p >= 75) return 'ee';
+  if(p >= 60) return 'me';
+  if(p >= 50) return 'ae';
+  return 'be';
+}
+function fmtDate(s){
+  if(!s) return '—';
+  const d = new Date(s.replace(' ', 'T'));
+  return isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+let state = { subject:null };
+
+async function load(){
+  try {
+    const [subjects, analysis, teachers, components, classSubjects] = await Promise.all([
+      api(API + '/subjects'),
+      api(API + '/marks/analysis'),
+      api(API + '/teachers'),
+      api(API + '/assessment-components').catch(() => []),
+      api(API + '/class-subjects?subject_id=' + SUBJECT_ID).catch(() => [])
+    ]);
+
+    const subject = subjects.find(s => String(s.id) === String(SUBJECT_ID));
+    if(!subject){
+      Joy.toast('Subject not found', { type:'danger' });
+      document.querySelector('.content').innerHTML = '<div class="empty"><div class="et">Subject not found</div><div class="ed">It may have been deleted. <a href="/admin/subjects.html">Back to subjects</a>.</div></div>';
+      return;
+    }
+    state.subject = subject;
+    document.title = subject.name + ' · Joyland Admin';
+    document.querySelector('[data-mount="topbar"]')?.setAttribute('data-crumb', 'Subjects · ' + subject.name);
+
+    /* HERO ────────────────────────────────────────────────────── */
+    const pal = paletteFor(subject.name);
+    const crest = document.getElementById('sCrest');
+    crest.style.background = 'linear-gradient(135deg,' + pal.a + ',' + pal.b + ')';
+    crest.innerHTML = '<i class="fas ' + pal.icon + '"></i>';
+    const teacherCountForHero = teachers.filter(t => (t.subject || '').toLowerCase().includes(subject.name.toLowerCase())).length;
+    document.getElementById('sEyebrow').textContent = (subject.level || 'CBC subject') + ' · ' + (subject.status === 'active' ? 'Active' : 'Inactive');
+    document.getElementById('sName').textContent = subject.name;
+    document.getElementById('sMeta').innerHTML =
+      '<span class="sub-meta-item"><i class="fas fa-chalkboard"></i><b>' + (subject.class_count || 0) + '</b> classes</span>' +
+      '<span class="sub-meta-item"><i class="fas fa-chalkboard-user"></i><b>' + teacherCountForHero + '</b> teachers</span>' +
+      '<span class="sub-meta-item status status-' + (subject.status === 'inactive' ? 'inactive' : 'active') + '">' + (subject.status === 'inactive' ? 'Inactive' : 'Active') + '</span>';
+
+    /* PERFORMANCE BY CLASS ──────────────────────────────────── */
+    /* Walk marks/analysis: for each class find its subject_averages entry matching this subject name */
+    const rows = [];
+    (analysis.classes || []).forEach(c => {
+      const sa = (c.subject_averages || []).find(s => s.name === subject.name);
+      if(sa && Number.isFinite(Number(sa.average))) {
+        rows.push({ class_id: c.class_id, class_name: c.class_name, average: Number(sa.average) });
+      }
+    });
+    rows.sort((a,b) => b.average - a.average);
+
+    const max = rows.length ? Math.max(...rows.map(r => r.average), 100) : 100;
+    if(analysis.display_term?.is_fallback){
+      document.getElementById('perfSub').innerHTML = 'Class mean · <b style="color:var(--ink);">' + esc(analysis.display_term.name) + '</b> (fallback)';
+    } else if(analysis.display_term){
+      document.getElementById('perfSub').innerHTML = 'Class mean · ' + esc(analysis.display_term.name);
+    }
+
+    const perfList = document.getElementById('perfList');
+    if(!rows.length){
+      perfList.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;line-height:1.6;">No marks recorded for this subject yet.<br><a href="/admin/marks.html" style="color:var(--ink);font-weight:600;">Enter marks →</a></div>';
+    } else {
+      perfList.innerHTML = rows.map(r => {
+        const band = bandFor(r.average);
+        const [c1,c2] = BAND_COLORS[band] || ['#3b82f6','#2563eb'];
+        const width = Math.max(2, Math.round(r.average / max * 100));
+        return '<a class="perf-row" href="/admin/class.html?id=' + r.class_id + '" style="text-decoration:none;color:inherit;">' +
+          '<span class="perf-name">' + esc(r.class_name) + '</span>' +
+          '<div class="perf-bar"><div class="perf-fill" style="width:' + width + '%;background:linear-gradient(90deg,' + c1 + ',' + c2 + ');">' + r.average.toFixed(1) + '</div></div>' +
+          '<span class="perf-stat">' + pct(r.average) + '</span>' +
+          '<span class="perf-band band-tag bt-' + band + '">' + band.toUpperCase() + '</span>' +
+        '</a>';
+      }).join('');
+    }
+
+    /* INFO PANEL ─────────────────────────────────────────────── */
+    document.getElementById('iLevel').textContent = subject.level || 'All levels';
+    document.getElementById('iStatus').innerHTML = subject.status === 'inactive'
+      ? '<span class="status status-inactive">Inactive</span>'
+      : '<span class="status status-active">Active</span>';
+    document.getElementById('iCreated').textContent = fmtDate(subject.created_at);
+    document.getElementById('iUpdated').textContent = fmtDate(subject.updated_at);
+    if(subject.description){
+      document.getElementById('iDescWrap').style.display = '';
+      document.getElementById('iDesc').textContent = subject.description;
+    }
+
+    /* TEACHERS ───────────────────────────────────────────────── */
+    const matchingTeachers = teachers.filter(t =>
+      (t.subject || '').toLowerCase().includes(subject.name.toLowerCase()) ||
+      (t.subjects_list || []).some(s => (s || '').toLowerCase() === subject.name.toLowerCase())
+    );
+    const tList = document.getElementById('tList');
+    document.getElementById('tSub').textContent = matchingTeachers.length + ' teacher' + (matchingTeachers.length === 1 ? '' : 's');
+    if(!matchingTeachers.length){
+      tList.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;line-height:1.6;">No teacher is currently linked to this subject.<br><a href="/admin/people.html?tab=teachers" style="color:var(--ink);font-weight:600;">Assign a teacher →</a></div>';
+    } else {
+      tList.innerHTML = matchingTeachers.slice(0,8).map(t =>
+        '<div class="trow">' +
+          '<div class="ava ava-md" style="' + Joy.avaStyle(t.name) + '">' + Joy.initials(t.name) + '</div>' +
+          '<div class="tinfo"><div class="tname">' + esc(t.name) + '</div><div class="tmeta">' + esc(t.subject || 'Teacher') + (t.primary_class ? ' · ' + esc(t.primary_class) : '') + '</div></div>' +
+          (t.status === 'inactive' ? '<span class="status status-inactive">Inactive</span>' : '<span class="status status-active">Active</span>') +
+        '</div>'
+      ).join('');
+    }
+
+    /* ASSESSMENTS ────────────────────────────────────────────── */
+    const subjectAssess = (components || []).filter(a => String(a.subject_id) === String(subject.id) || a.subject_name === subject.name);
+    const aList = document.getElementById('aList');
+    if(!subjectAssess.length){
+      aList.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;line-height:1.6;">No assessments yet.<br><a href="/admin/assessments.html" style="color:var(--ink);font-weight:600;">Create one →</a></div>';
+    } else {
+      aList.innerHTML = subjectAssess.slice(0,5).map(a => {
+        const title = (a.assessment_type === 'midterm' ? 'Midterm · ' : 'Endterm · ') + (a.component_name || 'Assessment');
+        return '<div class="trow">' +
+          '<div class="ava ava-md" style="background:linear-gradient(135deg,#f59e0b,#d97706);">📋</div>' +
+          '<div class="tinfo"><div class="tname">' + esc(title) + '</div><div class="tmeta">' + esc(a.class_name || 'All classes') + ' · ' + (a.done || 0) + '/' + (a.total || 0) + ' scored</div></div>' +
+          '<span class="mono" style="font-size:11px;color:var(--ink-2);">' + (a.mean != null ? pct(a.mean) : '—') + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    /* STATS STRIP ────────────────────────────────────────────── */
+    document.getElementById('stClasses').textContent = subject.class_count || 0;
+    document.getElementById('stClassesSub').innerHTML = '<i class="fas fa-circle-info"></i>Classes with this subject';
+
+    document.getElementById('stTeachers').textContent = matchingTeachers.length;
+    document.getElementById('stTeachersSub').innerHTML = '<i class="fas fa-circle-info"></i>Currently teaching it';
+
+    const meanVal = rows.length ? rows.reduce((s,r) => s + r.average, 0) / rows.length : null;
+    document.getElementById('stMean').innerHTML = meanVal != null ? meanVal.toFixed(1) + '<span class="unit">%</span>' : '—';
+    document.getElementById('stMeanSub').innerHTML = '<i class="fas fa-circle-info"></i>' + (meanVal != null ? 'Across ' + rows.length + ' class' + (rows.length===1?'':'es') : 'No marks yet');
+
+    document.getElementById('stAssess').textContent = subjectAssess.length;
+    document.getElementById('stAssessSub').innerHTML = '<i class="fas fa-circle-info"></i>Tracked this term';
+
+  } catch(e) {
+    console.error(e);
+    Joy.toast("Couldn't load subject", { type:'danger' });
+  }
+}
+
+/* ── EDIT slide-over ─────────────────────────────────────────── */
+let editStatus = 'active';
+document.getElementById('editBtn').addEventListener('click', () => {
+  if(!state.subject) return;
+  document.getElementById('editSub').textContent = 'Editing subject details';
+  document.getElementById('eName').value = state.subject.name || '';
+  document.getElementById('eLevel').value = state.subject.level || '';
+  editStatus = state.subject.status === 'inactive' ? 'inactive' : 'active';
+  document.getElementById('eStatusActive').classList.toggle('on', editStatus === 'active');
+  document.getElementById('eStatusInactive').classList.toggle('on', editStatus === 'inactive');
+  Joy.openSlide('editSlide');
+});
+document.getElementById('moreBtn').addEventListener('click', () => document.getElementById('editBtn').click());
+document.getElementById('eStatusActive').addEventListener('click', () => {
+  editStatus = 'active';
+  document.getElementById('eStatusActive').classList.add('on');
+  document.getElementById('eStatusInactive').classList.remove('on');
+});
+document.getElementById('eStatusInactive').addEventListener('click', () => {
+  editStatus = 'inactive';
+  document.getElementById('eStatusInactive').classList.add('on');
+  document.getElementById('eStatusActive').classList.remove('on');
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const name  = document.getElementById('eName').value.trim();
+  const level = document.getElementById('eLevel').value;
+  if(!name){ Joy.toast('Name is required', { type:'warn' }); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try {
+    /* Preserve existing internal code — backend keeps it untouched if omitted */
+    await api(API + '/subjects/' + state.subject.id, {
+      method:'PUT',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ name, level: level || null, status: editStatus, code: state.subject.code })
+    });
+    Joy.closeSlide();
+    Joy.toast('Subject updated');
+    load();
+  } catch(e){
+    Joy.toast(e.message || "Couldn't save", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Save changes';
+  }
+});
+
+document.getElementById('delBtn').addEventListener('click', async () => {
+  if(!state.subject) return;
+  if(!confirm('Delete "' + state.subject.name + '" permanently?\n\nThis cannot be undone. Subjects assigned to any class cannot be deleted until they\'re removed from those classes first.')) return;
+  try {
+    await api(API + '/subjects/' + state.subject.id, { method:'DELETE' });
+    Joy.toast('Subject deleted');
+    setTimeout(() => location.href = '/admin/subjects.html', 800);
+  } catch(e){
+    Joy.toast(e.message || "Couldn't delete", { type:'danger' });
+  }
+});
+
+load();
+</script>
+</body>
+</html>

@@ -24,6 +24,7 @@ cls
 set "PORT=3000"
 set "HOST=0.0.0.0"
 set "URL=http://localhost:%PORT%/"
+set "PORTAL_DEV_REFRESH=1"
 
 echo.
 echo ============================================================
@@ -158,6 +159,7 @@ if /i "%PORTAL_SKIP_BROWSER%"=="1" (
 )
 echo Keep this window open while using the portal.
 echo Press Ctrl+C to stop the server.
+echo Soft refresh is enabled for admin/app file changes.
 echo.
 
 if /i not "%PORTAL_SKIP_BROWSER%"=="1" (

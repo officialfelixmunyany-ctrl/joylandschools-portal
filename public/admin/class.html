@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Class · Joyland Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<link rel="stylesheet" href="/admin/_shared/admin.css"/>
+<style>
+/* ── Hero ──────────────────────────────────────────────────────── */
+.cls-hero{display:flex;align-items:flex-start;gap:22px;padding:22px 24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-2);margin-bottom:18px;position:relative;overflow:hidden;}
+.cls-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(800px circle at 100% -20%,rgba(201,151,50,.04),transparent 50%);pointer-events:none;}
+.cls-crest{width:78px;height:78px;border-radius:18px;background:linear-gradient(135deg,#1a1d1c,#2e3331);position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 8px 24px -8px rgba(15,17,18,.25);}
+.cls-crest::before{content:'';position:absolute;inset:1.5px;border-radius:16.5px;background:linear-gradient(135deg,rgba(201,151,50,.16),transparent 60%);}
+.cls-crest .num{position:relative;font-family:var(--display);font-weight:700;font-size:34px;color:#fff;line-height:1;letter-spacing:-.02em;}
+.cls-info{flex:1;min-width:0;}
+.cls-eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;flex-wrap:wrap;}
+.cls-title{font-family:var(--display);font-weight:600;font-size:30px;color:var(--ink);letter-spacing:-.018em;line-height:1.1;margin-bottom:8px;}
+.cls-title em{font-style:italic;color:var(--ink-2);font-weight:500;}
+.cls-meta{display:flex;align-items:center;gap:18px;font-size:13px;color:var(--ink-2);flex-wrap:wrap;}
+.cls-meta-item{display:inline-flex;align-items:center;gap:7px;}
+.cls-meta-item i{color:var(--ink-3);font-size:11px;}
+.cls-meta-item b{font-weight:600;color:var(--ink);}
+
+/* ── Stats strip ───────────────────────────────────────────────── */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+
+/* ── Tab panels ────────────────────────────────────────────────── */
+.tab-panel{display:none;}
+.tab-panel.show{display:block;}
+
+/* ── Bands · roster · ranks ────────────────────────────────────── */
+.bands{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.band-row{display:grid;grid-template-columns:32px 1fr 56px;gap:10px;align-items:center;}
+.band-label{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--ink-2);}
+.band-bar{height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden;}
+.band-fill{height:100%;border-radius:5px;}
+.band-pct{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink);text-align:right;}
+.band-pct .of{color:var(--ink-3);font-weight:500;font-size:10px;margin-left:2px;}
+.band-ee .band-fill{background:linear-gradient(90deg,#10b981,#059669);}
+.band-me .band-fill{background:linear-gradient(90deg,#3b82f6,#2563eb);}
+.band-ae .band-fill{background:linear-gradient(90deg,#f59e0b,#d97706);}
+.band-be .band-fill{background:linear-gradient(90deg,#ef4444,#dc2626);}
+
+.heat-wrap{display:grid;grid-template-columns:80px 1fr;gap:14px;margin-top:8px;align-items:start;}
+.heat-days{display:flex;flex-direction:column;gap:5px;}
+.heat-day{font-family:var(--mono);font-size:9px;color:var(--ink-3);font-weight:600;height:16px;display:flex;align-items:center;letter-spacing:.04em;}
+.heat-grid{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;}
+.heat-cell{aspect-ratio:1;border-radius:3px;background:var(--surface-2);transition:.12s var(--ease);position:relative;}
+.heat-cell:hover{transform:scale(1.3);z-index:1;outline:2px solid var(--ink);outline-offset:1px;}
+.heat-cell[title]{cursor:help;}
+.heat-l1{background:#cfead5;} .heat-l2{background:#9ed8a9;} .heat-l3{background:#6cc781;} .heat-l4{background:#16a34a;}
+.heat-absent{background:rgba(220,38,38,.4);}
+.heat-empty{background:repeating-linear-gradient(45deg,var(--surface-2),var(--surface-2) 2px,transparent 2px,transparent 4px);}
+.heat-legend{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:10px;color:var(--ink-3);font-family:var(--mono);flex-wrap:wrap;}
+.heat-legend .scale{display:flex;gap:3px;}
+.heat-legend .scale i{width:11px;height:11px;border-radius:2px;display:block;}
+
+.staff-list{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
+.staff-row{display:flex;align-items:center;gap:11px;padding:10px 8px;border-radius:9px;}
+.staff-row:hover{background:var(--surface-2);}
+.staff-info{flex:1;min-width:0;}
+.staff-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;}
+.staff-meta{font-size:11px;color:var(--ink-3);margin-top:2px;font-family:var(--mono);}
+.staff-chip{font-size:10px;font-weight:600;color:var(--ink-2);background:var(--surface-2);padding:3px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.04em;}
+
+.roster-preview{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:6px;}
+.roster-tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:9px;cursor:pointer;text-decoration:none;color:inherit;}
+.roster-tile:hover{background:var(--surface-2);}
+.roster-name{font-size:10px;font-weight:600;color:var(--ink-2);text-align:center;line-height:1.2;}
+
+.rank-list{display:flex;flex-direction:column;gap:1px;margin-top:6px;}
+.rank-row{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:9px;text-decoration:none;color:inherit;}
+.rank-row:hover{background:var(--surface-2);}
+.rank-pos{width:24px;height:24px;border-radius:50%;background:var(--surface-2);color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;flex-shrink:0;}
+.rank-pos.gold{background:linear-gradient(135deg,#f3d579,#C99732);color:#fff;}
+.rank-pos.silver{background:linear-gradient(135deg,#dfdfdf,#a3a3a3);color:#fff;}
+.rank-pos.bronze{background:linear-gradient(135deg,#e3b692,#a06b46);color:#fff;}
+.rank-info{flex:1;min-width:0;}
+.rank-name{font-size:13px;font-weight:600;color:var(--ink);}
+.rank-meta{font-size:11px;color:var(--ink-3);margin-top:1px;}
+.rank-stat{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);}
+
+.up-list{display:flex;flex-direction:column;gap:1px;margin-top:6px;}
+.up-row{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:9px;}
+.up-row:hover{background:var(--surface-2);}
+.up-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:42px;height:46px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;flex-shrink:0;}
+.up-date .d{font-family:var(--display);font-weight:700;font-size:18px;color:var(--ink);line-height:1;}
+.up-date .m{font-family:var(--mono);font-size:8px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;margin-top:2px;}
+.up-info{flex:1;min-width:0;}
+.up-name{font-size:13px;font-weight:600;color:var(--ink);}
+.up-meta{font-size:11px;color:var(--ink-3);margin-top:1px;}
+.up-tag{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:5px;}
+.up-tag.assess{background:rgba(245,158,11,.10);color:var(--warn);}
+.up-tag.event{background:rgba(59,130,246,.10);color:var(--d1);}
+.up-tag.meet{background:rgba(139,92,246,.10);color:var(--d2);}
+.up-tag.term{background:rgba(201,151,50,.15);color:#a47915;}
+.up-tag.hol{background:rgba(16,163,74,.10);color:var(--ok);}
+
+/* ── Roster tab table ──────────────────────────────────────────── */
+.roster-tab-wrap .person{display:flex;align-items:center;gap:11px;}
+
+/* ── Photos tab grid ───────────────────────────────────────────── */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-top:8px;}
+.photo-tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
+.photo-thumb{aspect-ratio:1;background:linear-gradient(135deg,var(--surface-2),#fff);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:32px;color:var(--ink-3);position:relative;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-meta{padding:10px 12px;border-top:1px solid var(--line);}
+.photo-name{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.photo-count{font-size:10.5px;color:var(--ink-3);margin-top:3px;display:flex;align-items:center;gap:5px;font-family:var(--mono);}
+
+/* ── Comms tab cards ───────────────────────────────────────────── */
+.bc-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:10px;}
+.bc-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.bc-icon{width:34px;height:34px;border-radius:9px;background:rgba(59,130,246,.10);color:var(--d1);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.bc-info{flex:1;}
+.bc-title{font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);}
+.bc-sub{font-size:11px;color:var(--ink-3);margin-top:2px;font-family:var(--mono);}
+.bc-body{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-top:6px;}
+
+/* ── Settings rows ─────────────────────────────────────────────── */
+.s-row{display:grid;grid-template-columns:1fr 320px;gap:24px;padding:14px 0;border-bottom:1px solid var(--line-2);align-items:center;}
+.s-row:last-of-type{border-bottom:none;}
+.s-row .lbl{font-size:13px;color:var(--ink);font-weight:600;}
+.s-row .help{font-size:11.5px;color:var(--ink-3);margin-top:3px;}
+.danger-zone{padding:14px 16px;border:1px solid rgba(185,28,28,.22);background:rgba(185,28,28,.04);border-radius:10px;margin-top:14px;display:flex;align-items:center;gap:12px;}
+.danger-zone i{color:var(--danger);font-size:14px;}
+.danger-zone .dt{flex:1;font-size:12.5px;color:var(--ink-2);}
+.danger-zone .dt b{color:var(--ink);font-weight:600;}
+
+/* ── Broadcast slide ───────────────────────────────────────────── */
+.aud-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;}
+.aud-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--ink-2);cursor:pointer;}
+.aud-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.chan-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.chan-card{padding:11px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:9px;cursor:pointer;background:var(--surface);}
+.chan-card.on{border-color:var(--ink);background:var(--surface-2);}
+.chan-card i{font-size:14px;color:var(--ink-2);}
+.chan-card.on i{color:var(--ink);}
+.chan-info{flex:1;}
+.chan-name{font-size:12px;font-weight:600;color:var(--ink);}
+.chan-meta{font-size:10px;color:var(--ink-3);margin-top:1px;}
+.chan-check{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--ink-4);}
+.chan-card.on .chan-check{background:var(--ink);border-color:var(--ink);position:relative;}
+.chan-card.on .chan-check::after{content:'';position:absolute;top:3px;left:5px;width:4px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);}
+.textarea{min-height:140px;resize:vertical;line-height:1.5;}
+</style>
+</head>
+<body data-page="classes" data-title="Class">
+
+<aside class="side" data-mount="side"></aside>
+
+<div class="shell">
+  <div data-mount="topbar" data-crumb="Classes · Loading…"></div>
+
+  <div class="content">
+
+    <!-- ─── Hero ──────────────────────────────────────────────── -->
+    <div class="cls-hero">
+      <div class="cls-crest"><span class="num" id="hCrest">—</span></div>
+      <div class="cls-info">
+        <div class="cls-eyebrow" id="hEyebrow">Loading…</div>
+        <h1 class="cls-title" id="hTitle">—</h1>
+        <div class="cls-meta" id="hMeta">&nbsp;</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn" id="rosterPrintBtn" title="Print roster"><i class="fas fa-print"></i>Roster</button>
+        <button class="btn" id="exportBtn"><i class="fas fa-download"></i>Export</button>
+        <button class="btn btn-primary" id="broadcastBtn"><i class="fas fa-bullhorn"></i>Broadcast</button>
+      </div>
+    </div>
+
+    <!-- ─── Stats strip ───────────────────────────────────────── -->
+    <div class="stats-strip">
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon bl"><i class="fas fa-user-check"></i></span>Attendance · today</div>
+        <div class="stat-value" id="kAtt">—</div>
+        <div class="stat-delta flat" id="kAttSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon pu"><i class="fas fa-chart-line"></i></span>Class mean</div>
+        <div class="stat-value" id="kMean">—</div>
+        <div class="stat-delta flat" id="kMeanSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon gr"><i class="fas fa-trophy"></i></span>Top performer</div>
+        <div class="stat-value" id="kTop" style="font-size:18px;font-family:var(--body);font-weight:700;letter-spacing:-.01em;">—</div>
+        <div class="stat-delta flat" id="kTopSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon or"><i class="fas fa-triangle-exclamation"></i></span>Needs attention</div>
+        <div class="stat-value" id="kRisk">—</div>
+        <div class="stat-delta flat" id="kRiskSub">Loading…</div>
+      </div>
+    </div>
+
+    <!-- ─── Tabs ──────────────────────────────────────────────── -->
+    <div class="tabs">
+      <div class="tab active" data-tab="overview">Overview</div>
+      <div class="tab" data-tab="roster">Roster <span class="count" id="tabRosterCount">—</span></div>
+      <div class="tab" data-tab="marks">Marks</div>
+      <div class="tab" data-tab="attendance">Attendance</div>
+      <div class="tab" data-tab="photos">Photos <span class="count" id="tabPhotoCount">—</span></div>
+      <div class="tab" data-tab="comms">Comms</div>
+      <div class="tab" data-tab="settings">Settings</div>
+    </div>
+
+    <!-- ─── OVERVIEW TAB ──────────────────────────────────────── -->
+    <div class="tab-panel show" data-panel="overview">
+      <div class="grid">
+
+        <!-- Marks distribution bars -->
+        <div class="card col-6">
+          <div class="card-head"><div><div class="card-title">Marks distribution</div><div class="card-sub" id="bandsSub">CBC bands · current term</div></div></div>
+          <div class="card-body">
+            <div class="bands">
+              <div class="band-row band-ee"><span class="band-label">EE</span><div class="band-bar"><div class="band-fill" style="width:0%"></div></div><span class="band-pct">0<span class="of">/0</span></span></div>
+              <div class="band-row band-me"><span class="band-label">ME</span><div class="band-bar"><div class="band-fill" style="width:0%"></div></div><span class="band-pct">0<span class="of">/0</span></span></div>
+              <div class="band-row band-ae"><span class="band-label">AE</span><div class="band-bar"><div class="band-fill" style="width:0%"></div></div><span class="band-pct">0<span class="of">/0</span></span></div>
+              <div class="band-row band-be"><span class="band-label">BE</span><div class="band-bar"><div class="band-fill" style="width:0%"></div></div><span class="band-pct">0<span class="of">/0</span></span></div>
+            </div>
+            <div id="bandsCallout" style="margin-top:14px;padding:10px 12px;background:var(--surface-2);border-radius:8px;font-size:11.5px;color:var(--ink-2);line-height:1.5;display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Teaching team -->
+        <div class="card col-6">
+          <div class="card-head"><div><div class="card-title">Teaching team</div><div class="card-sub" id="staffSub">Subject teachers</div></div></div>
+          <div class="card-body"><div class="staff-list" id="staffList"></div></div>
+        </div>
+
+        <!-- Attendance heatmap -->
+        <div class="card col-8">
+          <div class="card-head">
+            <div><div class="card-title">Attendance heatmap</div><div class="card-sub" id="heatSub">Past 14 school days</div></div>
+            <a class="card-link" href="/admin/attendance.html">Register <i class="fas fa-arrow-right"></i></a>
+          </div>
+          <div class="card-body">
+            <div class="heat-wrap">
+              <div class="heat-days">
+                <div class="heat-day">Mon</div><div class="heat-day">Tue</div><div class="heat-day">Wed</div><div class="heat-day">Thu</div><div class="heat-day">Fri</div>
+              </div>
+              <div>
+                <div class="heat-grid" id="heatGrid"></div>
+                <div class="heat-legend">
+                  <span>Less</span>
+                  <span class="scale"><i class="heat-empty"></i><i class="heat-l1"></i><i class="heat-l2"></i><i class="heat-l3"></i><i class="heat-l4"></i></span>
+                  <span>More present</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;"><i class="heat-empty" style="width:11px;height:11px;border-radius:2px;display:inline-block;"></i> No data</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;"><i class="heat-absent" style="width:11px;height:11px;border-radius:2px;display:inline-block;"></i> Absent &gt;3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- This week (real calendar events) -->
+        <div class="card col-4">
+          <div class="card-head">
+            <div><div class="card-title">This week</div><div class="card-sub">Assessments · events · meetings</div></div>
+            <a class="card-link" href="/admin/calendar.html">Calendar <i class="fas fa-arrow-right"></i></a>
+          </div>
+          <div class="card-body"><div class="up-list" id="weekList"><div style="font-size:11.5px;color:var(--ink-3);padding:8px;">Loading…</div></div></div>
+        </div>
+
+        <!-- Top of class -->
+        <div class="card col-6">
+          <div class="card-head"><div><div class="card-title">Top of class</div><div class="card-sub">By overall mean · current term</div></div></div>
+          <div class="card-body"><div class="rank-list" id="topList"></div></div>
+        </div>
+
+        <!-- Needs attention -->
+        <div class="card col-6">
+          <div class="card-head"><div><div class="card-title">Needs attention</div><div class="card-sub">Below ME band</div></div></div>
+          <div class="card-body"><div class="rank-list" id="riskList"></div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── ROSTER TAB ────────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="roster">
+      <div class="filter-row">
+        <div class="input-wrap">
+          <i class="fas fa-search"></i>
+          <input class="input input-search" id="rosterSearch" placeholder="Search by name or admission no…"/>
+        </div>
+        <span style="font-size:12px;color:var(--ink-3);font-family:var(--mono);" id="rosterCount">—</span>
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="rosterCsvBtn"><i class="fas fa-download"></i>CSV</button>
+      </div>
+      <div class="table-wrap roster-tab-wrap">
+        <table class="tbl">
+          <thead><tr><th>Learner</th><th>Admission no</th><th>Sex</th><th>DOB</th><th>Status</th><th class="r" style="width:80px;"></th></tr></thead>
+          <tbody id="rosterBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── MARKS TAB ─────────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="marks">
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Marks · this class</div><div class="card-sub" id="marksSub">Pick an assessment to enter or view scores</div></div>
+          <a class="card-link" id="marksEntryLink">Open marks entry <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card-body">
+          <div id="marksList" style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:12px;color:var(--ink-3);padding:14px;">Loading assessments…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ATTENDANCE TAB ────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="attendance">
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Attendance register</div><div class="card-sub" id="attRegisterSub">Recent days</div></div>
+          <a class="card-link" id="attMarkLink">Mark today <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap" style="border:none;box-shadow:none;">
+            <table class="tbl">
+              <thead><tr><th>Date</th><th class="r">Present</th><th class="r">Absent</th><th class="r">Late</th><th class="r">Marked</th><th class="r">Rate</th></tr></thead>
+              <tbody id="attBody"><tr><td colspan="6" style="padding:18px;color:var(--ink-3);">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PHOTOS TAB ────────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="photos">
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Learner photos</div><div class="card-sub" id="photoSub">Portraits and gallery</div></div>
+        </div>
+        <div class="card-body">
+          <div class="photo-grid" id="photoGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── COMMS TAB ─────────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="comms">
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Class broadcasts</div><div class="card-sub" id="commsSub">Sent to this class</div></div>
+          <button class="card-link" id="commsBroadcastBtn"><i class="fas fa-bullhorn"></i>New broadcast</button>
+        </div>
+        <div class="card-body">
+          <div id="commsList">
+            <div style="font-size:12px;color:var(--ink-3);padding:14px;">Loading broadcasts…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SETTINGS TAB ──────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="settings">
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Class settings</div><div class="card-sub">Edit class metadata · saved to the live database</div></div>
+        </div>
+        <div class="card-body">
+          <div class="s-row">
+            <div><div class="lbl">Class name</div><div class="help">Shown in roll calls, mark sheets and reports</div></div>
+            <input class="input" id="sName"/>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Grade level / display label</div><div class="help">Often the same as class name</div></div>
+            <input class="input" id="sGrade"/>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Class teacher</div><div class="help">Owns this class and its broadcasts</div></div>
+            <select class="input" id="sTeacher"><option value="">Unassigned</option></select>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Capacity</div><div class="help">Maximum learners this class can hold</div></div>
+            <input class="input" id="sCap" type="number" min="1"/>
+          </div>
+          <div class="s-row">
+            <div><div class="lbl">Report template</div><div class="help">Template used when generating report cards</div></div>
+            <input class="input" id="sTemplate" placeholder="e.g. Primary"/>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+            <button class="btn" id="sReset">Discard</button>
+            <button class="btn btn-primary" id="sSave"><i class="fas fa-check"></i>Save changes</button>
+          </div>
+
+          <div class="danger-zone">
+            <i class="fas fa-triangle-exclamation"></i>
+            <div class="dt"><b>Delete this class</b><br>The class must have no learners and no class-subject assignments. Learners must be moved or unassigned first.</div>
+            <button class="btn btn-danger" id="sDelete"><i class="fas fa-trash"></i>Delete class</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── Broadcast slide ───────────────────────────────────────── -->
+<div class="shroud" id="shroud"></div>
+<aside class="slide" id="bcSlide">
+  <div class="slide-head">
+    <div>
+      <div class="slide-title" id="bcTitle">Broadcast to class</div>
+      <div class="slide-sub" id="bcSub">—</div>
+    </div>
+    <button class="slide-close" onclick="Joy.closeSlide()"><i class="fas fa-xmark"></i></button>
+  </div>
+  <div class="slide-body">
+    <div class="field">
+      <label class="field-label">Audience</label>
+      <div class="aud-row">
+        <span class="aud-chip on" data-aud="parents"><i class="fas fa-check"></i>All parents</span>
+        <span class="aud-chip" data-aud="learners">Learners</span>
+        <span class="aud-chip" data-aud="all">Both</span>
+      </div>
+    </div>
+    <div class="field"><label class="field-label">Subject</label><input class="input" id="bcSubject" placeholder="A short, clear subject"/></div>
+    <div class="field"><label class="field-label">Message</label><textarea class="input textarea" id="bcBody" placeholder="Dear parents,&#10;&#10;…"></textarea></div>
+    <div class="field">
+      <label class="field-label">Channels</label>
+      <div class="chan-row">
+        <div class="chan-card on" data-ch="in-app"><i class="fas fa-mobile-screen"></i><div class="chan-info"><div class="chan-name">In-app</div><div class="chan-meta">Parent portal &amp; learner app</div></div><div class="chan-check"></div></div>
+        <div class="chan-card" data-ch="sms"><i class="fas fa-comment-sms"></i><div class="chan-info"><div class="chan-name">SMS</div><div class="chan-meta">Where phone is verified</div></div><div class="chan-check"></div></div>
+        <div class="chan-card" data-ch="email"><i class="fas fa-envelope"></i><div class="chan-info"><div class="chan-name">Email</div><div class="chan-meta">Where email is on file</div></div><div class="chan-check"></div></div>
+        <div class="chan-card" data-ch="whatsapp"><i class="fab fa-whatsapp"></i><div class="chan-info"><div class="chan-name">WhatsApp</div><div class="chan-meta">Coming soon</div></div><div class="chan-check"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-foot">
+    <span class="ct" id="bcFoot">Live save · Joyland database</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="Joy.closeSlide()">Cancel</button>
+      <button class="btn btn-primary" id="bcSend"><i class="fas fa-paper-plane"></i>Send</button>
+    </div>
+  </div>
+</aside>
+
+<script src="/admin/_shared/admin.js"></script>
+<script>
+const API = '/api/admin';
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/, '') + '%' : '—';
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'include', ...opts });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok || j.success === false) throw new Error(j.message || j.error || 'Request failed');
+  return j.data !== undefined ? j.data : j;
+}
+function gradeNum(name){ return (String(name).match(/\d+/) || [''])[0]; }
+function band(avg){ avg = Number(avg || 0); return avg >= 75 ? 'EE' : avg >= 60 ? 'ME' : avg >= 50 ? 'AE' : 'BE'; }
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function fmtDate(s){
+  if(!s) return '—';
+  const d = new Date(String(s).replace(' ', 'T'));
+  return isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+function csvCell(v){ const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
+const CLASS_ID = new URLSearchParams(location.search).get('id') || '1';
+let state = { cls:null, learners:[], staff:[], analysis:null, attendance:null, period:null, teachers:[], attRecords:[] };
+
+/* ── HERO ───────────────────────────────────────────────────────── */
+function renderHero(){
+  const c = state.cls;
+  if(!c) return;
+  document.title = c.name + ' · Joyland Admin';
+  document.querySelector('[data-mount="topbar"]')?.setAttribute('data-crumb', 'Classes · ' + c.name);
+  document.getElementById('hCrest').textContent = gradeNum(c.name) || c.name.slice(0,2).toUpperCase();
+  const termName = state.period?.term?.name || 'Current term';
+  const sessionName = state.period?.term?.session_name || '';
+  document.getElementById('hEyebrow').innerHTML =
+    '<span>' + esc(c.grade_level || c.name) + ' · ' + esc(c.template_name || 'Primary') + '</span>' +
+    (sessionName ? '<span>·</span><span>' + esc(sessionName) + '</span>' : '');
+  document.getElementById('hTitle').innerHTML = esc(c.name) + ' <em>· ' + esc(termName) + '</em>';
+  document.getElementById('hMeta').innerHTML =
+    '<span class="cls-meta-item"><i class="fas fa-users"></i><b>' + state.learners.length + '</b> learners</span>' +
+    '<span class="cls-meta-item"><div class="ava ava-sm" style="' + Joy.avaStyle(c.class_teacher_name || 'Unassigned') + '">' + Joy.initials(c.class_teacher_name || 'Unassigned') + '</div>Class teacher: <b>' + esc(c.class_teacher_name || 'Unassigned') + '</b></span>' +
+    '<span class="cls-meta-item"><i class="fas fa-book"></i><b>' + state.staff.length + '</b> subjects</span>' +
+    '<span class="cls-meta-item"><i class="fas fa-users-line"></i>Capacity <b>' + (c.capacity || '—') + '</b></span>';
+
+  /* Tab counts */
+  document.getElementById('tabRosterCount').textContent = state.learners.length;
+}
+
+/* ── STATS STRIP ────────────────────────────────────────────────── */
+function renderStats(){
+  const a = state.attendance || {};
+  const ranked = state.analysis?.ranked || [];
+  const risk = state.analysis?.needing_support || [];
+  const mean = ranked.length ? ranked.reduce((s,l) => s + Number(l.average || 0), 0) / ranked.length : null;
+  const top = ranked[0];
+
+  document.getElementById('kAtt').innerHTML = (a.present || 0) + '<span class="unit">/ ' + (a.total || state.learners.length) + '</span>';
+  document.getElementById('kAttSub').innerHTML = a.total ? '<i class="fas fa-circle-info"></i>' + pct(a.percent) + ' present today' : '<i class="fas fa-circle-info"></i>Not yet marked today';
+
+  document.getElementById('kMean').innerHTML = mean != null ? mean.toFixed(1) + '<span class="unit">%</span>' : '—';
+  document.getElementById('kMeanSub').innerHTML = mean != null
+    ? '<i class="fas fa-circle-info"></i>Band <b style="color:var(--ink);font-weight:700;">' + band(mean) + '</b> · ' + ranked.length + ' learners scored'
+    : '<i class="fas fa-circle-info"></i>No marks yet';
+
+  document.getElementById('kTop').textContent = top?.name || '—';
+  document.getElementById('kTopSub').innerHTML = top
+    ? '<i class="fas fa-medal"></i>' + pct(top.average) + ' · #1 of ' + ranked.length
+    : '<i class="fas fa-circle-info"></i>No marks yet';
+
+  document.getElementById('kRisk').innerHTML = risk.length + '<span class="unit">learners</span>';
+  document.getElementById('kRiskSub').innerHTML = risk.length
+    ? '<i class="fas fa-arrow-trend-down" style="color:var(--danger);"></i>Below ME band'
+    : '<i class="fas fa-check"></i>All on or above ME';
+}
+
+/* ── BANDS ──────────────────────────────────────────────────────── */
+function renderBands(){
+  const ranked = state.analysis?.ranked || [];
+  const counts = { EE:0, ME:0, AE:0, BE:0 };
+  ranked.forEach(l => counts[band(l.average)]++);
+  const total = ranked.length;
+  const rows = document.querySelectorAll('.band-row');
+  ['EE','ME','AE','BE'].forEach((b, i) => {
+    const r = rows[i]; if(!r) return;
+    const w = total ? Math.round(counts[b] / total * 100) : 0;
+    r.querySelector('.band-fill').style.width = w + '%';
+    r.querySelector('.band-pct').innerHTML = counts[b] + '<span class="of">/' + total + '</span>';
+  });
+  document.getElementById('bandsSub').textContent = total
+    ? total + ' learners scored · ' + (state.analysis?.display_term?.name || 'current term')
+    : 'No marks recorded yet';
+
+  /* Callout */
+  const callout = document.getElementById('bandsCallout');
+  if(total > 0){
+    const meAndAbove = counts.EE + counts.ME;
+    const pctME = Math.round(meAndAbove / total * 100);
+    callout.style.display = '';
+    callout.innerHTML = '<b style="color:var(--ink)">' + pctME + '%</b> at <b style="color:var(--d1)">ME</b> or above (' + meAndAbove + ' of ' + total + ' learners).';
+  } else {
+    callout.style.display = '';
+    callout.innerHTML = '<a href="/admin/marks.html?classId=' + CLASS_ID + '" style="color:var(--ink);font-weight:600;">Enter marks →</a> to populate the distribution.';
+  }
+}
+
+/* ── STAFF / TEACHING TEAM ──────────────────────────────────────── */
+function renderStaff(){
+  const list = document.getElementById('staffList');
+  document.getElementById('staffSub').textContent = state.staff.length + ' subject' + (state.staff.length === 1 ? '' : 's');
+  if(!state.staff.length){
+    list.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:12px;">No subjects assigned to this class yet. <a href="/admin/subjects.html" style="color:var(--ink);font-weight:600;">Assign subjects →</a></div>';
+    return;
+  }
+  list.innerHTML = state.staff.map(s => {
+    const tname = s.teacher_name || s.class_teacher_name || 'Unassigned';
+    const assigned = !!s.teacher_id;
+    return '<div class="staff-row">' +
+      '<div class="ava ava-md" style="' + Joy.avaStyle(tname) + '">' + Joy.initials(tname) + '</div>' +
+      '<div class="staff-info"><div class="staff-name">' + esc(s.subject_name || 'Subject') + '</div><div class="staff-meta">' + esc(tname) + '</div></div>' +
+      (assigned ? '' : '<span class="staff-chip" style="background:rgba(245,158,11,.10);color:var(--warn);">Unassigned</span>') +
+    '</div>';
+  }).join('');
+}
+
+/* ── HEATMAP (real records) ─────────────────────────────────────── */
+function renderHeatmap(){
+  const grid = document.getElementById('heatGrid');
+  grid.innerHTML = '';
+  /* Build a map of date → { present, total } from state.attRecords */
+  const recs = state.attRecords || [];
+  const total = state.learners.length || 1;
+  const byDate = new Map();
+  recs.forEach(r => byDate.set(r.date, r));
+
+  /* Render 14 columns × 5 rows, last column = today */
+  const today = new Date();
+  /* Find the latest weekday day */
+  const cells = []; /* [col][row] */
+  for(let col = 13; col >= 0; col--){
+    /* Walk back through weekdays only */
+    cells[col] = [];
+  }
+  /* Build a flat list of the last 14 school days (Mon-Fri) */
+  const schoolDays = [];
+  let cursor = new Date(today);
+  while(schoolDays.length < 14){
+    const dow = cursor.getDay(); /* 0 Sun, 6 Sat */
+    if(dow !== 0 && dow !== 6) schoolDays.unshift(new Date(cursor));
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  /* Render 5 rows × 14 cols: row=DoW(Mon..Fri), col=week-index */
+  /* For each schoolDay we know its dow → place into row dow-1 */
+  const m = {}; /* { 'YYYY-MM-DD': {dow, idx} } */
+  schoolDays.forEach((d, i) => { m[ymd(d)] = { dow: d.getDay() - 1, idx: i }; });
+  /* But to render rows of Mon..Fri across columns 0..13, we walk row × col */
+  for(let row = 0; row < 5; row++){
+    for(let col = 0; col < 14; col++){
+      const flatIdx = col; /* not used per row */
+      const cell = document.createElement('div');
+      cell.className = 'heat-cell heat-empty';
+      grid.appendChild(cell);
+    }
+  }
+  /* Now overlay real data */
+  const allCells = grid.querySelectorAll('.heat-cell');
+  schoolDays.forEach((d, i) => {
+    const rec = byDate.get(ymd(d));
+    if(!rec) return;
+    const present = Number(rec.present || 0);
+    const recTotal = Number(rec.marked || total);
+    const pctPresent = recTotal ? present / recTotal * 100 : 0;
+    const absent = Number(rec.absent || 0);
+    /* Cells are laid out row-major (row * 14 + col). We want col=i floor div 5? No — we want each schoolDay placed where it belongs */
+    /* Simpler: i goes 0..13 chronologically. Place at row = d.getDay()-1, col = floor(i/5)... but that won't align */
+    /* Cleanest: 14 cells, one per day, ignoring the day-of-week rows. Replace with 14-col strip. */
+    /* Just paint the cell at index i in a 14-wide strip — but our grid is 5 rows × 14 cols = 70 cells. Use row 0 only for clarity? */
+    /* Re-render: drop the 5×14 layout, use 1×14 strip with day-of-week label below each */
+    /* Keep it simple: paint i-th cell of the appropriate row */
+    const dow = d.getDay() - 1; if(dow < 0 || dow > 4) return;
+    /* Spread chronologically across columns by week index */
+    const weekIdx = Math.floor((schoolDays.length - 1 - i) / 5);
+    const col = 13 - weekIdx * 5 - (4 - dow);
+    /* Fall back to flat row=dow, col=i_for_that_dow */
+    const cellIdx = dow * 14 + Math.max(0, col);
+    const c = allCells[cellIdx];
+    if(!c) return;
+    let cls;
+    if(absent > 3) cls = 'heat-absent';
+    else if(pctPresent >= 95) cls = 'heat-l4';
+    else if(pctPresent >= 85) cls = 'heat-l3';
+    else if(pctPresent >= 70) cls = 'heat-l2';
+    else if(pctPresent > 0)   cls = 'heat-l1';
+    else cls = 'heat-absent';
+    c.className = 'heat-cell ' + cls;
+    c.title = fmtDate(ymd(d)) + ' · ' + present + '/' + recTotal + ' present (' + Math.round(pctPresent) + '%)';
+  });
+  document.getElementById('heatSub').textContent = recs.length + ' day' + (recs.length === 1 ? '' : 's') + ' of attendance recorded';
+}
+
+/* ── THIS WEEK (real calendar events) ───────────────────────────── */
+async function renderWeek(){
+  const today = new Date();
+  const weekEnd = new Date(today.getTime() + 7 * 86400000);
+  const TYPE_TAG = { assess:'Assess', event:'Event', meet:'Meet', term:'Term', hol:'Holiday' };
+  try {
+    const events = await api(API + '/calendar/events?from=' + ymd(today) + '&to=' + ymd(weekEnd) + '&classId=' + CLASS_ID);
+    const list = document.getElementById('weekList');
+    if(!events.length){
+      list.innerHTML = '<div style="font-size:11.5px;color:var(--ink-3);padding:8px;line-height:1.5;">No events this week.</div>';
+      return;
+    }
+    list.innerHTML = events.slice(0, 5).map(e => {
+      const d = new Date((e.date || '') + 'T00:00:00');
+      return '<div class="up-row">' +
+        '<div class="up-date"><span class="d">' + (isNaN(d) ? '—' : d.getDate()) + '</span><span class="m">' + (isNaN(d) ? '' : d.toLocaleDateString('en-GB',{month:'short'}).toUpperCase()) + '</span></div>' +
+        '<div class="up-info"><div class="up-name">' + esc(e.title) + '</div>' + (e.description ? '<div class="up-meta">' + esc(e.description) + '</div>' : '') + '</div>' +
+        '<span class="up-tag ' + (e.type || 'event') + '">' + (TYPE_TAG[e.type] || 'Event') + '</span>' +
+      '</div>';
+    }).join('');
+  } catch(e){
+    document.getElementById('weekList').innerHTML = '<div style="font-size:11.5px;color:var(--ink-3);padding:8px;">Couldn\'t load events.</div>';
+  }
+}
+
+/* ── TOP / RISK LISTS ───────────────────────────────────────────── */
+function renderRankLists(){
+  const top = (state.analysis?.ranked || []).slice(0, 5);
+  const risk = (state.analysis?.needing_support || []).slice(0, 5);
+  const topEl = document.getElementById('topList');
+  const riskEl = document.getElementById('riskList');
+  topEl.innerHTML = top.length ? top.map((l, i) => {
+    const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    return '<a class="rank-row" href="/admin/people.html?learner=' + l.id + '">' +
+      '<span class="rank-pos ' + cls + '">' + (i+1) + '</span>' +
+      '<div class="ava ava-md" style="' + Joy.avaStyle(l.name) + '">' + Joy.initials(l.name) + '</div>' +
+      '<div class="rank-info"><div class="rank-name">' + esc(l.name) + '</div><div class="rank-meta">' + band(l.average) + ' band · ' + (l.subject_count || 0) + ' subjects</div></div>' +
+      '<span class="rank-stat">' + pct(l.average) + '</span></a>';
+  }).join('') : '<div style="padding:12px;color:var(--ink-3);font-size:12.5px;">No marks recorded yet.</div>';
+  riskEl.innerHTML = risk.length ? risk.map((l, i) =>
+    '<a class="rank-row" href="/admin/people.html?learner=' + l.id + '">' +
+      '<div class="ava ava-md" style="' + Joy.avaStyle(l.name) + '">' + Joy.initials(l.name) + '</div>' +
+      '<div class="rank-info"><div class="rank-name">' + esc(l.name) + '</div><div class="rank-meta">' + band(l.average) + ' band</div></div>' +
+      '<span class="rank-stat" style="color:var(--danger);">' + pct(l.average) + '</span></a>'
+  ).join('') : '<div style="padding:12px;color:var(--ink-3);font-size:12.5px;">All learners are on or above ME — well done.</div>';
+}
+
+/* ── ROSTER TAB ─────────────────────────────────────────────────── */
+function renderRoster(){
+  const q = (document.getElementById('rosterSearch')?.value || '').toLowerCase();
+  const rows = state.learners.filter(l => {
+    if(!q) return true;
+    return [l.name, l.admission_no, l.user_id].join(' ').toLowerCase().includes(q);
+  });
+  document.getElementById('rosterCount').textContent = rows.length + ' of ' + state.learners.length;
+  const body = document.getElementById('rosterBody');
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="6" style="padding:18px;color:var(--ink-3);">No learners match this filter.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map(l => {
+    const dob = l.date_of_birth ? fmtDate(l.date_of_birth) : '—';
+    return '<tr>' +
+      '<td><div class="person"><div class="ava ava-md" style="' + Joy.avaStyle(l.name) + '">' + Joy.initials(l.name) + '</div><div><div style="font-weight:600;color:var(--ink);font-size:13px;">' + esc(l.name) + '</div></div></div></td>' +
+      '<td><span class="mono" style="font-size:11.5px;color:var(--ink-2);">' + esc(l.admission_no || l.user_id || '—') + '</span></td>' +
+      '<td>' + esc(l.sex || '—') + '</td>' +
+      '<td>' + esc(dob) + '</td>' +
+      '<td><span class="status status-' + (l.status || 'active') + '">' + (l.status || 'active').charAt(0).toUpperCase() + (l.status || 'active').slice(1) + '</span></td>' +
+      '<td class="r"><a href="/admin/people.html?learner=' + l.id + '" class="btn btn-sm btn-icon"><i class="fas fa-arrow-right"></i></a></td>' +
+    '</tr>';
+  }).join('');
+}
+
+/* ── MARKS TAB ──────────────────────────────────────────────────── */
+async function renderMarks(){
+  document.getElementById('marksEntryLink').href = '/admin/marks.html?classId=' + CLASS_ID;
+  try {
+    const all = await api(API + '/assessment-components').catch(() => []);
+    const rows = (all || []).filter(a => String(a.class_id) === String(CLASS_ID));
+    const list = document.getElementById('marksList');
+    document.getElementById('marksSub').textContent = rows.length + ' assessment' + (rows.length === 1 ? '' : 's') + ' for this class';
+    if(!rows.length){
+      list.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;line-height:1.6;">No assessments created yet. <a href="/admin/assessments.html" style="color:var(--ink);font-weight:600;">Create one →</a></div>';
+      return;
+    }
+    list.innerHTML = rows.map(a => {
+      const done = Number(a.done || 0), total = Number(a.total || 0);
+      const w = total ? Math.round(done / total * 100) : 0;
+      const stage = total && done >= total ? 'Published' : done > 0 ? 'Marking' : 'Open';
+      const title = (a.assessment_type === 'midterm' ? 'Midterm · ' : 'Endterm · ') + (a.component_name || 'Assessment');
+      return '<a href="/admin/marks.html?classId=' + CLASS_ID + '&subjectId=' + a.subject_id + '&assessmentType=' + a.assessment_type + '" style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--surface-2);border-radius:10px;text-decoration:none;color:inherit;">' +
+        '<div class="feed-icon or" style="width:32px;height:32px;font-size:12px;flex-shrink:0;background:rgba(245,158,11,.10);color:var(--warn);border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="fas fa-clipboard-list"></i></div>' +
+        '<div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--ink);">' + esc(title) + '</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;font-family:var(--mono);">' + esc(a.subject_name || 'Subject') + ' · ' + done + '/' + total + ' scored</div></div>' +
+        '<span class="status status-' + (stage === 'Published' ? 'active' : stage === 'Marking' ? 'pending' : 'inactive') + '">' + stage + '</span>' +
+        '<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);min-width:50px;text-align:right;">' + (a.mean != null ? pct(a.mean) : '—') + '</span>' +
+      '</a>';
+    }).join('');
+  } catch(e){
+    document.getElementById('marksList').innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;">Couldn\'t load assessments.</div>';
+  }
+}
+
+/* ── ATTENDANCE TAB ─────────────────────────────────────────────── */
+function renderAttendance(){
+  document.getElementById('attMarkLink').href = '/admin/attendance.html?classId=' + CLASS_ID;
+  const body = document.getElementById('attBody');
+  const recs = state.attRecords || [];
+  document.getElementById('attRegisterSub').textContent = recs.length + ' day' + (recs.length === 1 ? '' : 's') + ' recorded';
+  if(!recs.length){
+    body.innerHTML = '<tr><td colspan="6" style="padding:18px;color:var(--ink-3);"><a href="/admin/attendance.html?classId=' + CLASS_ID + '" style="color:var(--ink);font-weight:600;">Mark attendance →</a> No records yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = recs.map(r => {
+    const m = Number(r.marked || 0);
+    const p = Number(r.present || 0);
+    const a = Number(r.absent || 0);
+    const l = Number(r.late || 0);
+    const rate = m ? Math.round(p / m * 100) : 0;
+    return '<tr>' +
+      '<td><b style="color:var(--ink);">' + fmtDate(r.date) + '</b></td>' +
+      '<td class="r" style="color:var(--ok);">' + p + '</td>' +
+      '<td class="r" style="color:var(--danger);">' + a + '</td>' +
+      '<td class="r" style="color:var(--warn);">' + l + '</td>' +
+      '<td class="r">' + m + '</td>' +
+      '<td class="r"><b>' + rate + '%</b></td>' +
+    '</tr>';
+  }).join('');
+}
+
+/* ── PHOTOS TAB ─────────────────────────────────────────────────── */
+async function renderPhotos(){
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;">Loading…</div>';
+  /* Pull each learner's profile to get portrait_path + photos count.
+     We only fetch on demand (when tab opens) to avoid N calls on every page load. */
+  try {
+    const profiles = await Promise.all(state.learners.slice(0, 24).map(l =>
+      api(API + '/learners/' + l.id + '/profile').then(p => ({ id:l.id, name:l.name, profile:p })).catch(() => ({ id:l.id, name:l.name, profile:null }))
+    ));
+    let totalPhotos = 0;
+    grid.innerHTML = profiles.map(({ id, name, profile }) => {
+      const portrait = profile?.learner?.portrait_path;
+      const photos = (profile?.photos || []).length;
+      totalPhotos += photos + (portrait ? 1 : 0);
+      return '<a class="photo-tile" href="/admin/people.html?learner=' + id + '" style="text-decoration:none;color:inherit;">' +
+        '<div class="photo-thumb" style="' + (portrait ? '' : 'background:linear-gradient(135deg,' + Joy.avaStyle(name).replace('background:','').replace(';','') + ');color:#fff;') + '">' +
+          (portrait ? '<img src="' + esc(portrait) + '" alt="' + esc(name) + '"/>' : Joy.initials(name)) +
+        '</div>' +
+        '<div class="photo-meta"><div class="photo-name">' + esc(name) + '</div><div class="photo-count"><i class="fas fa-camera"></i> ' + (portrait ? '1 portrait' : 'No portrait') + (photos ? ' · ' + photos + ' photos' : '') + '</div></div>' +
+      '</a>';
+    }).join('') + (state.learners.length > 24
+      ? '<div style="grid-column:1/-1;font-size:11.5px;color:var(--ink-3);padding:10px;text-align:center;">Showing first 24 of ' + state.learners.length + ' learners.</div>'
+      : '');
+    document.getElementById('tabPhotoCount').textContent = totalPhotos;
+    document.getElementById('photoSub').textContent = totalPhotos + ' photo' + (totalPhotos === 1 ? '' : 's') + ' across ' + profiles.length + ' learners';
+  } catch(e){
+    grid.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;">Couldn\'t load photos.</div>';
+  }
+}
+
+/* ── COMMS TAB ──────────────────────────────────────────────────── */
+async function renderComms(){
+  const list = document.getElementById('commsList');
+  try {
+    const data = await api('/api/notifications?role=admin&type=broadcast&limit=20').catch(() => []);
+    const rows = (Array.isArray(data) ? data : data.notifications || []).filter(n =>
+      String(n.target_class_id) === String(CLASS_ID) ||
+      String(n.audience || '').includes('class:' + CLASS_ID)
+    );
+    document.getElementById('commsSub').textContent = rows.length + ' broadcast' + (rows.length === 1 ? '' : 's') + ' sent to this class';
+    if(!rows.length){
+      list.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;line-height:1.6;">No broadcasts sent to this class yet.<br><a href="#" id="firstBcLink" style="color:var(--ink);font-weight:600;">Send the first one →</a></div>';
+      document.getElementById('firstBcLink')?.addEventListener('click', e => { e.preventDefault(); openBroadcast(); });
+      return;
+    }
+    list.innerHTML = rows.map(n => {
+      return '<div class="bc-card">' +
+        '<div class="bc-head">' +
+          '<div class="bc-icon"><i class="fas fa-bullhorn"></i></div>' +
+          '<div class="bc-info"><div class="bc-title">' + esc(n.title) + '</div><div class="bc-sub">' + fmtDate(n.sent_at || n.created_at) + ' · by ' + esc(n.created_by_role || 'admin') + '</div></div>' +
+        '</div>' +
+        '<div class="bc-body">' + esc((n.body || '').slice(0, 200)) + (((n.body || '').length > 200) ? '…' : '') + '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e){
+    list.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;">Couldn\'t load broadcasts.</div>';
+  }
+}
+
+/* ── SETTINGS TAB ───────────────────────────────────────────────── */
+function renderSettings(){
+  const c = state.cls; if(!c) return;
+  document.getElementById('sName').value = c.name || '';
+  document.getElementById('sGrade').value = c.grade_level || '';
+  document.getElementById('sCap').value = c.capacity || 40;
+  document.getElementById('sTemplate').value = c.template_name || '';
+  /* Fill teacher dropdown */
+  const sel = document.getElementById('sTeacher');
+  sel.innerHTML = '<option value="">Unassigned</option>' +
+    state.teachers.map(t => '<option value="' + t.id + '"' + (String(t.id) === String(c.class_teacher_id) ? ' selected' : '') + '>' + esc(t.name) + '</option>').join('');
+}
+document.getElementById('sReset')?.addEventListener('click', renderSettings);
+document.getElementById('sSave')?.addEventListener('click', async () => {
+  const btn = document.getElementById('sSave');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+  try {
+    await api(API + '/classes/' + CLASS_ID, {
+      method:'PUT', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('sName').value.trim(),
+        grade_level: document.getElementById('sGrade').value.trim(),
+        capacity: parseInt(document.getElementById('sCap').value, 10) || 40,
+        class_teacher_id: document.getElementById('sTeacher').value || null,
+        template_name: document.getElementById('sTemplate').value.trim() || null
+      })
+    });
+    Joy.toast('Class updated');
+    await load(); /* reload everything */
+  } catch(e){
+    Joy.toast(e.message || "Couldn't save", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Save changes';
+  }
+});
+document.getElementById('sDelete')?.addEventListener('click', async () => {
+  if(!confirm('Delete ' + state.cls.name + ' permanently?\n\nThis cannot be undone. The class must have no learners and no subject assignments.')) return;
+  try {
+    await api(API + '/classes/' + CLASS_ID, { method:'DELETE' });
+    Joy.toast('Class deleted');
+    setTimeout(() => location.href = '/admin/classes.html', 800);
+  } catch(e){
+    Joy.toast(e.message || "Couldn't delete", { type:'danger' });
+  }
+});
+
+/* ── TABS ───────────────────────────────────────────────────────── */
+const tabLoaders = {
+  overview:  () => { /* already in main load() */ },
+  roster:    renderRoster,
+  marks:     renderMarks,
+  attendance:renderAttendance,
+  photos:    renderPhotos,
+  comms:     renderComms,
+  settings:  renderSettings
+};
+const tabLoaded = new Set(['overview']);
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  const key = t.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('show'));
+  document.querySelector('[data-panel="' + key + '"]')?.classList.add('show');
+  if(!tabLoaded.has(key)){
+    tabLoaders[key]?.();
+    tabLoaded.add(key);
+  }
+}));
+document.getElementById('rosterSearch')?.addEventListener('input', renderRoster);
+
+/* ── EXPORT + PRINT ─────────────────────────────────────────────── */
+function downloadCsv(name, lines){
+  const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function exportRoster(){
+  const lines = ['Name,Admission No,Sex,DOB,Status'];
+  state.learners.forEach(l => {
+    lines.push([l.name, l.admission_no || l.user_id || '', l.sex || '', l.date_of_birth || '', l.status || 'active'].map(csvCell).join(','));
+  });
+  downloadCsv((state.cls?.name || 'class').toLowerCase().replace(/\s+/g, '-') + '-roster.csv', lines);
+  Joy.toast('Roster downloaded');
+}
+document.getElementById('exportBtn').addEventListener('click', exportRoster);
+document.getElementById('rosterCsvBtn').addEventListener('click', exportRoster);
+document.getElementById('rosterPrintBtn').addEventListener('click', () => {
+  /* Switch to roster tab and trigger browser print */
+  document.querySelector('.tab[data-tab="roster"]')?.click();
+  setTimeout(() => window.print(), 300);
+});
+
+/* ── BROADCAST SLIDE ────────────────────────────────────────────── */
+function openBroadcast(){
+  const c = state.cls;
+  document.getElementById('bcTitle').textContent = 'Broadcast to ' + c.name;
+  document.getElementById('bcSub').textContent = state.learners.length + ' learners in this class';
+  document.getElementById('bcSubject').value = '';
+  document.getElementById('bcBody').value = '';
+  Joy.openSlide('bcSlide');
+}
+document.getElementById('broadcastBtn').addEventListener('click', openBroadcast);
+document.getElementById('commsBroadcastBtn').addEventListener('click', openBroadcast);
+
+document.querySelectorAll('.chan-card').forEach(c => c.addEventListener('click', () => c.classList.toggle('on')));
+document.querySelectorAll('.aud-chip').forEach(c => c.addEventListener('click', () => {
+  c.parentElement.querySelectorAll('.aud-chip').forEach(x => x.classList.remove('on'));
+  c.classList.add('on');
+}));
+
+document.getElementById('bcSend').addEventListener('click', async () => {
+  const title = document.getElementById('bcSubject').value.trim();
+  const body = document.getElementById('bcBody').value.trim();
+  if(!title || !body){ Joy.toast('Subject and message are required', { type:'warn' }); return; }
+  const aud = document.querySelector('.aud-chip.on')?.dataset.aud || 'parents';
+  const channels = [...document.querySelectorAll('.chan-card.on')].map(c => c.dataset.ch);
+  if(!channels.length){ Joy.toast('Pick at least one channel', { type:'warn' }); return; }
+  const btn = document.getElementById('bcSend');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+  try {
+    await fetch('/api/notifications', {
+      method:'POST', credentials:'include',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ title, body, audience: 'class:' + CLASS_ID + ':' + aud, target_class_id: Number(CLASS_ID), channels, type:'broadcast' })
+    }).then(r => r.json()).then(j => { if(j.success === false) throw new Error(j.message); });
+    Joy.closeSlide();
+    Joy.toast('Broadcast sent');
+    tabLoaded.delete('comms'); /* force refresh on next open */
+  } catch(e){
+    Joy.toast(e.message || "Couldn't send", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>Send';
+  }
+});
+
+/* ── MAIN LOAD ──────────────────────────────────────────────────── */
+async function load(){
+  try {
+    const [classes, roster, analysisAll, staff, attendance, period, teachers, attendanceHistory] = await Promise.all([
+      api(API + '/classes'),
+      api(API + '/classes/' + CLASS_ID + '/learners'),
+      api(API + '/marks/analysis'),
+      api(API + '/class-subjects?classId=' + CLASS_ID),
+      api(API + '/attendance/summary?range=today&classId=' + CLASS_ID).catch(() => ({ present:0, absent:0, late:0, total:0, percent:0 })),
+      api(API + '/current-period').catch(() => ({})),
+      api(API + '/teachers').catch(() => []),
+      /* Last 14 days attendance history — derived via per-day calls */
+      Promise.all(Array.from({length: 21}, (_, i) => {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const dStr = ymd(d);
+        return api(API + '/attendance/summary?date=' + dStr + '&classId=' + CLASS_ID)
+          .then(r => ({ date: dStr, ...r }))
+          .catch(() => null);
+      })).then(arr => arr.filter(r => r && r.marked > 0))
+    ]);
+    state.cls = classes.find(c => String(c.id) === String(CLASS_ID));
+    if(!state.cls){
+      document.querySelector('.content').innerHTML = '<div class="empty"><div class="et">Class not found</div><div class="ed">It may have been deleted. <a href="/admin/classes.html">Back to classes</a>.</div></div>';
+      return;
+    }
+    state.learners = roster.learners || [];
+    state.staff = staff || [];
+    state.analysis = (analysisAll.classes || []).find(c => String(c.class_id) === String(CLASS_ID));
+    state.attendance = attendance;
+    state.period = period;
+    state.teachers = teachers;
+    state.attRecords = attendanceHistory || [];
+
+    renderHero();
+    renderStats();
+    renderBands();
+    renderStaff();
+    renderHeatmap();
+    renderWeek();
+    renderRankLists();
+  } catch(e){
+    console.error(e);
+    Joy.toast("Couldn't load class", { type:'danger' });
+  }
+}
+load();
+</script>
+</body>
+</html>

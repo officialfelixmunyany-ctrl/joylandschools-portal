@@ -21,6 +21,7 @@ app.set('etag', false);
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const liveClients = new Set();
 let liveEventId = 0;
+let devRefreshTimer = null;
 
 function noStore(res) {
   res.set({
@@ -95,6 +96,36 @@ function liveSyncMutationMiddleware(source) {
   };
 }
 
+function startDevRefreshWatcher() {
+  if (process.env.PORTAL_DEV_REFRESH !== '1') return;
+  const watchedDirs = [
+    path.join(PUBLIC_DIR, 'admin'),
+    path.join(PUBLIC_DIR, 'app')
+  ].filter((dir) => fs.existsSync(dir));
+  const ignored = /(?:^|[\\/])uploads[\\/]|\.map$|\.tmp$|\.bak$|~$/i;
+  watchedDirs.forEach((dir) => {
+    try {
+      fs.watch(dir, { recursive:true }, (eventType, fileName) => {
+        if (!fileName || ignored.test(String(fileName))) return;
+        clearTimeout(devRefreshTimer);
+        devRefreshTimer = setTimeout(() => {
+          broadcastPortalUpdate({
+            source:'dev-watch',
+            kind:'dev-refresh',
+            method:eventType,
+            path:String(fileName).replace(/\\/g, '/')
+          });
+        }, 250);
+      });
+    } catch (err) {
+      console.warn('[WARN] Dev refresh watcher could not watch', dir, err.message);
+    }
+  });
+  if (watchedDirs.length) {
+    console.log('[DEV] Soft browser refresh enabled for public/admin and public/app changes.');
+  }
+}
+
 app.get(['/app/v2', '/app/v2/'], (req, res) => {
   noStore(res);
   res.redirect(302, '/app/');
@@ -152,6 +183,22 @@ app.get(/^\/app(\/|$)/, (req, res, next) => {
   res.sendFile(path.join(PUBLIC_DIR, 'app', fileName));
 });
 
+// Guard the admin shell (HTML, CSS, JS, shared assets) before the static handler.
+// APIs under /api/admin are already protected by adminRoutes middleware; this stops
+// anonymous users from loading the UI shell at /admin/overview.html etc.
+app.use('/admin', (req, res, next) => {
+  const roleUser = req.session.roleUsers?.admin
+    || (req.session.user?.role === 'admin' || req.session.user?.is_admin === 1 ? req.session.user : null);
+  if (!roleUser) {
+    // For JSON/asset requests, fail cleanly with 401; for HTML, redirect to login.
+    const accept = String(req.headers.accept || '');
+    if (accept.includes('application/json')) return res.status(401).json({ success:false, message:'Unauthorized' });
+    return res.redirect('/');
+  }
+  req.session.user = roleUser;
+  next();
+});
+
 app.use(express.static(PUBLIC_DIR, {
   etag: false,
   lastModified: false,
@@ -176,7 +223,7 @@ function guardPage(role) {
       : (req.session.roleUsers?.[role] || (req.session.user?.role === role ? req.session.user : null));
     if (!roleUser) return res.redirect('/');
     req.session.user = roleUser;
-    if (role === 'admin') return sendNoStoreHtml(res, 'admin.html');
+    if (role === 'admin') return res.redirect('/admin/overview.html');
     if (role === 'teacher') return sendNoStoreHtml(res, 'teacher.html');
     if (role === 'learner') return sendNoStoreHtml(res, 'learner.html');
     res.redirect('/');
@@ -199,6 +246,7 @@ app.get('/teacher', guardPage('teacher'));
 app.get('/learner', guardPage('learner'));
 
 initDatabase();
+startDevRefreshWatcher();
 
 function getLanAddresses() {
   const interfaces = os.networkInterfaces();
@@ -244,4 +292,3 @@ app.listen(PORT, HOST, () => {
   console.log(' Admin login: ADM001 / admin123');
   console.log('============================================================\n');
 });
-
