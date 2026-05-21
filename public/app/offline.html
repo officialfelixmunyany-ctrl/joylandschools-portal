@@ -27,13 +27,13 @@ button:active{transform:scale(.98)}
 <main class="panel">
   <div class="logo"><img src="/uploads/school/logo.jpg" alt="School logo"></div>
   <h1>Cannot Connect To Daraja</h1>
-  <p>The app could not reach the school portal server. Make sure the portal is running and this phone is on the school Wi-Fi.</p>
-  <div class="status"><span class="dot"></span><span id="status-text">Waiting for the school server...</span></div>
+  <p>The app could not reach the live school portal. Check your internet connection, then try again.</p>
+  <div class="status"><span class="dot"></span><span id="status-text">Waiting for the live school portal...</span></div>
   <button type="button" onclick="retry()">Try Again</button>
-  <div class="hint">Server: <strong>192.168.8.158:3000</strong></div>
+  <div class="hint">Server: <strong>136.112.61.134</strong></div>
 </main>
 <script>
-const APP_URL = 'http://192.168.8.158:3000/app/';
+const APP_URL = 'http://136.112.61.134/app/';
 let attempts = 0;
 
 function retry(){
@@ -44,8 +44,8 @@ function retry(){
 setInterval(() => {
   attempts += 1;
   document.getElementById('status-text').textContent = attempts % 2
-    ? 'Checking the school Wi-Fi...'
-    : 'Waiting for the school server...';
+    ? 'Checking the live school portal...'
+    : 'Waiting for the live school portal...';
 }, 2500);
 </script>
 </body>
