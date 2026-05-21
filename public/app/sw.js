@@ -1,4 +1,4 @@
-const CACHE = 'daraja-shell-v3';
+const CACHE = 'daraja-shell-v4';
 const SHELL_ASSETS = [
   '/app/',
   '/app/index.html',

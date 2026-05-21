@@ -204,56 +204,43 @@ function renderPublicHome(){
   screen.classList.add('active');
   const school = state.school || {};
   screen.innerHTML = `
-    <div class="public-hero">
-      <div class="hero-orbit" aria-hidden="true"></div>
-      <div class="row-between public-top">
-        <div class="brand-lockup">
-          <div class="brand-logo">${school.school_logo ? `<img src="${esc(school.school_logo)}" alt="">` : '<i data-lucide="graduation-cap"></i>'}</div>
-          <div>
-            <div class="hero-eyebrow">${esc((school.school_name || 'Joyland Schools').toUpperCase())}</div>
-            <div class="trust-note"><i data-lucide="shield"></i> Protected school access</div>
+    <div class="scroll no-nav public-home">
+      <section class="public-hero">
+        <div class="hero-orbit" aria-hidden="true"></div>
+        <div class="public-top">
+          <div class="brand-lockup">
+            <div class="brand-logo">${school.school_logo ? `<img src="${esc(school.school_logo)}" alt="">` : '<i data-lucide="graduation-cap"></i>'}</div>
+            <div>
+              <div class="hero-eyebrow">${esc((school.school_name || 'Joyland Schools').toUpperCase())}</div>
+              <div class="trust-note"><i data-lucide="shield"></i> Protected school access</div>
+            </div>
           </div>
         </div>
-        <button class="btn sm glass-btn" onclick="renderLogin()"><i data-lucide="log-in"></i> Sign in</button>
-      </div>
-      <div class="hero-greet">A calmer bridge<br>between <em>school &amp; home.</em></div>
-      <div class="hero-sub">Official records, daily learning signals, teacher workflows and parent updates in one secure mobile experience.</div>
-      <div class="trust-strip" aria-label="Trust signals">
-        <span><i data-lucide="lock"></i> Secure sessions</span>
-        <span><i data-lucide="file-check"></i> Official records</span>
-        <span><i data-lucide="wifi"></i> Offline-ready resources</span>
-      </div>
-    </div>
-    <div class="scroll no-nav pad public-scroll">
-      <div class="lift stack-gap experience-stack">
-        <div class="signin-card">
-          <div>
-            <div class="section-label">Your school workspace</div>
-            <h2>Choose your role after sign-in.</h2>
-            <p>Learners, parents and teachers see only the records and workflows assigned to their account.</p>
-          </div>
-          <button class="btn primary block" onclick="renderLogin()"><i data-lucide="log-in"></i> Continue securely</button>
+        <div class="public-copy">
+          <div class="hero-greet">School and home,<br><em>in one secure app.</em></div>
+          <div class="hero-sub">Official learner records, attendance, teacher updates and parent access for the Joyland community.</div>
         </div>
-        <div class="signal-grid">
-          <div class="signal-card">
+        <button class="btn primary public-cta" onclick="renderLogin()"><i data-lucide="log-in"></i> Sign in securely</button>
+        <div class="trust-strip" aria-label="Trust signals">
+          <span><i data-lucide="lock"></i> Secure</span>
+          <span><i data-lucide="file-check"></i> Official</span>
+          <span><i data-lucide="wifi"></i> Offline-ready</span>
+        </div>
+      </section>
+      <section class="public-panel experience-stack">
+        <div class="section-label">After sign-in</div>
+        <div class="public-signals">
+          <div class="signal-row">
             <span class="signal-icon green"><i data-lucide="trending-up"></i></span>
-            <b>Progress</b>
-            <span>Published marks, skills and report context.</span>
+            <div><b>Progress</b><span>Marks, skills and report context.</span></div>
           </div>
-          <div class="signal-card">
+          <div class="signal-row">
             <span class="signal-icon gold"><i data-lucide="calendar-check"></i></span>
-            <b>Attendance</b>
-            <span>Daily presence and class routines.</span>
+            <div><b>Attendance</b><span>Daily presence and class routines.</span></div>
           </div>
-          <div class="signal-card">
+          <div class="signal-row">
             <span class="signal-icon blue"><i data-lucide="school"></i></span>
-            <b>Teaching</b>
-            <span>Today-first queues for school work.</span>
-          </div>
-          <div class="signal-card">
-            <span class="signal-icon rose"><i data-lucide="book-open"></i></span>
-            <b>Resources</b>
-            <span>Learning materials for revision and support.</span>
+            <div><b>Teacher workflow</b><span>Today-first class queues.</span></div>
           </div>
         </div>
         <div class="confidence-card">
