@@ -1,7 +1,19 @@
-const CACHE = 'daraja-f7-app-v1';
+const CACHE = 'daraja-shell-v3';
+const SHELL_ASSETS = [
+  '/app/',
+  '/app/index.html',
+  '/app/daraja.css',
+  '/app/daraja.js',
+  '/vendor/lucide/lucide.min.js'
+];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(SHELL_ASSETS))
+      .catch(() => {})
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', event => {
@@ -17,11 +29,18 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/api/')) return;
+  if (url.pathname.startsWith('/uploads/')) return;
 
   event.respondWith(
-    fetch(event.request, { cache: 'no-store' })
-      .then(response => response)
-      .catch(() => caches.match(event.request))
+    fetch(event.request)
+      .then(response => {
+        if (response && response.ok && SHELL_ASSETS.includes(url.pathname)) {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request).then(match => match || caches.match('/app/index.html')))
   );
 });
 

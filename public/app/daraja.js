@@ -46,7 +46,7 @@ const UI = {
     const wrap = $('#toast-wrap');
     const t = document.createElement('div');
     t.className = 'toast ' + type;
-    t.innerHTML = (type === 'ok' ? '<i class="fas fa-check"></i>' : type === 'danger' ? '<i class="fas fa-triangle-exclamation"></i>' : '') + '<span>' + esc(msg) + '</span>';
+    t.innerHTML = (type === 'ok' ? '<i data-lucide="check"></i>' : type === 'danger' ? '<i data-lucide="triangle-alert"></i>' : '') + '<span>' + esc(msg) + '</span>';
     wrap.appendChild(t);
     requestAnimationFrame(() => t.classList.add('on'));
     setTimeout(() => { t.classList.remove('on'); setTimeout(() => t.remove(), 320); }, 2600);
@@ -66,7 +66,7 @@ const UI = {
 
 function appbar({ title = 'Daraja', back = false, action = '' } = {}){
   return `<div class="appbar">
-    ${back ? `<button class="appbar-btn" onclick="Router.pop()"><i class="fas fa-arrow-left"></i></button>` : ''}
+    ${back ? `<button class="appbar-btn" onclick="Router.pop()"><i data-lucide="arrow-left"></i></button>` : ''}
     <div class="appbar-title">${esc(title)}</div>
     ${action}
   </div>`;
@@ -74,11 +74,11 @@ function appbar({ title = 'Daraja', back = false, action = '' } = {}){
 const skelBlock = (h, mt = 0) => `<div class="skel" style="height:${h}px;${mt ? 'margin-top:' + mt + 'px;' : ''}"></div>`;
 function loadingScroll(){ return `<div class="scroll pad stack-gap">${skelBlock(120)}${skelBlock(70)}${skelBlock(150)}</div>`; }
 function emptyState(icon, title, msg){
-  return `<div class="empty"><div class="ic"><i class="fas ${icon}"></i></div><h3>${esc(title)}</h3><p>${esc(msg)}</p></div>`;
+  return `<div class="empty"><div class="ic"><i data-lucide="${icon}"></i></div><h3>${esc(title)}</h3><p>${esc(msg)}</p></div>`;
 }
 function errorState(msg, retryFn){
-  return `<div class="empty"><div class="ic"><i class="fas fa-cloud-exclamation"></i></div><h3>Couldn't load</h3>
-    <p>${esc(msg || 'Please try again.')}</p>${retryFn ? `<button class="btn ghost sm mt5" onclick="${retryFn}"><i class="fas fa-rotate"></i> Retry</button>` : ''}</div>`;
+  return `<div class="empty"><div class="ic"><i data-lucide="cloud-off"></i></div><h3>Couldn't load</h3>
+    <p>${esc(msg || 'Please try again.')}</p>${retryFn ? `<button class="btn ghost sm mt5" onclick="${retryFn}"><i data-lucide="rotate-cw"></i> Retry</button>` : ''}</div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -95,7 +95,7 @@ const Router = {
     const inner = $('#tabbar-inner');
     inner.innerHTML = `<div class="tab-pill" id="tab-pill"></div>` +
       tabs.map((t, i) => `<button class="tab" data-i="${i}" onclick="Router.go('${t.id}')">
-        <i class="fas ${t.icon}"></i><span>${esc(t.label)}</span></button>`).join('');
+        <i data-lucide="${t.icon}"></i><span>${esc(t.label)}</span></button>`).join('');
     $('#tabbar').classList.toggle('hide', tabs.length === 0);
     if (tabs.length) this.go(tabs[0].id);
   },
@@ -161,6 +161,22 @@ function hideSplash(){
   setTimeout(() => { $('#splash').classList.add('gone'); }, 360);
 }
 
+/* ── Icons — Lucide, self-hosted (offline-safe). Auto-paints icons in any
+   dynamically rendered screen. Sized via 1em so font-size/color still apply. ── */
+const Icons = {
+  paint(){ if (window.lucide){ try { lucide.createIcons({ icons: lucide.icons, attrs:{ width:'1em', height:'1em', 'stroke-width':2 } }); } catch(e){} } },
+  start(){
+    this.paint();
+    if (this._mo) return;
+    this._mo = new MutationObserver(() => {
+      this._mo.disconnect();           // ignore our own <i>→<svg> swaps
+      this.paint();
+      this._mo.observe(document.body, { childList:true, subtree:true });
+    });
+    this._mo.observe(document.body, { childList:true, subtree:true });
+  }
+};
+
 async function boot(){
   await loadBrand();
   let me = null;
@@ -188,38 +204,62 @@ function renderPublicHome(){
   screen.classList.add('active');
   const school = state.school || {};
   screen.innerHTML = `
-    <div class="hero" style="border-radius:0 0 var(--r-2xl) var(--r-2xl);">
-      <div class="row-between">
-        <div class="hero-eyebrow">${esc((school.school_name || 'Daraja School').toUpperCase())}</div>
-        <button class="btn sm" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none;" onclick="renderLogin()">
-          <i class="fas fa-right-to-bracket"></i> Sign in</button>
+    <div class="public-hero">
+      <div class="hero-orbit" aria-hidden="true"></div>
+      <div class="row-between public-top">
+        <div class="brand-lockup">
+          <div class="brand-logo">${school.school_logo ? `<img src="${esc(school.school_logo)}" alt="">` : '<i data-lucide="graduation-cap"></i>'}</div>
+          <div>
+            <div class="hero-eyebrow">${esc((school.school_name || 'Joyland Schools').toUpperCase())}</div>
+            <div class="trust-note"><i data-lucide="shield"></i> Protected school access</div>
+          </div>
+        </div>
+        <button class="btn sm glass-btn" onclick="renderLogin()"><i data-lucide="log-in"></i> Sign in</button>
       </div>
-      <div class="hero-greet">Knowledge for<br><em>every classroom.</em></div>
-      <div class="hero-sub">A free library of notes, past papers and schemes of work — for learners revising, teachers planning and parents helping. Works offline, anywhere.</div>
+      <div class="hero-greet">A calmer bridge<br>between <em>school &amp; home.</em></div>
+      <div class="hero-sub">Official records, daily learning signals, teacher workflows and parent updates in one secure mobile experience.</div>
+      <div class="trust-strip" aria-label="Trust signals">
+        <span><i data-lucide="lock"></i> Secure sessions</span>
+        <span><i data-lucide="file-check"></i> Official records</span>
+        <span><i data-lucide="wifi"></i> Offline-ready resources</span>
+      </div>
     </div>
-    <div class="scroll no-nav pad">
-      <div class="lift stack-gap">
-        <div class="metrics">
-          <button class="metric" onclick="UI.toast('Resources coming soon')">
-            <span class="ic green"><i class="fas fa-book-open"></i></span>
-            <span class="val" style="font-size:var(--t-md)">Notes</span><span class="lbl">Read offline</span></button>
-          <button class="metric" onclick="UI.toast('Past papers coming soon')">
-            <span class="ic gold"><i class="fas fa-file-lines"></i></span>
-            <span class="val" style="font-size:var(--t-md)">Past papers</span><span class="lbl">KCPE · KCSE</span></button>
-          <button class="metric" onclick="UI.toast('Schemes coming soon')">
-            <span class="ic blue"><i class="fas fa-list-check"></i></span>
-            <span class="val" style="font-size:var(--t-md)">Schemes</span><span class="lbl">Of work</span></button>
-          <button class="metric" onclick="UI.toast('Games coming soon')">
-            <span class="ic rose"><i class="fas fa-gamepad"></i></span>
-            <span class="val" style="font-size:var(--t-md)">Games</span><span class="lbl">Learn & play</span></button>
+    <div class="scroll no-nav pad public-scroll">
+      <div class="lift stack-gap experience-stack">
+        <div class="signin-card">
+          <div>
+            <div class="section-label">Your school workspace</div>
+            <h2>Choose your role after sign-in.</h2>
+            <p>Learners, parents and teachers see only the records and workflows assigned to their account.</p>
+          </div>
+          <button class="btn primary block" onclick="renderLogin()"><i data-lucide="log-in"></i> Continue securely</button>
         </div>
-        <div class="card" style="background:var(--grad-gold);color:#3a2a06;">
-          <div class="card-hd" style="margin-bottom:8px;"><h3 style="color:#3a2a06;">Are you a learner, parent or teacher?</h3></div>
-          <p style="font-size:var(--t-sm);margin-bottom:14px;">Sign in to see results, attendance, timetable and report cards for your school.</p>
-          <button class="btn block" style="background:#3a2a06;color:#fff;box-shadow:none;" onclick="renderLogin()">
-            <i class="fas fa-right-to-bracket"></i> Go to my dashboard</button>
+        <div class="signal-grid">
+          <div class="signal-card">
+            <span class="signal-icon green"><i data-lucide="trending-up"></i></span>
+            <b>Progress</b>
+            <span>Published marks, skills and report context.</span>
+          </div>
+          <div class="signal-card">
+            <span class="signal-icon gold"><i data-lucide="calendar-check"></i></span>
+            <b>Attendance</b>
+            <span>Daily presence and class routines.</span>
+          </div>
+          <div class="signal-card">
+            <span class="signal-icon blue"><i data-lucide="school"></i></span>
+            <b>Teaching</b>
+            <span>Today-first queues for school work.</span>
+          </div>
+          <div class="signal-card">
+            <span class="signal-icon rose"><i data-lucide="book-open"></i></span>
+            <b>Resources</b>
+            <span>Learning materials for revision and support.</span>
+          </div>
         </div>
-        <div class="center muted" style="font-size:var(--t-xs);padding:10px 0;">${esc(school.school_motto || 'Education is Treasure')}</div>
+        <div class="confidence-card">
+          <span class="conf-ic"><i data-lucide="medal"></i></span>
+          <div><b>Built for accountable school growth.</b><span>${esc(school.school_motto || 'Education is Treasure')}</span></div>
+        </div>
       </div>
     </div>`;
 }
@@ -231,27 +271,34 @@ function renderLogin(){
   const school = state.school || {};
   let loginMode = 'password';
   screen.innerHTML = `
-    <div class="scroll no-nav" style="display:flex;flex-direction:column;">
-      <div class="appbar"><button class="appbar-btn" onclick="renderPublicHome()"><i class="fas fa-arrow-left"></i></button>
-        <div class="appbar-title">Sign in</div></div>
-      <div class="pad" style="flex:1;display:flex;flex-direction:column;justify-content:center;">
-        <div class="center" style="margin-bottom:26px;">
-          <div class="ava ava-lg" style="margin:0 auto 14px;${school.school_logo ? 'background:#fff;' : ''}">
-            ${school.school_logo ? `<img src="${esc(school.school_logo)}" alt="">` : '<i class="fas fa-graduation-cap"></i>'}</div>
-          <h2 style="font-size:var(--t-2xl);font-weight:800;letter-spacing:-.02em;">${esc(school.school_name || 'Daraja')}</h2>
-          <p class="muted" style="font-size:var(--t-sm);margin-top:4px;">${esc(school.school_motto || 'Welcome back')}</p>
+    <div class="scroll no-nav login-screen">
+      <div class="appbar login-appbar"><button class="appbar-btn" onclick="renderPublicHome()"><i data-lucide="arrow-left"></i></button>
+        <div class="appbar-title">Protected sign in</div></div>
+      <div class="login-wrap">
+        <div class="login-intro">
+          <div class="login-mark" style="${school.school_logo ? 'background:#fff;' : ''}">
+            ${school.school_logo ? `<img src="${esc(school.school_logo)}" alt="">` : '<i data-lucide="graduation-cap"></i>'}</div>
+          <div>
+            <div class="section-label">Official school access</div>
+            <h2>${esc(school.school_name || 'Daraja')}</h2>
+            <p>${esc(school.school_motto || 'Welcome back. Your school record is protected.')}</p>
+          </div>
         </div>
-        <form id="login-form">
+        <form id="login-form" class="login-card">
           <div class="seg" style="margin-bottom:var(--s4);">
-            <button type="button" class="on" data-login-mode="password"><i class="fas fa-lock"></i> Password</button>
-            <button type="button" data-login-mode="temp"><i class="fas fa-key"></i> Temporary Code</button>
+            <button type="button" class="on" data-login-mode="password"><i data-lucide="lock"></i> Password</button>
+            <button type="button" data-login-mode="temp"><i data-lucide="key"></i> Temporary Code</button>
           </div>
           <div class="field"><label>Admission / ID / Phone</label>
             <input class="input" id="li-id" autocomplete="username" placeholder="e.g. JS110" required></div>
           <div class="field"><label id="li-secret-label">Password</label>
             <input class="input" id="li-secret" type="password" autocomplete="current-password" placeholder="Your password" required></div>
-          <button class="btn primary block mt2" id="li-btn" type="submit"><i class="fas fa-arrow-right-to-bracket"></i> Sign In</button>
+          <button class="btn primary block mt2" id="li-btn" type="submit"><i data-lucide="log-in"></i> Sign in securely</button>
         </form>
+        <div class="login-assurance">
+          <span><i data-lucide="shield-check"></i> Role-based access</span>
+          <span><i data-lucide="history"></i> Session protected</span>
+        </div>
         <p class="center muted mt5" id="li-help" style="font-size:var(--t-xs);">Forgot your password? Ask the school office.</p>
       </div>
     </div>`;
@@ -283,7 +330,7 @@ function renderLogin(){
   $('#login-form', screen).addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = $('#li-btn', screen); btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner spin"></i> Signing in...';
+    btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Signing in...';
     try {
       const identifier = $('#li-id', screen).value.trim();
       const secret = $('#li-secret', screen).value.trim();
@@ -295,7 +342,7 @@ function renderLogin(){
       routeByRole(me.role);
     } catch(err){
       UI.toast(err.message || 'Sign-in failed', 'danger');
-      btn.disabled = false; btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Sign In';
+      btn.disabled = false; btn.innerHTML = '<i data-lucide="log-in"></i> Sign in securely';
     }
   });
 }
@@ -314,10 +361,10 @@ const LearnerApp = {
 
   start(){
     Router.setTabs([
-      { id:'home',     label:'Home',      icon:'fa-house',          render:m => LearnerApp.home(m) },
-      { id:'results',  label:'Results',   icon:'fa-chart-simple',   render:m => LearnerApp.results(m) },
-      { id:'timetable',label:'Timetable', icon:'fa-calendar-day',   render:m => LearnerApp.timetable(m) },
-      { id:'more',     label:'More',      icon:'fa-ellipsis',       render:m => LearnerApp.more(m) }
+      { id:'home',     label:'Home',      icon:'home',          render:m => LearnerApp.home(m) },
+      { id:'results',  label:'Results',   icon:'bar-chart-3',   render:m => LearnerApp.results(m) },
+      { id:'timetable',label:'Timetable', icon:'calendar-days',   render:m => LearnerApp.timetable(m) },
+      { id:'more',     label:'More',      icon:'ellipsis',       render:m => LearnerApp.more(m) }
     ]);
   },
 
@@ -338,7 +385,7 @@ const LearnerApp = {
       <div class="hero">
         <div class="row-between">
           <div class="hero-eyebrow">${esc(s.current_session?.name || 'This year')} · ${esc(s.current_term?.name || 'Term')}</div>
-          <button class="appbar-btn" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none;" onclick="LearnerApp.notifications()"><i class="fas fa-bell"></i></button>
+          <button class="appbar-btn" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none;" onclick="LearnerApp.notifications()"><i data-lucide="bell"></i></button>
         </div>
         <div class="hero-greet">${greet},<br><em>${esc(firstName(p.name) || 'Learner')}.</em></div>
         <div class="hero-sub">${esc(p.class_name || 'Your class')} · Adm ${esc(p.admission_no || '—')}</div>
@@ -346,19 +393,19 @@ const LearnerApp = {
       <div class="scroll pad">
         <div class="lift stack-gap">
           <div class="metrics">
-            <div class="metric"><span class="ic green"><i class="fas fa-user-check"></i></span>
+            <div class="metric"><span class="ic green"><i data-lucide="user-check"></i></span>
               <span class="val">${att ? att.pct + '%' : '—'}</span><span class="lbl">Attendance</span></div>
-            <div class="metric"><span class="ic gold"><i class="fas fa-book"></i></span>
+            <div class="metric"><span class="ic gold"><i data-lucide="book"></i></span>
               <span class="val">${num(s.subjects_count)}</span><span class="lbl">Subjects</span></div>
-            <div class="metric"><span class="ic blue"><i class="fas fa-calendar-check"></i></span>
+            <div class="metric"><span class="ic blue"><i data-lucide="calendar-check"></i></span>
               <span class="val">${att ? num(att.present) : '—'}</span><span class="lbl">Days present</span></div>
-            <div class="metric"><span class="ic rose"><i class="fas fa-calendar-xmark"></i></span>
+            <div class="metric"><span class="ic rose"><i data-lucide="calendar-x"></i></span>
               <span class="val">${att ? num(att.absent) : '—'}</span><span class="lbl">Days absent</span></div>
           </div>
 
           <div class="card">
             <div class="card-hd"><h3>My results</h3>
-              <a class="link" onclick="Router.go('results')">View all <i class="fas fa-chevron-right" style="font-size:10px;"></i></a></div>
+              <a class="link" onclick="Router.go('results')">View all <i data-lucide="chevron-right" style="font-size:10px;"></i></a></div>
             <div id="home-results" class="muted" style="font-size:var(--t-sm);">Loading…</div>
           </div>
 
@@ -409,7 +456,7 @@ const LearnerApp = {
         <button data-a="endterm" class="${r.assessment_type === 'endterm' ? 'on' : ''}">End term</button>
       </div>
       ${resultsBodyHTML(r)}
-      ${scored.length ? `<button class="btn ghost block" onclick="LearnerApp.comments()"><i class="fas fa-comment-dots"></i> Teacher comments</button>` : ''}
+      ${scored.length ? `<button class="btn ghost block" onclick="LearnerApp.comments()"><i data-lucide="message-circle"></i> Teacher comments</button>` : ''}
     </div>`;
     $$('#assess-seg button', m).forEach(b => b.addEventListener('click', () => {
       LearnerApp.ctx.assessment = b.dataset.a; Router.go('results');
@@ -425,7 +472,7 @@ const LearnerApp = {
         s.innerHTML = appbar({ title:'Teacher Comments', back:true }) + `<div class="scroll pad stack-gap">
           ${list.length ? list.map(x => `<div class="card"><div class="card-hd" style="margin-bottom:8px;">
             <h3>${esc(x.role_label)}</h3></div><p style="font-size:var(--t-base);line-height:1.6;color:var(--ink-2);font-style:italic;">"${esc(x.text || 'No comment')}"</p></div>`).join('')
-          : emptyState('fa-comment-slash', 'No comments yet', 'Comments appear after teachers complete your report.')}
+          : emptyState('message-circle-off', 'No comments yet', 'Comments appear after teachers complete your report.')}
         </div>`;
       } catch(e){ s.innerHTML = appbar({ title:'Teacher Comments', back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; }
     });
@@ -442,7 +489,7 @@ const LearnerApp = {
 
   notifications(){
     Router.push(async (s) => {
-      s.innerHTML = appbar({ title:'Notifications', back:true }) + `<div class="scroll">${emptyState('fa-bell', 'No notifications', 'School announcements will appear here.')}</div>`;
+      s.innerHTML = appbar({ title:'Notifications', back:true }) + `<div class="scroll">${emptyState('bell', 'No notifications', 'School announcements will appear here.')}</div>`;
     });
   },
 
@@ -460,9 +507,9 @@ const LearnerApp = {
           <div class="muted" style="font-size:var(--t-sm);">${esc(p.class_name || '')} · Adm ${esc(p.admission_no || me.user_id || '—')}</div></div>
       </div>
       <div class="card" style="padding:6px 16px;"><div class="rows">
-        ${moreRow('fa-key', 'Change password', "LearnerApp.changePassword()")}
-        ${moreRow('fa-circle-info', 'About Daraja', "LearnerApp.about()")}
-        ${moreRow('fa-arrow-right-from-bracket', 'Sign out', "doLogout()", 'var(--danger)')}
+        ${moreRow('key', 'Change password', "LearnerApp.changePassword()")}
+        ${moreRow('info', 'About Daraja', "LearnerApp.about()")}
+        ${moreRow('log-out', 'Sign out', "doLogout()", 'var(--danger)')}
       </div></div>
       <div class="center muted" style="font-size:var(--t-xs);">${esc(school.school_name || 'Daraja')} · v3.0</div>
     </div>`;
@@ -480,7 +527,7 @@ const LearnerApp = {
       $('#cp-form', s).addEventListener('submit', async (e) => {
         e.preventDefault();
         if ($('#cp-new', s).value !== $('#cp-conf', s).value) return UI.toast('Passwords do not match', 'danger');
-        const btn = $('#cp-btn', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const btn = $('#cp-btn', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Saving…';
         try {
           await api.put('/api/learner/change-password', { current_password: $('#cp-cur', s).value, new_password: $('#cp-new', s).value });
           UI.toast('Password updated', 'ok'); Router.pop();
@@ -494,12 +541,12 @@ const LearnerApp = {
     Router.push(async (s) => {
       s.innerHTML = appbar({ title:'About', back:true }) + `<div class="scroll pad center">
         <div class="ava ava-lg" style="margin:24px auto 16px;${school.school_logo ? 'background:#fff;' : ''}">
-          ${school.school_logo ? `<img src="${esc(school.school_logo)}">` : '<i class="fas fa-graduation-cap"></i>'}</div>
+          ${school.school_logo ? `<img src="${esc(school.school_logo)}">` : '<i data-lucide="graduation-cap"></i>'}</div>
         <h2 style="font-weight:800;font-size:var(--t-2xl);">${esc(school.school_name || 'Daraja')}</h2>
         <p class="muted mt2">${esc(school.school_motto || 'Education is Treasure')}</p>
         <div class="card flat mt6" style="text-align:left;">
-          ${[['fa-phone', school.school_phone], ['fa-envelope', school.school_email], ['fa-location-dot', school.school_address]].filter(x => x[1]).map(x =>
-            `<div class="row"><i class="fas ${x[0]} lead muted" style="width:24px;"></i><div class="body title" style="font-weight:500;">${esc(x[1])}</div></div>`).join('')}
+          ${[['phone', school.school_phone], ['mail', school.school_email], ['map-pin', school.school_address]].filter(x => x[1]).map(x =>
+            `<div class="row"><i data-lucide="${x[0]}" class="lead muted" style="width:24px;"></i><div class="body title" style="font-weight:500;">${esc(x[1])}</div></div>`).join('')}
         </div>
         <p class="muted mt6" style="font-size:var(--t-xs);">Daraja v3.0 · Built for learners</p>
       </div>`;
@@ -509,9 +556,9 @@ const LearnerApp = {
 
 function moreRow(icon, label, onclick, color){
   return `<button class="row" style="width:100%;text-align:left;" onclick="${onclick}">
-    <i class="fas ${icon} lead" style="width:26px;color:${color || 'var(--ink-3)'};font-size:16px;"></i>
+    <i data-lucide="${icon}" class="lead" style="width:26px;color:${color || 'var(--ink-3)'};font-size:16px;"></i>
     <div class="body title" style="font-weight:600;${color ? 'color:' + color + ';' : ''}">${esc(label)}</div>
-    <i class="fas fa-chevron-right chev"></i></button>`;
+    <i data-lucide="chevron-right" class="chev"></i></button>`;
 }
 
 function fmtDate(d){
@@ -524,7 +571,7 @@ function fmtDate(d){
 /* ── Shared screen renderers (used by Learner + Parent) ── */
 function resultsBodyHTML(r){
   const scored = (r.subjects || []).filter(x => x.percent != null);
-  if (!scored.length) return emptyState('fa-chart-simple', 'No results yet', 'Marks for this term will appear here once teachers publish them.');
+  if (!scored.length) return emptyState('bar-chart-3', 'No results yet', 'Marks for this term will appear here once teachers publish them.');
   const overall = r.overall_percent; const [oc, , ol] = bandFor(overall || 0);
   return `<div class="card" style="background:var(--grad-brand);color:#fff;text-align:center;box-shadow:var(--sh-brand);">
       <div style="font-size:var(--t-xs);letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);">Overall average</div>
@@ -539,26 +586,43 @@ function resultsBodyHTML(r){
 
 function mountTimetable(mount, title, t, { back = false } = {}){
   const slots = t.slots || [];
-  if (!slots.length){ mount.innerHTML = appbar({ title, back }) + `<div class="scroll">${emptyState('fa-calendar-day', 'No timetable yet', 'The class timetable will show here once the school publishes it.')}</div>`; return; }
+  if (!slots.length){ mount.innerHTML = appbar({ title, back }) + `<div class="scroll">${emptyState('calendar-days', 'No timetable yet', 'The class timetable will show here once the school publishes it.')}</div>`; return; }
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const periods = {};
+  (t.periods || []).forEach(p => { periods[p.period_no] = p; });
   const todayDow = new Date().getDay();
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const toMinutes = value => {
+    const [h, m] = String(value || '').split(':').map(Number);
+    return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+  };
   const byDay = {}; slots.forEach(s => { (byDay[s.day_of_week] = byDay[s.day_of_week] || []).push(s); });
   const order = [1,2,3,4,5,6,0].filter(d => byDay[d]);
   let cur = order.includes(todayDow) ? todayDow : order[0];
   const draw = (day) => {
     const list = (byDay[day] || []).sort((a, b) => a.period_no - b.period_no);
-    $('#tt-body', mount).innerHTML = list.length ? `<div class="rows">${list.map(s => `
-      <div class="row"><div class="lead" style="width:42px;text-align:center;">
-        <div class="mono" style="font-weight:800;font-size:var(--t-md);color:var(--brand-600);">${s.period_no}</div>
-        <div class="muted" style="font-size:9px;">PERIOD</div></div>
+    const nextIdx = list.findIndex(s => {
+      const end = toMinutes(periods[s.period_no]?.end_time);
+      return day === todayDow && end != null && end >= nowMinutes;
+    });
+    $('#tt-body', mount).innerHTML = list.length ? `<div class="rows">${list.map((s, idx) => {
+      const p = periods[s.period_no] || {};
+      const start = p.start_time || ('P' + s.period_no);
+      const end = p.end_time || 'period';
+      const next = idx === nextIdx;
+      return `<div class="row ${next ? 'active' : ''}"><div class="lead" style="width:58px;text-align:center;">
+        <div class="mono" style="font-weight:800;font-size:var(--t-sm);color:var(--brand-600);">${esc(start)}</div>
+        <div class="muted" style="font-size:9px;">${esc(end)}</div></div>
         <div class="body"><div class="title">${esc(s.subject_name || 'Lesson')}</div>
-        <div class="meta">${esc(s.teacher_name || '')}</div></div>
-        ${s.is_substitution ? '<span class="badge warn">Cover</span>' : ''}</div>`).join('')}</div>`
-      : emptyState('fa-mug-hot', 'No lessons', 'Nothing scheduled for this day.');
+        <div class="meta">${esc(s.teacher_name || s.class_name || '')}${s.room_name ? ' - ' + esc(s.room_name) : ''}${next ? ' - next' : ''}</div></div>
+        ${s.is_substitution ? '<span class="badge warn">Cover</span>' : ''}</div>`;
+    }).join('')}</div>` : emptyState('coffee', 'No lessons', 'Nothing scheduled for this day.');
   };
   mount.innerHTML = appbar({ title, back }) + `<div class="scroll pad stack-gap">
+    <div class="card flat"><div class="row"><i data-lucide="circle-check" class="lead ok"></i><div class="body"><div class="title">Official timetable</div><div class="meta">${esc(t.message || 'Published by the school')}</div></div></div></div>
     <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;" id="tt-days">
-      ${order.map(d => `<button class="chip ${d === cur ? 'on' : ''}" data-d="${d}">${DAYS[d].slice(0, 3)}${d === todayDow ? ' ·' : ''}</button>`).join('')}
+      ${order.map(d => `<button class="chip ${d === cur ? 'on' : ''}" data-d="${d}">${DAYS[d].slice(0, 3)}${d === todayDow ? ' *' : ''}</button>`).join('')}
     </div>
     <div class="card"><div id="tt-body"></div></div></div>`;
   draw(cur);
@@ -568,7 +632,6 @@ function mountTimetable(mount, title, t, { back = false } = {}){
     draw(cur);
   }));
 }
-
 /* ═══════════════════════════════════════════════════════════════════════
    PARENT APP — child selector + per-child views (reuses shared renderers)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -587,10 +650,10 @@ const ParentApp = {
       if (first) ParentApp.ctx.assessment = first.current_assessment || 'midterm';
     } catch(e){ if (e.auth) return doLogout(); }
     Router.setTabs([
-      { id:'home',     label:'Home',      icon:'fa-house',        render:m => ParentApp.home(m) },
-      { id:'results',  label:'Results',   icon:'fa-chart-simple', render:m => ParentApp.results(m) },
-      { id:'timetable',label:'Timetable', icon:'fa-calendar-day', render:m => ParentApp.timetable(m) },
-      { id:'more',     label:'More',      icon:'fa-ellipsis',     render:m => ParentApp.more(m) }
+      { id:'home',     label:'Home',      icon:'home',        render:m => ParentApp.home(m) },
+      { id:'results',  label:'Results',   icon:'bar-chart-3', render:m => ParentApp.results(m) },
+      { id:'timetable',label:'Timetable', icon:'calendar-days', render:m => ParentApp.timetable(m) },
+      { id:'more',     label:'More',      icon:'ellipsis',     render:m => ParentApp.more(m) }
     ]);
   },
 
@@ -616,13 +679,13 @@ const ParentApp = {
     const hour = new Date().getHours();
     const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (!cs.length){
-      m.innerHTML = appbar({ title:'Home' }) + `<div class="scroll">${emptyState('fa-child', 'No children linked', 'Ask the school office to link your child to your account.')}</div>`;
+      m.innerHTML = appbar({ title:'Home' }) + `<div class="scroll">${emptyState('baby', 'No children linked', 'Ask the school office to link your child to your account.')}</div>`;
       return;
     }
     m.innerHTML = `
       <div class="hero">
         <div class="row-between"><div class="hero-eyebrow">Parent</div>
-          <button class="appbar-btn" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none;" onclick="ParentApp.notifications()"><i class="fas fa-bell"></i></button></div>
+          <button class="appbar-btn" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none;" onclick="ParentApp.notifications()"><i data-lucide="bell"></i></button></div>
         <div class="hero-greet">${greet},<br><em>${esc(firstName(parentName))}.</em></div>
         <div class="hero-sub">${cs.length} child${cs.length === 1 ? '' : 'ren'} at ${esc(state.school?.school_name || 'school')}</div>
       </div>
@@ -641,7 +704,7 @@ const ParentApp = {
           ${c.portrait_path ? `<img src="${esc(c.portrait_path)}">` : initials(c.name)}</div>
         <div class="body"><div class="title">${esc(c.name)}</div>
           <div class="meta">${esc(c.class_name || '')} · Adm ${esc(c.admission_no || '—')}</div></div>
-        <i class="fas fa-chevron-right chev"></i>
+        <i data-lucide="chevron-right" class="chev"></i>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div style="background:var(--surface-2);border-radius:var(--r-sm);padding:10px 12px;">
@@ -660,7 +723,7 @@ const ParentApp = {
   /* ── Results ── */
   async results(m){
     const c = ParentApp.child();
-    if (!c){ m.innerHTML = appbar({ title:'Results' }) + `<div class="scroll">${emptyState('fa-child', 'No child selected', 'Link a child to view results.')}</div>`; return; }
+    if (!c){ m.innerHTML = appbar({ title:'Results' }) + `<div class="scroll">${emptyState('baby', 'No child selected', 'Link a child to view results.')}</div>`; return; }
     m.innerHTML = appbar({ title:'Results' }) + loadingScroll();
     let r;
     try { r = await api.get(`/api/parent/children/${c.id}/marks?assessment_type=${ParentApp.ctx.assessment}`); }
@@ -674,7 +737,7 @@ const ParentApp = {
         <button data-a="endterm" class="${r.assessment_type === 'endterm' ? 'on' : ''}">End term</button>
       </div>
       ${resultsBodyHTML(r)}
-      ${scored.length ? `<button class="btn ghost block" onclick="ParentApp.comments()"><i class="fas fa-comment-dots"></i> Teacher comments</button>` : ''}
+      ${scored.length ? `<button class="btn ghost block" onclick="ParentApp.comments()"><i data-lucide="message-circle"></i> Teacher comments</button>` : ''}
     </div>`;
     ParentApp.wireSwitcher(m);
     $$('#assess-seg button', m).forEach(b => b.addEventListener('click', () => { ParentApp.ctx.assessment = b.dataset.a; Router.go('results'); }));
@@ -690,7 +753,7 @@ const ParentApp = {
         s.innerHTML = appbar({ title:'Teacher Comments', back:true }) + `<div class="scroll pad stack-gap">
           ${list.length ? list.map(x => `<div class="card"><div class="card-hd" style="margin-bottom:8px;"><h3>${esc(x.role_label)}</h3></div>
             <p style="font-size:var(--t-base);line-height:1.6;color:var(--ink-2);font-style:italic;">"${esc(x.text || 'No comment')}"</p></div>`).join('')
-          : emptyState('fa-comment-slash', 'No comments yet', 'Comments appear after teachers complete the report.')}</div>`;
+          : emptyState('message-circle-off', 'No comments yet', 'Comments appear after teachers complete the report.')}</div>`;
       } catch(e){ s.innerHTML = appbar({ title:'Teacher Comments', back:true }) + `<div class="scroll">${errorState(e.message)}</div>`; }
     });
   },
@@ -698,18 +761,18 @@ const ParentApp = {
   /* ── Timetable ── */
   async timetable(m){
     const c = ParentApp.child();
-    if (!c){ m.innerHTML = appbar({ title:'Timetable' }) + `<div class="scroll">${emptyState('fa-child', 'No child selected', '')}</div>`; return; }
+    if (!c){ m.innerHTML = appbar({ title:'Timetable' }) + `<div class="scroll">${emptyState('baby', 'No child selected', '')}</div>`; return; }
     m.innerHTML = appbar({ title:'Timetable' }) + loadingScroll();
     let t;
     try { t = await api.get('/api/parent/timetable?child_id=' + c.id); }
-    catch(e){ if (e.auth) return doLogout(); m.innerHTML = appbar({ title:'Timetable' }) + `<div class="scroll">${e.message && /not yet shared/i.test(e.message) ? emptyState('fa-calendar-day', 'Not shared yet', 'The school has not shared the timetable with parents.') : errorState(e.message, 'Router.go(\'timetable\')')}</div>`; return; }
+    catch(e){ if (e.auth) return doLogout(); m.innerHTML = appbar({ title:'Timetable' }) + `<div class="scroll">${e.message && /not yet shared/i.test(e.message) ? emptyState('calendar-days', 'Not shared yet', 'The school has not shared the timetable with parents.') : errorState(e.message, 'Router.go(\'timetable\')')}</div>`; return; }
     mountTimetable(m, esc(firstName(c.name)) + "'s Timetable", t);
     // inject switcher above
     const sw = ParentApp.switcherHTML();
     if (sw){ const scroll = $('.scroll', m); scroll.insertAdjacentHTML('afterbegin', sw); ParentApp.wireSwitcher(m); }
   },
 
-  notifications(){ Router.push(async (s) => { s.innerHTML = appbar({ title:'Notifications', back:true }) + `<div class="scroll">${emptyState('fa-bell', 'No notifications', 'School announcements will appear here.')}</div>`; }); },
+  notifications(){ Router.push(async (s) => { s.innerHTML = appbar({ title:'Notifications', back:true }) + `<div class="scroll">${emptyState('bell', 'No notifications', 'School announcements will appear here.')}</div>`; }); },
 
   /* ── More ── */
   async more(m){
@@ -727,8 +790,8 @@ const ParentApp = {
           <div class="body"><div class="title">${esc(c.name)}</div><div class="meta">${esc(c.class_name || '')}</div></div></div>`).join('') || '<div class="muted" style="font-size:var(--t-sm);padding:6px 2px;">No children linked.</div>'}
       </div></div>
       <div class="card" style="padding:6px 16px;"><div class="rows">
-        ${moreRow('fa-circle-info', 'About Daraja', "LearnerApp.about()")}
-        ${moreRow('fa-arrow-right-from-bracket', 'Sign out', "doLogout()", 'var(--danger)')}
+        ${moreRow('info', 'About Daraja', "LearnerApp.about()")}
+        ${moreRow('log-out', 'Sign out', "doLogout()", 'var(--danger)')}
       </div></div>
       <div class="center muted" style="font-size:var(--t-xs);">${esc(school.school_name || 'Daraja')} · v3.0</div>
     </div>`;
@@ -746,10 +809,10 @@ const TeacherApp = {
 
   start(){
     Router.setTabs([
-      { id:'today',     label:'Today',     icon:'fa-bolt',           render:m => TeacherApp.today(m) },
-      { id:'classes',   label:'Classes',   icon:'fa-users-rectangle', render:m => TeacherApp.classes(m) },
-      { id:'gradebook', label:'Gradebook', icon:'fa-table-cells',    render:m => TeacherApp.gradebook(m) },
-      { id:'more',      label:'More',      icon:'fa-ellipsis',       render:m => TeacherApp.more(m) }
+      { id:'today',     label:'Today',     icon:'zap',           render:m => TeacherApp.today(m) },
+      { id:'classes',   label:'Classes',   icon:'users', render:m => TeacherApp.classes(m) },
+      { id:'gradebook', label:'Gradebook', icon:'grid-3x3',    render:m => TeacherApp.gradebook(m) },
+      { id:'more',      label:'More',      icon:'ellipsis',       render:m => TeacherApp.more(m) }
     ]);
   },
 
@@ -757,7 +820,7 @@ const TeacherApp = {
     const me = state.me || {};
     return `<div class="tbar"><div class="top">
         <div><div class="ctx">${esc(ctxLine)}</div><h1>${esc(title)}</h1></div>
-        <button class="bell" onclick="TeacherApp.notifications()"><i class="fas fa-bell"></i><span class="dot"></span></button>
+        <button class="bell" onclick="TeacherApp.notifications()"><i data-lucide="bell"></i><span class="dot"></span></button>
       </div><div id="thead-extra"></div></div>`;
   },
 
@@ -774,14 +837,16 @@ const TeacherApp = {
         api.get('/api/teacher/teaching-analytics').catch(() => ({ subjects:[] }))
       ]);
     } catch(e){ if (e.auth) return doLogout(); m.innerHTML = TeacherApp.thead('Today', 'Daraja') + `<div class="scroll">${errorState(e.message, 'Router.go(\'today\')')}</div>`; return; }
-    if (home.empty){ m.innerHTML = TeacherApp.thead('Today', 'Daraja') + `<div class="scroll">${emptyState('fa-chalkboard-user', 'No classes yet', home.message || 'No classes assigned to you.')}</div>`; return; }
+    if (home.empty){ m.innerHTML = TeacherApp.thead('Today', 'Daraja') + `<div class="scroll">${emptyState('school', 'No classes yet', home.message || 'No classes assigned to you.')}</div>`; return; }
 
     const ctx = home.context || {};
     TeacherApp._ctx = { assessment: analytics.current_assessment || ctx.assessment || 'midterm', termId: (analytics.current_term || ctx.term || {}).id || null };
     const now = new Date();
     const dateLine = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
     const weekStr = ctx.calendar?.week_no ? `Week ${ctx.calendar.week_no}` : '';
-    const ctxLine = [dateLine, weekStr, ctx.term?.name].filter(Boolean).join(' · ');
+    // Header describes where we are in time → use the calendar term (matches week_no and the
+    // Gradebook). ctx.term is the data-fallback window (last term with marks) and can differ.
+    const ctxLine = [dateLine, weekStr, ctx.calendar?.term_name || ctx.term?.name].filter(Boolean).join(' · ');
 
     // today's lessons
     const dow = now.getDay();
@@ -800,10 +865,10 @@ const TeacherApp = {
 
     // work queue
     const queue = [];
-    (ov.classes || []).filter(c => !c.marked).forEach(c => queue.push({ ic:'fa-user-check', title:`Mark ${c.name} attendance`, meta:`${c.learner_count} learners · today`, onclick:`TeacherApp.roll(${c.id},'${esc(c.name)}','${todayISO}')` }));
+    (ov.classes || []).filter(c => !c.marked).forEach(c => queue.push({ ic:'user-check', title:`Mark ${c.name} attendance`, meta:`${c.learner_count} learners · today`, onclick:`TeacherApp.roll(${c.id},'${esc(c.name)}','${todayISO}')` }));
     (analytics.subjects || []).forEach(sj => {
       if (sj.components_configured && sj.learners_marked < (sj.enrollment_count || 0)) {
-        queue.push({ ic:'fa-pen', title:`${sj.subject_name} · ${sj.class_name} marks`, meta:`${sj.learners_marked}/${sj.enrollment_count} entered`, onclick:`TeacherApp.marksGrid(${sj.class_id},${sj.subject_id},'${esc(sj.class_name)}','${esc(sj.subject_name)}')` });
+        queue.push({ ic:'pencil', title:`${sj.subject_name} · ${sj.class_name} marks`, meta:`${sj.learners_marked}/${sj.enrollment_count} entered`, onclick:`TeacherApp.marksGrid(${sj.class_id},${sj.subject_id},'${esc(sj.class_name)}','${esc(sj.subject_name)}')` });
       }
     });
 
@@ -819,16 +884,16 @@ const TeacherApp = {
       + `<div class="scroll pad stack-gap">
         ${queue.length ? `<div class="section-label">Work queue · ${queue.length}</div>
           <div class="stack-gap" style="gap:8px;">${queue.slice(0, 6).map(q => `
-            <button class="queue-item" onclick="${q.onclick}"><span class="qic"><i class="fas ${q.ic}"></i></span>
+            <button class="queue-item" onclick="${q.onclick}"><span class="qic"><i data-lucide="${q.ic}"></i></span>
               <div class="body"><div class="title">${q.title}</div><div class="meta">${q.meta}</div></div>
-              <i class="fas fa-chevron-right chev"></i></button>`).join('')}</div>`
-          : `<div class="queue-item ok"><span class="qic"><i class="fas fa-check"></i></span><div class="body"><div class="title">All caught up</div><div class="meta">No attendance or marks pending right now.</div></div></div>`}
+              <i data-lucide="chevron-right" class="chev"></i></button>`).join('')}</div>`
+          : `<div class="queue-item ok"><span class="qic"><i data-lucide="check"></i></span><div class="body"><div class="title">All caught up</div><div class="meta">No attendance or marks pending right now.</div></div></div>`}
 
         <div class="section-label">Today's lessons</div>
         ${todaySlots.length ? `<div class="card">${todaySlots.map(s => `
           <div class="tl-item ${s === nowSlot ? 'now' : ''}"><div class="tl-time">${s.start ? tlabel(s.start) : 'P' + s.period_no}</div>
             <div class="tl-body"><div class="tl-card"><div class="s">${esc(s.subject_name)}</div><div class="c">${esc(s.class_name)}${s.is_substitution ? ' · cover' : ''}</div></div></div></div>`).join('')}</div>`
-          : (dow === 0 || dow === 6) ? emptyState('fa-mug-hot', 'Weekend', 'No lessons scheduled today.') : emptyState('fa-calendar-day', 'No lessons today', 'Nothing on your timetable for today.')}
+          : (dow === 0 || dow === 6) ? emptyState('coffee', 'Weekend', 'No lessons scheduled today.') : emptyState('calendar-days', 'No lessons today', 'Nothing on your timetable for today.')}
       </div>`;
   },
 
@@ -855,8 +920,8 @@ const TeacherApp = {
           <div class="ava ava-md lead" style="${avaColor(c.name)}">${esc(c.name.replace(/[^0-9]/g, '') || initials(c.name))}</div>
           <div class="body"><div class="title">${esc(c.name)} ${c.homeroom ? '<span class="badge ok" style="margin-left:4px;">Class teacher</span>' : ''}</div>
             <div class="meta">${num(c.count)} learners${c.subjects.length ? ' · ' + c.subjects.map(s => esc(s.name)).join(', ') : ''}</div></div>
-          <i class="fas fa-chevron-right chev"></i></div></button>`).join('')
-        : emptyState('fa-users-rectangle', 'No classes', 'You have no classes assigned.')}
+          <i data-lucide="chevron-right" class="chev"></i></div></button>`).join('')
+        : emptyState('users', 'No classes', 'You have no classes assigned.')}
     </div>`;
   },
 
@@ -872,10 +937,10 @@ const TeacherApp = {
       const roster = await TeacherApp._roster(classId, subjectId);
       const actions = homeroom ? `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;">
-          <button class="btn ghost sm" onclick="TeacherApp.roll(${classId},'${esc(className)}','${new Date().toISOString().slice(0, 10)}')"><i class="fas fa-user-check"></i> Attendance</button>
-          <button class="btn ghost sm" onclick="TeacherApp.rateSkills(${classId},'${esc(className)}')"><i class="fas fa-star"></i> Skills</button>
-          <button class="btn ghost sm" onclick="TeacherApp.writeComments(${classId},'${esc(className)}')"><i class="fas fa-comment-dots"></i> Comments</button>
-          <button class="btn ghost sm" onclick="TeacherApp.classReport(${classId},'${esc(className)}')"><i class="fas fa-file-lines"></i> Reports</button>
+          <button class="btn ghost sm" onclick="TeacherApp.roll(${classId},'${esc(className)}','${new Date().toISOString().slice(0, 10)}')"><i data-lucide="user-check"></i> Attendance</button>
+          <button class="btn ghost sm" onclick="TeacherApp.rateSkills(${classId},'${esc(className)}')"><i data-lucide="star"></i> Skills</button>
+          <button class="btn ghost sm" onclick="TeacherApp.writeComments(${classId},'${esc(className)}')"><i data-lucide="message-circle"></i> Comments</button>
+          <button class="btn ghost sm" onclick="TeacherApp.classReport(${classId},'${esc(className)}')"><i data-lucide="file-text"></i> Reports</button>
         </div>` : '';
       s.innerHTML = appbar({ title:className, back:true }) + `<div class="scroll pad stack-gap">
         ${actions}
@@ -884,7 +949,7 @@ const TeacherApp = {
           <button class="stud" onclick="TeacherApp.studentProfile(${classId},'${esc(className)}',${l.id},'${esc(l.name)}','${esc(l.admission_no || '')}',${homeroom})">
             <div class="ava ava-md" style="${avaColor(l.name)}">${initials(l.name)}</div>
             <div class="nm">${esc(l.name)}</div></button>`).join('')}</div>`
-          : emptyState('fa-users', 'Roster unavailable', homeroom ? 'No active learners in this class.' : 'The class roster is managed by the class teacher.')}
+          : emptyState('users', 'Roster unavailable', homeroom ? 'No active learners in this class.' : 'The class roster is managed by the class teacher.')}
       </div>`;
     });
   },
@@ -898,7 +963,7 @@ const TeacherApp = {
           <div class="muted" style="font-size:var(--t-sm);">${esc(className)} · Adm ${esc(adm || '—')}</div></div></div>`;
       if (!homeroom){
         s.innerHTML = appbar({ title:name, back:true }) + `<div class="scroll pad stack-gap">${head}
-          ${emptyState('fa-lock', 'Class-teacher view', 'Full performance, skills and comments for a learner are available to their class teacher.')}</div>`;
+          ${emptyState('lock', 'Class-teacher view', 'Full performance, skills and comments for a learner are available to their class teacher.')}</div>`;
         return;
       }
       const a = TeacherApp._ctx.assessment;
@@ -914,7 +979,7 @@ const TeacherApp = {
       const comment = comments ? (comments.entries || {})[learnerId] || '' : '';
       const sk = skills ? (skills.entries || {})[learnerId] || {} : {};
 
-      let perfHTML = emptyState('fa-chart-simple', 'No marks yet', 'No marks recorded for this learner this term.');
+      let perfHTML = emptyState('bar-chart-3', 'No marks yet', 'No marks recorded for this learner this term.');
       if (row && row.subject_count > 0){
         const [oc, , ol] = bandFor(row.average || 0);
         perfHTML = `<div class="card"><div class="card-hd"><h3>Performance</h3>
@@ -937,14 +1002,14 @@ const TeacherApp = {
         ${head}${perfHTML}${skillsHTML}
         <div class="card"><div class="card-hd"><h3>Class teacher comment</h3></div>
           <textarea class="input" id="sp-comment" placeholder="Write a comment for ${esc(firstName(name))}…" maxlength="1000">${esc(comment)}</textarea>
-          <button class="btn primary block mt3" id="sp-save"><i class="fas fa-floppy-disk"></i> Save comment</button></div>
+          <button class="btn primary block mt3" id="sp-save"><i data-lucide="save"></i> Save comment</button></div>
       </div>`;
       $('#sp-save', s).addEventListener('click', async () => {
-        const btn = $('#sp-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const btn = $('#sp-save', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Saving…';
         try {
           await api.post('/api/teacher/comments', { class_id:classId, assessment_type:a, term_id:TeacherApp._ctx.termId, entries:[{ learner_id:learnerId, comment_text:$('#sp-comment', s).value }] });
-          UI.toast('Comment saved', 'ok'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save comment';
-        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save comment'; }
+          UI.toast('Comment saved', 'ok'); btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> Save comment';
+        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> Save comment'; }
       });
     });
   },
@@ -973,19 +1038,19 @@ const TeacherApp = {
           ${items.map(it => `<div style="margin-bottom:8px;"><div class="muted" style="font-size:var(--t-xs);margin-bottom:4px;">${esc(it.itemLabel)}</div>
             <div class="rate-row" data-key="${l.id}|${it.catKey}|${it.itemKey}">
               ${ratings.map(r => `<button data-r="${r}" class="${sel[l.id + '|' + it.catKey + '|' + it.itemKey] == r ? 'on' : ''}">${r}</button>`).join('')}
-            </div></div>`).join('')}</div>`).join('') || emptyState('fa-users', 'No learners', '')}
+            </div></div>`).join('')}</div>`).join('') || emptyState('users', 'No learners', '')}
       </div>
-      <button class="btn primary" id="sk-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save skills</button>`;
+      <button class="btn primary" id="sk-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i data-lucide="save"></i> Save skills</button>`;
       $$('.rate-row', s).forEach(rr => rr.addEventListener('click', (e) => {
         const b = e.target.closest('button[data-r]'); if (!b) return;
         TeacherApp._skillSel[rr.dataset.key] = Number(b.dataset.r);
         $$('button', rr).forEach(x => x.classList.toggle('on', x === b));
       }));
       $('#sk-save', s).addEventListener('click', async () => {
-        const btn = $('#sk-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const btn = $('#sk-save', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Saving…';
         const ent = Object.entries(TeacherApp._skillSel).filter(([, v]) => v != null).map(([k, v]) => { const [lid, ck, ik] = k.split('|'); return { learner_id:Number(lid), category_key:ck, item_key:ik, rating:v }; });
         try { await api.post('/api/teacher/skills', { class_id:classId, assessment_type:a, term_id:TeacherApp._ctx.termId, entries:ent }); UI.toast('Skills saved', 'ok'); Router.pop(); }
-        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save skills'; }
+        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> Save skills'; }
       });
     });
   },
@@ -1007,19 +1072,19 @@ const TeacherApp = {
       const avgBy = {}; if (bs) (bs.learners || []).forEach(r => { avgBy[r.id] = r.average; });
       TeacherApp._sugBands = bands; TeacherApp._avgBy = avgBy;
       s.innerHTML = appbar({ title:'Comments · ' + className, back:true }) + `<div class="scroll pad" style="padding-bottom:88px;">
-        <div class="muted" style="font-size:var(--t-sm);margin-bottom:12px;">Class-teacher remark for each learner. Tap <i class="fas fa-wand-magic-sparkles"></i> to suggest from the bank.</div>
+        <div class="muted" style="font-size:var(--t-sm);margin-bottom:12px;">Class-teacher remark for each learner. Tap <i data-lucide="wand-sparkles"></i> to suggest from the bank.</div>
         ${(roster || []).map(l => `<div class="card" style="margin-bottom:12px;"><div class="row" style="border:none;padding:0 0 8px;">
           <div class="ava ava-sm lead" style="${avaColor(l.name)}">${initials(l.name)}</div>
           <div class="body title">${esc(l.name)}</div>
-          ${bands.length ? `<button class="appbar-btn" style="width:34px;height:34px;font-size:13px;" onclick="TeacherApp.suggestComment(${l.id})"><i class="fas fa-wand-magic-sparkles"></i></button>` : ''}</div>
-          <textarea class="input cm-in" data-lid="${l.id}" maxlength="1000" placeholder="Comment…">${esc(entries[l.id] || '')}</textarea></div>`).join('') || emptyState('fa-users', 'No learners', '')}
+          ${bands.length ? `<button class="appbar-btn" style="width:34px;height:34px;font-size:13px;" onclick="TeacherApp.suggestComment(${l.id})"><i data-lucide="wand-sparkles"></i></button>` : ''}</div>
+          <textarea class="input cm-in" data-lid="${l.id}" maxlength="1000" placeholder="Comment…">${esc(entries[l.id] || '')}</textarea></div>`).join('') || emptyState('users', 'No learners', '')}
       </div>
-      <button class="btn primary" id="cm-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save comments</button>`;
+      <button class="btn primary" id="cm-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i data-lucide="save"></i> Save comments</button>`;
       $('#cm-save', s).addEventListener('click', async () => {
-        const btn = $('#cm-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const btn = $('#cm-save', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Saving…';
         const ent = $$('.cm-in', s).map(t => ({ learner_id:Number(t.dataset.lid), comment_text:t.value }));
         try { await api.post('/api/teacher/comments', { class_id:classId, assessment_type:a, term_id:TeacherApp._ctx.termId, entries:ent }); UI.toast('Comments saved', 'ok'); Router.pop(); }
-        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save comments'; }
+        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> Save comments'; }
       });
     });
   },
@@ -1053,7 +1118,7 @@ const TeacherApp = {
           <div class="bar"><span style="width:${marked}%;"></span></div>
           <div class="muted" style="font-size:var(--t-xs);margin-top:6px;">${sj.learners_marked}/${num(sj.enrollment_count)} learners entered${sj.components_configured ? '' : ' · components not set up'}</div>
         </button>`;
-      }).join('') : emptyState('fa-table-cells', 'No subjects', 'You have no subjects to grade.')}
+      }).join('') : emptyState('grid-3x3', 'No subjects', 'You have no subjects to grade.')}
     </div>`;
   },
 
@@ -1085,12 +1150,12 @@ const TeacherApp = {
           <div style="font-size:var(--t-2xl);font-weight:800;letter-spacing:-.02em;">${mean == null ? '—' : pct(mean)}</div></div>
           <div class="center"><div class="muted" style="font-size:var(--t-xs);">marked</div><div style="font-weight:700;font-size:var(--t-lg);">${percents.length}</div></div></div>
           ${percents.length ? `<div class="dist-bar"><span class="ee" style="width:${dist.ee / n * 100}%"></span><span class="me" style="width:${dist.me / n * 100}%"></span><span class="ae" style="width:${dist.ae / n * 100}%"></span><span class="be" style="width:${dist.be / n * 100}%"></span></div>
-          <div class="dist-legend"><span><i style="background:#22c55e"></i>EE ${dist.ee}</span><span><i style="background:#3b82f6"></i>ME ${dist.me}</span><span><i style="background:var(--gold-500)"></i>AE ${dist.ae}</span><span><i style="background:#ef4444"></i>BE ${dist.be}</span></div>` : ''}</div>
+          <div class="dist-legend"><span><i style="background:var(--ee)"></i>EE ${dist.ee}</span><span><i style="background:var(--me)"></i>ME ${dist.me}</span><span><i style="background:var(--ae)"></i>AE ${dist.ae}</span><span><i style="background:var(--be)"></i>BE ${dist.be}</span></div>` : ''}</div>
         ${percents.length ? `<div class="card" style="display:flex;gap:10px;text-align:center;">
           <div style="flex:1;"><div class="muted" style="font-size:var(--t-xs);">Highest</div><div style="font-weight:800;font-size:var(--t-lg);color:var(--brand-600);">${pct(sorted[0])}</div></div>
           <div style="flex:1;border-left:1px solid var(--line);border-right:1px solid var(--line);"><div class="muted" style="font-size:var(--t-xs);">Lowest</div><div style="font-weight:800;font-size:var(--t-lg);color:var(--danger);">${pct(sorted[sorted.length - 1])}</div></div>
           <div style="flex:1;"><div class="muted" style="font-size:var(--t-xs);">At risk</div><div style="font-weight:800;font-size:var(--t-lg);">${dist.be + dist.ae}</div></div></div>` : ''}
-        <button class="btn primary block" onclick="TeacherApp.marksGrid(${classId},${subjectId},'${esc(className)}','${esc(subjectName)}')"><i class="fas fa-pen-to-square"></i> ${percents.length ? 'Edit' : 'Enter'} marks</button>
+        <button class="btn primary block" onclick="TeacherApp.marksGrid(${classId},${subjectId},'${esc(className)}','${esc(subjectName)}')"><i data-lucide="square-pen"></i> ${percents.length ? 'Edit' : 'Enter'} marks</button>
       </div>`;
     });
   },
@@ -1107,10 +1172,10 @@ const TeacherApp = {
       const components = comps.components || [];
       const entries = marks.entries || {};
       const termId = marks.term?.id || TeacherApp._ctx.termId;
-      if (!components.length){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('fa-sliders', 'No components set up', 'Ask the admin to configure assessment components for this subject before entering marks.')}</div>`; return; }
+      if (!components.length){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('sliders-horizontal', 'No components set up', 'Ask the admin to configure assessment components for this subject before entering marks.')}</div>`; return; }
       let list = Array.isArray(marks.learners) ? marks.learners : null;
       if (!list){ try { list = (await api.get('/api/teacher/classes/' + classId + '/learners')).learners; } catch(e){ list = null; } }
-      if (!list){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('fa-user-lock', 'Roster unavailable', 'The class roster needs a backend update for subject teachers.')}</div>`; return; }
+      if (!list){ s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll">${emptyState('shield-check', 'Roster unavailable', 'The class roster needs a backend update for subject teachers.')}</div>`; return; }
       const colW = components.length > 2 ? 64 : 84;
       s.innerHTML = appbar({ title:subjectName, back:true }) + `<div class="scroll pad" style="padding-bottom:90px;">
         <div class="seg" id="mk-assess" style="margin-bottom:14px;">
@@ -1127,14 +1192,14 @@ const TeacherApp = {
                 value="${entries[l.id]?.[c.component_key] != null ? entries[l.id][c.component_key] : ''}"
                 style="width:${colW}px;height:40px;text-align:center;border:1.5px solid var(--line);border-radius:10px;font-size:var(--t-md);font-weight:600;background:var(--surface);"></td>`).join('')}
             </tr>`).join('')}</tbody></table></div></div>
-        <button class="btn primary" id="mk-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save marks</button>`;
+        <button class="btn primary" id="mk-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i data-lucide="save"></i> Save marks</button>`;
       $$('#mk-assess button', s).forEach(b => b.addEventListener('click', () => { TeacherApp._ctx.assessment = b.dataset.a; Router.pop(); TeacherApp.marksGrid(classId, subjectId, className, subjectName); }));
       $$('.mk-in', s).forEach(inp => inp.addEventListener('input', () => { const max = Number(inp.dataset.max); if (inp.value !== '' && Number(inp.value) > max) inp.value = max; if (Number(inp.value) < 0) inp.value = 0; }));
       $('#mk-save', s).addEventListener('click', async () => {
-        const btn = $('#mk-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const btn = $('#mk-save', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Saving…';
         const ent = $$('.mk-in', s).map(inp => ({ learner_id:Number(inp.dataset.lid), component_key:inp.dataset.key, score:inp.value === '' ? '' : Number(inp.value) }));
         try { await api.post('/api/teacher/marks', { class_id:classId, subject_id:subjectId, assessment_type:TeacherApp._ctx.assessment, term_id:termId, entries:ent }); UI.toast('Marks saved', 'ok'); Router.pop(); }
-        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save marks'; }
+        catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> Save marks'; }
       });
     });
   },
@@ -1158,7 +1223,7 @@ const TeacherApp = {
         const vals = Object.values(TeacherApp._roll.sel);
         $('#roll-counts', s).textContent = `${vals.filter(v => v === 'P').length} present · ${vals.filter(v => v === 'A').length} absent · ${vals.filter(v => v === 'L').length} late`;
       };
-      s.innerHTML = appbar({ title:className, back:true, action:`<button class="appbar-btn" onclick="TeacherApp.markAll('P')" title="All present"><i class="fas fa-check-double"></i></button>` })
+      s.innerHTML = appbar({ title:className, back:true, action:`<button class="appbar-btn" onclick="TeacherApp.markAll('P')" title="All present"><i data-lucide="check-check"></i></button>` })
         + `<div class="scroll pad" style="padding-bottom:90px;">
           <div class="muted center" id="roll-counts" style="font-size:var(--t-sm);margin-bottom:12px;"></div>
           <div class="card" style="padding:6px 12px;"><div class="rows" id="roll-rows">
@@ -1169,7 +1234,7 @@ const TeacherApp = {
                 ${['P','A','L'].map(k => `<button data-s="${k}" class="${sel[l.id] === k ? 'on' : ''}">${k}</button>`).join('')}
               </div></div>`).join('') || '<div class="muted pad">No learners.</div>'}
           </div></div></div>
-          <button class="btn primary" id="roll-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i class="fas fa-floppy-disk"></i> Save attendance</button>`;
+          <button class="btn primary" id="roll-save" style="position:absolute;left:18px;right:18px;bottom:calc(var(--safe-bottom) + 16px);width:auto;"><i data-lucide="save"></i> Save attendance</button>`;
       drawCounts();
       $$('#roll-rows .seg', s).forEach(seg => seg.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-s]'); if (!btn) return;
@@ -1179,12 +1244,12 @@ const TeacherApp = {
         drawCounts();
       }));
       $('#roll-save', s).addEventListener('click', async () => {
-        const btn = $('#roll-save', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const btn = $('#roll-save', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Saving…';
         try {
           const payload = { class_id: classId, date, entries: Object.entries(TeacherApp._roll.sel).map(([learner_id, status]) => ({ learner_id: Number(learner_id), status })) };
           await api.post('/api/teacher/attendance', payload);
           UI.toast('Attendance saved', 'ok'); Router.pop(); Router.go('today');
-        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Save attendance'; }
+        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> Save attendance'; }
       });
     });
   },
@@ -1210,7 +1275,7 @@ const TeacherApp = {
           <div style="font-size:var(--t-xs);letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);">Report readiness · ${esc(rd.assessment)}</div>
           <div style="font-size:var(--t-3xl);font-weight:800;margin:6px 0;">${ready}/${learners.length}</div>
           <div style="font-size:var(--t-sm);color:rgba(255,255,255,.8);">learners fully marked (${rd.subjects_total} subjects)</div></div>
-        <button class="btn gold block" onclick="TeacherApp.broadsheet(${classId},'${esc(className)}')"><i class="fas fa-table"></i> View broadsheet</button>
+        <button class="btn gold block" onclick="TeacherApp.broadsheet(${classId},'${esc(className)}')"><i data-lucide="table"></i> View broadsheet</button>
         <div class="card"><div class="card-hd"><h3>Learners</h3></div><div class="rows">
           ${learners.map(l => `<div class="row"><div class="body"><div class="title">${esc(l.name)}</div>
             <div class="meta">${esc(l.admission_no || '')}</div></div>
@@ -1241,12 +1306,12 @@ const TeacherApp = {
               ${subjects.map((sub, si) => { const v = r.subjects?.[si]?.average; return `<td class="mono" style="padding:7px 2px;text-align:center;">${v == null ? '—' : Math.round(v)}</td>`; }).join('')}
               <td class="mono" style="padding:7px 2px;text-align:center;font-weight:700;">${r.average == null ? '—' : Number(r.average).toFixed(1)}</td>
               <td class="mono" style="padding:7px 2px;text-align:center;color:var(--brand-600);font-weight:700;">${r.position ?? '—'}</td></tr>`).join('')}</tbody>
-          </table></div>` : emptyState('fa-table', 'No marks yet', 'No marks have been entered for this class this term.')}
+          </table></div>` : emptyState('table', 'No marks yet', 'No marks have been entered for this class this term.')}
       </div>`;
     });
   },
 
-  notifications(){ Router.push(async (s) => { s.innerHTML = appbar({ title:'Notifications', back:true }) + `<div class="scroll">${emptyState('fa-bell', 'No notifications', 'School announcements will appear here.')}</div>`; }); },
+  notifications(){ Router.push(async (s) => { s.innerHTML = appbar({ title:'Notifications', back:true }) + `<div class="scroll">${emptyState('bell', 'No notifications', 'School announcements will appear here.')}</div>`; }); },
 
   /* ════ MORE ════ */
   async more(m){
@@ -1263,16 +1328,16 @@ const TeacherApp = {
           <div class="muted" style="font-size:var(--t-sm);">${esc(prof.user_id || me.user_id || '')} · Teacher</div></div>
       </div>
       <div class="card" style="padding:6px 16px;"><div class="rows">
-        ${moreRow('fa-calendar-day', 'My timetable', "TeacherApp.timetable()")}
-        ${moreRow('fa-calendar-plus', 'Book a lesson slot', "TeacherApp.booking()")}
-        ${moreRow('fa-right-left', 'My cover duties', "TeacherApp.cover()")}
-        ${moreRow('fa-file-lines', 'Reports & broadsheets', "TeacherApp.reportsList()")}
-        ${moreRow('fa-bell', 'Notifications', "TeacherApp.notifications()")}
+        ${moreRow('calendar-days', 'My timetable', "TeacherApp.timetable()")}
+        ${moreRow('calendar-plus', 'Book a lesson slot', "TeacherApp.booking()")}
+        ${moreRow('arrow-right-left', 'My cover duties', "TeacherApp.cover()")}
+        ${moreRow('file-text', 'Reports & broadsheets', "TeacherApp.reportsList()")}
+        ${moreRow('bell', 'Notifications', "TeacherApp.notifications()")}
       </div></div>
       <div class="card" style="padding:6px 16px;"><div class="rows">
-        ${moreRow('fa-key', 'Change password', "TeacherApp.changePassword()")}
-        ${moreRow('fa-circle-info', 'About Daraja', "LearnerApp.about()")}
-        ${moreRow('fa-arrow-right-from-bracket', 'Sign out', "doLogout()", 'var(--danger)')}
+        ${moreRow('key', 'Change password', "TeacherApp.changePassword()")}
+        ${moreRow('info', 'About Daraja', "LearnerApp.about()")}
+        ${moreRow('log-out', 'Sign out', "doLogout()", 'var(--danger)')}
       </div></div>
       <div class="center muted" style="font-size:var(--t-xs);">${esc(school.school_name || 'Daraja')} · v3.0</div>
     </div>`;
@@ -1291,8 +1356,8 @@ const TeacherApp = {
           <button class="row" style="width:100%;text-align:left;" onclick="TeacherApp.classReport(${c.id},'${esc(c.name)}')">
             <div class="ava ava-sm lead" style="${avaColor(c.name)}">${esc(c.name.replace(/[^0-9]/g, '') || initials(c.name))}</div>
             <div class="body"><div class="title">${esc(c.name)}</div><div class="meta">Readiness · broadsheet</div></div>
-            <i class="fas fa-chevron-right chev"></i></button>`).join('')}</div></div>`
-          : emptyState('fa-file-lines', 'For class teachers', 'Reports are available to class teachers.')}
+            <i data-lucide="chevron-right" class="chev"></i></button>`).join('')}</div></div>`
+          : emptyState('file-text', 'For class teachers', 'Reports are available to class teachers.')}
       </div>`;
     });
   },
@@ -1307,10 +1372,10 @@ const TeacherApp = {
       s.innerHTML = appbar({ title:'Cover duties', back:true }) + `<div class="scroll pad stack-gap">
         ${covers.length ? `<div class="muted" style="font-size:var(--t-sm);">You are covering these lessons today.</div>
           <div class="card" style="padding:6px 12px;"><div class="rows">${covers.map(c => `
-            <div class="row"><div class="ava ava-sm lead" style="${avaColor(c.subject_name)}"><i class="fas fa-right-left" style="font-size:12px;"></i></div>
+            <div class="row"><div class="ava ava-sm lead" style="${avaColor(c.subject_name)}"><i data-lucide="arrow-right-left" style="font-size:12px;"></i></div>
               <div class="body"><div class="title">${esc(c.subject_name)} · ${esc(c.class_name)}</div>
                 <div class="meta">Period ${c.period_no}${c.original_teacher_name ? ' · for ' + esc(c.original_teacher_name) : ''}</div></div></div>`).join('')}</div></div>`
-          : emptyState('fa-mug-hot', 'No cover today', 'You have no substitution duties scheduled for today.')}
+          : emptyState('coffee', 'No cover today', 'You have no substitution duties scheduled for today.')}
       </div>`;
     });
   },
@@ -1324,26 +1389,68 @@ const TeacherApp = {
       const myBookings = Array.isArray(mine) ? mine : (mine.data || []);
       const classes = (fs.classes || []).filter(c => (c.free_slots || []).length);
       const subjects = fs.subjects || [];
+      const rooms = fs.rooms || [];
+      const mySlots = fs.my_slots || [];
+      const lessonPeriods = (fs.periods || []).filter(p => p.type === 'lesson');
       const todayISO = new Date().toISOString().slice(0, 10);
       const stBadge = st => st === 'approved' ? 'ok' : st === 'rejected' || st === 'cancelled' ? 'be' : 'warn';
+      const dayFromDate = value => new Date((value || todayISO) + 'T12:00:00').getDay();
+      const recurrenceFrom = (scope, date) => scope === 'full_week' ? [1,2,3,4,5] : [dayFromDate(date)];
       s.innerHTML = appbar({ title:'Book a slot', back:true }) + `<div class="scroll pad stack-gap">
         ${myBookings.length ? `<div class="section-label">My requests</div>
           <div class="card" style="padding:6px 12px;"><div class="rows">${myBookings.map(b => `
             <div class="row"><div class="body"><div class="title">${esc(b.subject_name)} · ${esc(b.class_name)}</div>
               <div class="meta">${esc(b.date)} · period ${b.period_no}</div></div>
               <div class="trail"><span class="badge ${stBadge(b.status)}">${esc(b.status)}</span>
-                ${b.status === 'pending' ? `<button class="appbar-btn" style="width:32px;height:32px;font-size:12px;" onclick="TeacherApp.cancelBooking(${b.id})"><i class="fas fa-xmark"></i></button>` : ''}</div></div>`).join('')}</div></div>` : ''}
+                ${b.status === 'pending' ? `<button class="appbar-btn" style="width:32px;height:32px;font-size:12px;" onclick="TeacherApp.cancelBooking(${b.id})"><i data-lucide="x"></i></button>` : ''}</div></div>`).join('')}</div></div>` : ''}
         <div class="section-label">Request a free slot</div>
+        ${rooms.length && mySlots.length ? `<div class="card stack-gap">
+          <div class="field"><label>Move scheduled lesson to room</label><select class="input" id="bk-existing">
+            ${mySlots.map(sl => `<option value="${sl.id}">${DOW[sl.day_of_week]} - P${sl.period_no} - ${esc(sl.subject_name)} - ${esc(sl.class_name)}${sl.room_name ? ' (' + esc(sl.room_name) + ')' : ''}</option>`).join('')}</select></div>
+          <div class="field"><label>Target room</label><select class="input" id="bk-existing-room">
+            ${rooms.map(r => `<option value="${r.id}">${esc(r.name)}${r.room_type ? ' - ' + esc(r.room_type) : ''}</option>`).join('')}</select></div>
+          <div class="field"><label>Target period</label><select class="input" id="bk-existing-period">
+            ${lessonPeriods.map(p => `<option value="${p.period_no}">P${p.period_no} - ${esc(p.start_time || '')}${p.end_time ? ' to ' + esc(p.end_time) : ''}</option>`).join('')}</select></div>
+          <div class="field"><label>Lesson date</label><input class="input" id="bk-existing-date" type="date" value="${todayISO}" min="${todayISO}"></div>
+          <div class="field"><label>Repeat</label><select class="input" id="bk-existing-scope">
+            <option value="once">Single day only</option>
+            <option value="weekly">Every matching weekday until end date</option>
+            <option value="full_week">Every school day until end date</option>
+          </select></div>
+          <div class="field"><label>End date</label><input class="input" id="bk-existing-date-to" type="date" value="${todayISO}" min="${todayISO}"></div>
+          <div class="muted" style="font-size:var(--t-xs);line-height:1.45;">Room moves must be requested at least 20 minutes before the lesson starts.</div>
+          <button class="btn block" id="bk-room-submit"><i data-lucide="door-open"></i> Request room move</button>
+        </div>` : ''}
+        ${rooms.length ? `<div class="section-label">Meeting or venue booking</div>
+        <div class="card stack-gap">
+          <div class="field"><label>Title</label><input class="input" id="bk-meet-title" placeholder="e.g. Parents meeting"></div>
+          <div class="field"><label>Room / venue</label><select class="input" id="bk-meet-room">
+            ${rooms.map(r => `<option value="${r.id}">${esc(r.name)}${r.room_type ? ' - ' + esc(r.room_type) : ''}</option>`).join('')}</select></div>
+          <div class="field"><label>Period</label><select class="input" id="bk-meet-period">
+            ${lessonPeriods.map(p => `<option value="${p.period_no}">P${p.period_no} - ${esc(p.start_time || '')}${p.end_time ? ' to ' + esc(p.end_time) : ''}</option>`).join('')}</select></div>
+          <div class="field"><label>Start date</label><input class="input" id="bk-meet-date" type="date" value="${todayISO}" min="${todayISO}"></div>
+          <div class="field"><label>Repeat</label><select class="input" id="bk-meet-scope">
+            <option value="once">Single day only</option>
+            <option value="weekly">Every matching weekday until end date</option>
+            <option value="full_week">Every school day until end date</option>
+          </select></div>
+          <div class="field"><label>End date</label><input class="input" id="bk-meet-date-to" type="date" value="${todayISO}" min="${todayISO}"></div>
+          <div class="field"><label>Expected people</label><input class="input" id="bk-meet-count" type="number" min="1" placeholder="Optional"></div>
+          <button class="btn block" id="bk-meet-submit"><i data-lucide="users"></i> Request venue</button>
+        </div>` : ''}
         ${classes.length ? `<div class="card stack-gap">
           <div class="field"><label>Class</label><select class="input" id="bk-class"><option value="">— pick a class —</option>
             ${classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
           <div class="field"><label>Free slot</label><select class="input" id="bk-slot" disabled><option value="">— pick a class first —</option></select></div>
           <div class="field"><label>Subject</label><select class="input" id="bk-subject">
             ${subjects.map(sub => `<option value="${sub.id}">${esc(sub.name)}</option>`).join('')}</select></div>
+          <div class="field"><label>Room</label><select class="input" id="bk-room">
+            <option value="">Use class room</option>
+            ${rooms.map(r => `<option value="${r.id}">${esc(r.name)}${r.room_type ? ' - ' + esc(r.room_type) : ''}</option>`).join('')}</select></div>
           <div class="field"><label>Date</label><input class="input" id="bk-date" type="date" value="${todayISO}" min="${todayISO}"></div>
           <div class="field"><label>Reason (optional)</label><input class="input" id="bk-reason" placeholder="e.g. extra revision lesson"></div>
-          <button class="btn primary block" id="bk-submit"><i class="fas fa-paper-plane"></i> Request slot</button>
-        </div>` : emptyState('fa-calendar-xmark', 'No free slots', 'There are no free slots available to book right now.')}
+          <button class="btn primary block" id="bk-submit"><i data-lucide="send"></i> Request slot</button>
+        </div>` : emptyState('calendar-x', 'No free slots', 'There are no free slots available to book right now.')}
       </div>`;
       const slotsByClass = {}; classes.forEach(c => { slotsByClass[c.id] = c.free_slots || []; });
       const clsSel = $('#bk-class', s), slotSel = $('#bk-slot', s);
@@ -1352,14 +1459,42 @@ const TeacherApp = {
         slotSel.disabled = !list.length;
         slotSel.innerHTML = list.length ? list.map((sl, i) => `<option value="${i}">${DOW[sl.day_of_week]} · Period ${sl.period_no}</option>`).join('') : '<option value="">No free slots</option>';
       });
+      const syncExistingPeriod = () => {
+        const src = mySlots.find(sl => String(sl.id) === String($('#bk-existing', s)?.value));
+        const pick = $('#bk-existing-period', s);
+        if (src && pick) pick.value = String(src.period_no);
+      };
+      if ($('#bk-existing', s)) { $('#bk-existing', s).addEventListener('change', syncExistingPeriod); syncExistingPeriod(); }
       if ($('#bk-submit', s)) $('#bk-submit', s).addEventListener('click', async () => {
         const cid = clsSel.value; const list = slotsByClass[cid] || []; const sl = list[Number(slotSel.value)];
         if (!cid || !sl) return UI.toast('Pick a class and free slot', 'warn');
-        const btn = $('#bk-submit', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Requesting…';
+        const btn = $('#bk-submit', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Requesting…';
         try {
-          await api.post('/api/teacher/bookings', { class_id:Number(cid), subject_id:Number($('#bk-subject', s).value), day_of_week:sl.day_of_week, period_no:sl.period_no, date:$('#bk-date', s).value, reason:$('#bk-reason', s).value });
+          await api.post('/api/teacher/bookings', { class_id:Number(cid), subject_id:Number($('#bk-subject', s).value), room_id:$('#bk-room', s).value || null, day_of_week:sl.day_of_week, period_no:sl.period_no, date:$('#bk-date', s).value, reason:$('#bk-reason', s).value });
           UI.toast('Booking requested', 'ok'); Router.pop(); TeacherApp.booking();
-        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Request slot'; }
+        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="send"></i> Request slot'; }
+      });
+      if ($('#bk-room-submit', s)) $('#bk-room-submit', s).addEventListener('click', async () => {
+        const src = mySlots.find(sl => String(sl.id) === String($('#bk-existing', s).value));
+        if (!src) return UI.toast('Pick a timetable lesson', 'warn');
+        const btn = $('#bk-room-submit', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Requesting...';
+        try {
+          const date = $('#bk-existing-date', s)?.value || todayISO;
+          const scope = $('#bk-existing-scope', s)?.value || 'once';
+          await api.post('/api/teacher/bookings', { source_slot_id:src.id, class_id:src.class_id, subject_id:src.subject_id, room_id:$('#bk-existing-room', s).value, day_of_week:dayFromDate(date), period_no:Number($('#bk-existing-period', s).value || src.period_no), date, date_to:$('#bk-existing-date-to', s)?.value || date, recurrence_days:recurrenceFrom(scope, date), reason:'Room move request' });
+          UI.toast('Room move requested', 'ok'); Router.pop(); TeacherApp.booking();
+        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="door-open"></i> Request room move'; }
+      });
+      if ($('#bk-meet-submit', s)) $('#bk-meet-submit', s).addEventListener('click', async () => {
+        const title = $('#bk-meet-title', s).value.trim();
+        const date = $('#bk-meet-date', s).value || todayISO;
+        const scope = $('#bk-meet-scope', s).value || 'once';
+        if (!title) return UI.toast('Enter a meeting title', 'warn');
+        const btn = $('#bk-meet-submit', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Requesting...';
+        try {
+          await api.post('/api/teacher/bookings', { booking_type:'meeting', title, room_id:$('#bk-meet-room', s).value, day_of_week:dayFromDate(date), period_no:Number($('#bk-meet-period', s).value), date, date_to:$('#bk-meet-date-to', s).value || date, recurrence_days:recurrenceFrom(scope, date), attendee_count:$('#bk-meet-count', s).value || null, reason:'Meeting / venue booking' });
+          UI.toast('Venue requested', 'ok'); Router.pop(); TeacherApp.booking();
+        } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = '<i data-lucide="users"></i> Request venue'; }
       });
     });
   },
@@ -1387,7 +1522,7 @@ const TeacherApp = {
       $('#cp-form', s).addEventListener('submit', async (e) => {
         e.preventDefault();
         if ($('#cp-new', s).value !== $('#cp-conf', s).value) return UI.toast('Passwords do not match', 'danger');
-        const btn = $('#cp-btn', s); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i> Saving…';
+        const btn = $('#cp-btn', s); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-circle" class="spin"></i> Saving…';
         try { await api.put('/api/teacher/change-password', { current_password: $('#cp-cur', s).value, new_password: $('#cp-new', s).value });
           UI.toast('Password updated', 'ok'); Router.pop();
         } catch(err){ UI.toast(err.message, 'danger'); btn.disabled = false; btn.innerHTML = 'Update password'; }
@@ -1397,4 +1532,5 @@ const TeacherApp = {
 };
 
 /* ── go ── */
+Icons.start();
 boot();

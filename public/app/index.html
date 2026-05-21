@@ -10,14 +10,13 @@
 <title>Daraja</title>
 <link rel="icon" href="/uploads/school/logo.jpg"/>
 <link rel="apple-touch-icon" href="/uploads/school/logo.jpg"/>
-<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
 <link rel="stylesheet" href="/app/daraja.css"/>
 </head>
 <body>
 
 <!-- Splash -->
 <div id="splash">
-  <div class="splash-logo" id="splash-logo"><i class="fas fa-graduation-cap" style="font-size:44px;color:var(--brand-600);"></i></div>
+  <div class="splash-logo" id="splash-logo"><i data-lucide="graduation-cap" style="font-size:44px;color:var(--brand-600);"></i></div>
   <div class="splash-name" id="splash-name">Daraja</div>
   <div class="splash-tag">Education is Treasure</div>
   <div class="splash-dots"><i></i><i></i><i></i></div>
@@ -34,6 +33,14 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 <div class="shroud" id="shroud" onclick="UI.closeSheet()"></div>
 
+<script src="/vendor/lucide/lucide.min.js"></script>
 <script src="/app/daraja.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(() => {});
+  });
+}
+</script>
 </body>
 </html>

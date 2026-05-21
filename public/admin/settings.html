@@ -61,78 +61,14 @@
         <a class="s-rail-item"><i class="fas fa-database"></i>Data &amp; backup</a>
       </div>
 
+      <!-- Real settings are rendered here by panels() in init(); this is the loading placeholder. -->
       <div>
-        <div class="s-section">
-          <h3>School profile</h3>
-          <div class="desc">Basic information shown on report cards, parent invitations and the school portal.</div>
-
-          <div class="s-row">
-            <div><div class="lbl">School name</div><div class="help">Appears on report card headers and letters home</div></div>
-            <input class="input" value="Joyland Schools"/>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Motto</div><div class="help">Short, on the masthead under the name</div></div>
-            <input class="input" value="Learning with Joy. Leading with Purpose."/>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Postal address</div><div class="help">For official correspondence</div></div>
-            <input class="input" value="P.O. Box 4892 · 00100 Nairobi"/>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Main phone</div><div class="help">Used as the SMS sender ID when permitted</div></div>
-            <input class="input" value="+254 712 000 000"/>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Logo</div><div class="help">PNG or SVG · 256×256 minimum</div></div>
-            <button class="btn"><i class="fas fa-upload"></i>Upload logo</button>
-          </div>
-        </div>
-
-        <div class="s-section">
-          <h3>Identity &amp; theme</h3>
-          <div class="desc">Brand color used on parent portal, learner app and report headers.</div>
-
-          <div class="s-row">
-            <div><div class="lbl">Primary color</div><div class="help">Joyland green by default</div></div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <div style="width:30px;height:30px;border-radius:7px;background:#1B5E20;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);"></div>
-              <input class="input mono" style="max-width:120px;" value="#1B5E20"/>
-            </div>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Accent / celebration</div><div class="help">Used on gold moments and badges</div></div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <div style="width:30px;height:30px;border-radius:7px;background:#C99732;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);"></div>
-              <input class="input mono" style="max-width:120px;" value="#C99732"/>
-            </div>
-          </div>
-        </div>
-
-        <div class="s-section">
-          <h3>Defaults</h3>
-          <div class="desc">Pre-fill choices to save teachers clicks.</div>
-
-          <div class="s-row">
-            <div><div class="lbl">Auto-save mark entry</div><div class="help">Saves drafts as teachers type</div></div>
-            <div style="display:flex;justify-content:flex-end;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Show CBC band in mark sheets</div><div class="help">EE / ME / AE / BE next to each score</div></div>
-            <div style="display:flex;justify-content:flex-end;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Send parent SMS on absence</div><div class="help">Automatic same-day notification</div></div>
-            <div style="display:flex;justify-content:flex-end;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
-          </div>
-          <div class="s-row">
-            <div><div class="lbl">Allow teachers to publish marks</div><div class="help">Otherwise only admins can release</div></div>
-            <div style="display:flex;justify-content:flex-end;"><div class="switch" onclick="this.classList.toggle('on')"></div></div>
-          </div>
-        </div>
-
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
-          <button class="btn">Discard</button>
-          <button class="btn btn-primary" onclick="Joy.toast('Settings saved')"><i class="far fa-save"></i>Save changes</button>
+        <div class="s-section" aria-busy="true">
+          <div class="skel" style="height:18px;width:180px;border-radius:6px;"></div>
+          <div class="skel" style="height:13px;width:60%;margin-top:10px;border-radius:6px;"></div>
+          <div class="skel" style="height:42px;margin-top:18px;border-radius:8px;"></div>
+          <div class="skel" style="height:42px;margin-top:10px;border-radius:8px;"></div>
+          <div class="skel" style="height:42px;margin-top:10px;border-radius:8px;"></div>
         </div>
       </div>
     </div>
@@ -152,7 +88,7 @@ function sw(id,on){return '<div class="switch '+(on?'on':'')+'" data-key="'+id+'
 function row(lbl,help,control){return '<div class="s-row"><div><div class="lbl">'+lbl+'</div><div class="help">'+help+'</div></div>'+control+'</div>';}
 function val(k,d=''){return settings[k]??d;} function bool(k){return String(val(k,'0'))==='1'||val(k)===true;}
 function panels(){let bands={EE:75,ME:60,AE:50,BE:0};try{bands=JSON.parse(val('band_thresholds_json','{}'));}catch{}
- const profile='<div class="s-section" data-section="profile"><h3>School profile</h3><div class="desc">Basic information shown on report cards, parent invitations and the school portal.</div>'+row('School name','Appears on report card headers','<input class="input" data-key="school_name" value="'+esc(val('school_name'))+'"/>')+row('Motto','Short, on the masthead','<input class="input" data-key="school_motto" value="'+esc(val('school_motto'))+'"/>')+row('Postal address','For official correspondence','<input class="input" data-key="school_address" value="'+esc(val('school_address'))+'"/>')+row('Main phone','Used in official communications','<input class="input" data-key="school_phone" value="'+esc(val('school_phone'))+'"/>')+row('Theme color','Report and portal accent','<input class="input mono" data-key="theme_color" value="'+esc(val('theme_color','#1B5E20'))+'"/>')+'<button class="btn btn-primary save-section" data-save="profile"><i class="far fa-save"></i>Save profile</button></div>';
+ const profile='<div class="s-section" data-section="profile"><h3>School profile</h3><div class="desc">Basic information shown on report cards, parent invitations and the school portal.</div>'+row('School name','Appears on report card headers','<input class="input" data-key="school_name" value="'+esc(val('school_name'))+'"/>')+row('Motto','Short, on the masthead','<input class="input" data-key="school_motto" value="'+esc(val('school_motto'))+'"/>')+row('Postal address','For official correspondence','<input class="input" data-key="school_address" value="'+esc(val('school_address'))+'"/>')+row('Main phone','Used in official communications','<input class="input" data-key="school_phone" value="'+esc(val('school_phone'))+'"/>')+row('Theme color','Report and portal accent','<input class="input mono" data-key="theme_color" value="'+esc(val('theme_color','#14532d'))+'"/>')+'<button class="btn btn-primary save-section" data-save="profile"><i class="far fa-save"></i>Save profile</button></div>';
  const grading='<div class="s-section" data-section="grading" hidden><h3>Grading scheme</h3><div class="desc">CBC band thresholds and mark publishing defaults.</div>'+['EE','ME','AE','BE'].map(b=>row(b+' threshold','Minimum percentage for '+b,'<input class="input mono band-input" data-band="'+b+'" type="number" value="'+(bands[b]??0)+'"/>')).join('')+row('Show CBC band in mark sheets','EE / ME / AE / BE next to each score',sw('show_band_in_marks',bool('show_band_in_marks')))+row('Allow teachers to publish marks','Otherwise only admins can release',sw('teacher_publish_marks',bool('teacher_publish_marks')))+'<button class="btn btn-primary save-section" data-save="grading"><i class="far fa-save"></i>Save grading</button></div>';
  const notif='<div class="s-section" data-section="notifications" hidden><h3>Notifications</h3><div class="desc">Defaults for teacher workflows and parent communication.</div>'+row('Auto-save mark entry','Saves drafts as teachers type',sw('auto_save_marks',bool('auto_save_marks')))+row('SMS on absence','Automatic same-day notification',sw('sms_on_absence',bool('sms_on_absence')))+row('SMS sender ID','Registered sender name','<input class="input" data-key="sms_sender_id" value="'+esc(val('sms_sender_id','JOYLAND'))+'"/>')+row('Default channels','Used for new broadcasts','<div style="display:flex;gap:8px;flex-wrap:wrap;">'+['in-app','sms','email','whatsapp'].map(c=>'<label class="chip"><input type="checkbox" class="default-channel" value="'+c+'" '+((val('default_channels_json','[]').includes(c))?'checked':'')+'> '+c+'</label>').join('')+'</div>')+'<button class="btn btn-primary save-section" data-save="notifications"><i class="far fa-save"></i>Save notifications</button></div>';
  const roleTable='<table class="tbl"><thead><tr><th>Role</th>'+perms.map(p=>'<th class="c">'+esc(p.replace(/_/g,' '))+'</th>').join('')+'</tr></thead><tbody>'+roles.map(r=>'<tr data-role="'+r.id+'"><td><b>'+esc(r.name)+'</b></td>'+perms.map(p=>'<td class="c"><div class="switch perm '+((r.permissions||[]).includes(p)?'on':'')+'" data-perm="'+p+'"></div></td>').join('')+'</tr>').join('')+'</tbody></table>';

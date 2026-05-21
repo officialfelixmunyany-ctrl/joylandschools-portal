@@ -181,7 +181,7 @@
     <button onclick="exportSelected()"><i class="fas fa-download"></i>Export</button>
     <button onclick="bulkDeactivate()"><i class="fas fa-ban"></i>Deactivate</button>
   </div>
-  <button class="bulk-x" onclick="clearSel()"><i class="fas fa-xmark"></i></button>
+  <button class="bulk-x" onclick="clearSel()" aria-label="Clear selection"><i class="fas fa-xmark"></i></button>
 </div>
 
 <!-- ═══ Shroud ═══ -->
@@ -269,7 +269,7 @@
   </div>
   <div class="slide-body">
 
-    <div style="padding:14px 16px;background:linear-gradient(135deg,var(--brand-tint),#fff);border:1px solid rgba(27,94,32,.18);border-radius:10px;margin-bottom:18px;font-size:12.5px;color:var(--ink-2);line-height:1.5;">
+    <div style="padding:14px 16px;background:linear-gradient(135deg,var(--brand-tint),#fff);border:1px solid rgba(20,83,45,.18);border-radius:10px;margin-bottom:18px;font-size:12.5px;color:var(--ink-2);line-height:1.5;">
       <div style="font-weight:600;color:var(--ink);margin-bottom:5px;"><i class="fas fa-circle-info" style="color:var(--brand);margin-right:5px;"></i>Required columns</div>
       <code style="font-family:var(--mono);font-size:11px;color:var(--ink);background:#fff;padding:2px 6px;border-radius:4px;border:1px solid var(--line);">Name, Admission No, Sex, Class, Date of Birth, Parent Phone</code>
       <div style="margin-top:8px;font-size:11.5px;color:var(--ink-3);">Class must match an existing class name exactly (e.g. <b>GRADE 5</b>, <b>PP1</b>). Date of birth in YYYY-MM-DD. Sex is M or F.</div>
@@ -424,7 +424,7 @@ async function openProfile(p){
   const learner = prof?.learner || p.source || p;
   const parents = prof?.parents || [];
   document.getElementById('profBody').innerHTML = '<div class="prof-hero"><div class="ava ava-xl" style="' + Joy.avaStyle(p.name) + '">' + Joy.initials(p.name) + '</div><div class="prof-meta"><div class="prof-name">' + esc(p.name) + '</div><div class="prof-id">' + esc(p.sub) + '</div><div class="prof-chips">' + roleChip(p.role) + statusPill(p.status) + '</div></div></div>' +
-    '<div class="prof-actions"><button class="btn btn-primary"><i class="far fa-file-alt"></i>Open report</button><button class="btn"><i class="far fa-envelope"></i>Message</button><button class="btn btn-icon"><i class="fas fa-ellipsis-h"></i></button></div>' +
+    '<div class="prof-actions"><button class="btn btn-primary"><i class="far fa-file-alt"></i>Open report</button><button class="btn"><i class="far fa-envelope"></i>Message</button><button class="btn btn-icon" aria-label="More actions"><i class="fas fa-ellipsis-h"></i></button></div>' +
     '<div class="snap"><div class="snap-cell"><div class="snap-v">-</div><div class="snap-l">Attendance</div></div><div class="snap-cell"><div class="snap-v">-</div><div class="snap-l">Mean</div></div><div class="snap-cell"><div class="snap-v">-</div><div class="snap-l">Position</div></div></div>' +
     '<div class="kv-grid"><div class="kv"><div class="k">Identifier</div><div class="v mono">' + esc(p.sub) + '</div></div><div class="kv"><div class="k">Class / Context</div><div class="v">' + esc(p.ctx) + '</div></div><div class="kv"><div class="k">Sex</div><div class="v">' + esc(learner.sex || '-') + '</div></div><div class="kv"><div class="k">Date of birth</div><div class="v">' + esc(learner.date_of_birth || '-') + '</div></div></div>' +
     '<div class="section-h">Parents · ' + parents.length + '</div>' + (parents.length ? parents.map(x=>'<div class="parent-row"><div class="ava" style="' + Joy.avaStyle(x.name) + '">' + Joy.initials(x.name) + '</div><div class="nm"><div class="pn">' + esc(x.name) + '</div><div class="pm mono">' + esc(x.phone || '-') + ' · ' + esc(x.relationship || 'Guardian') + '</div></div></div>').join('') : '<div style="font-size:12px;color:var(--ink-3);">No linked parents yet.</div>') +
@@ -621,7 +621,13 @@ function openRowMenu(anchor, p){
     }
     if(act === 'toggle'){
       const verb = isActive ? 'Deactivate' : 'Activate';
-      if(!confirm(verb + ' ' + p.name + '?')) return;
+      const ok = await Joy.confirm({
+        title:verb + ' person?',
+        message:verb + ' ' + p.name + '. Their records are preserved; list visibility changes with status.',
+        actionLabel:verb,
+        tone:isActive ? 'danger' : 'default'
+      });
+      if(!ok) return;
       try {
         const path = p.role === 'learner' ? '/learners/' + p.id + '/status'
                    : p.role === 'teacher' ? '/teachers/' + p.id + '/status'
@@ -719,7 +725,13 @@ function summarise(items){
 async function bulkDeactivate(){
   const items = people.filter(p => sel.has(p.key) && p.status === 'active');
   if(!items.length){ Joy.toast('No active people selected', { type:'warn' }); return; }
-  if(!confirm('Deactivate ' + summarise(items) + '?\n\nThey will keep their records but stop appearing in active lists.')) return;
+  const confirmed = await Joy.confirm({
+    title:'Deactivate selected people?',
+    message:'Deactivate ' + summarise(items) + '. They keep their records but stop appearing in active lists.',
+    actionLabel:'Deactivate',
+    tone:'danger'
+  });
+  if(!confirmed) return;
   let ok = 0, fail = 0;
   const learners = items.filter(p => p.role === 'learner');
   const teachers = items.filter(p => p.role === 'teacher');
@@ -754,7 +766,12 @@ async function bulkCodes(){
   if(!learners.length && !teachers.length){
     Joy.toast('Select learners or teachers first', { type:'warn' }); return;
   }
-  if(!confirm('Generate fresh temporary login codes for ' + summarise([...learners, ...teachers]) + '?')) return;
+  const confirmed = await Joy.confirm({
+    title:'Generate temporary login codes?',
+    message:'Generate fresh 24-hour login codes for ' + summarise([...learners, ...teachers]) + '. Existing temporary codes will be replaced.',
+    actionLabel:'Generate codes'
+  });
+  if(!confirmed) return;
   let total = 0;
   try {
     if(learners.length){
@@ -787,7 +804,13 @@ async function bulkMove(){
   if(!learners.length){ Joy.toast('Move applies to learners only', { type:'warn' }); return; }
   const opts = classes.map(c => c.name);
   if(!opts.length){ Joy.toast('No classes available', { type:'warn' }); return; }
-  const target = prompt('Move ' + learners.length + ' learner(s) to which class?\n\nAvailable classes:\n  ' + opts.join('\n  '), opts[0]);
+  const target = await Joy.choice({
+    title:'Move learners to class',
+    message:'Choose the destination class for ' + learners.length + ' learner(s).',
+    options:opts.map(name => ({ value:name, label:name })),
+    value:opts[0],
+    actionLabel:'Move learners'
+  });
   if(!target) return;
   if(!opts.some(n => n.toUpperCase() === target.trim().toUpperCase())){
     Joy.toast('Unknown class name: ' + target, { type:'danger' }); return;

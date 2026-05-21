@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Overview · Joyland Admin</title>
+<title>Overview  Joyland Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
@@ -15,8 +15,8 @@
 .hero-card::before{content:'';position:absolute;inset:0;background:radial-gradient(800px circle at 100% -20%,rgba(201,151,50,.06),transparent 50%);pointer-events:none;}
 .hero-eye{display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
 .hero-eye .live{display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-weight:700;}
-.hero-num{font-family:var(--display);font-weight:600;font-size:88px;color:var(--ink);letter-spacing:-.028em;line-height:1;display:flex;align-items:flex-end;gap:8px;}
-.hero-num .pct{font-size:36px;color:var(--ink-3);font-weight:500;letter-spacing:-.02em;margin-bottom:14px;}
+.hero-num{font-family:var(--body);font-weight:800;font-size:64px;color:var(--ink);letter-spacing:-.025em;line-height:1;display:flex;align-items:flex-end;gap:8px;}
+.hero-num .pct{font-size:22px;color:var(--ink-3);font-weight:650;letter-spacing:-.01em;margin-bottom:9px;}
 .hero-sub{font-size:14px;color:var(--ink-2);margin-top:14px;max-width:480px;line-height:1.5;}
 .hero-sub b{color:var(--ink);font-weight:600;}
 .hero-spark{margin-top:18px;}
@@ -95,30 +95,30 @@
 
   <div class="content">
 
-    <!-- ═══ Page head ═══ -->
+    <!--  Page head  -->
     <div class="page-head">
       <div>
-        <div class="eyebrow" id="termEyebrow">Loading current term…</div>
+        <div class="eyebrow" id="termEyebrow">Loading school year...</div>
         <h1 class="h1">Good morning, <em id="adminName">there</em>.</h1>
-        <div class="h-sub">Here's how the school is doing today · <b id="today-date"></b></div>
+        <div class="h-sub">Daily operations and learner support status  <b id="today-date"></b></div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
-        <button class="btn" id="exportBtn" title="Download a CSV snapshot of today's overview"><i class="fas fa-download"></i>Export snapshot</button>
-        <button class="btn btn-primary" id="quickAction" title="Open command bar (⌘K)"><i class="fas fa-bolt"></i>Quick action <span class="kbd" style="margin-left:4px;font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:1px 5px;">⌘K</span></button>
+        <button class="btn" id="exportBtn" title="Download a CSV dashboard report"><i class="fas fa-download"></i>Download report</button>
+        <button class="btn btn-primary" id="quickAction" title="Open quick actions"><i class="fas fa-bolt"></i>Open quick actions <span class="kbd" style="margin-left:4px;font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:1px 5px;">Ctrl K</span></button>
       </div>
     </div>
 
-    <!-- ═══ Bento grid ═══ -->
+    <!--  Bento grid  -->
     <div class="grid">
 
-      <!-- Hero card · today's pulse -->
+      <!-- Hero card  today's pulse -->
       <div class="card col-8 hero-card">
         <div class="card-body" style="padding:24px;">
           <div class="hero-eye">
-            <span>Today's Pulse</span>
-            <span class="live"><span class="live-dot"></span>Live · attendance &amp; marks</span>
+            <span>Daily operations</span>
+            <span class="live"><span class="live-dot"></span>Live from attendance &amp; published results</span>
           </div>
-          <div class="hero-num"><span id="heroNum">—</span><span class="pct">% present</span></div>
+          <div class="hero-num"><span id="heroNum">--</span><span class="pct">% present</span></div>
           <div class="hero-sub" id="heroSub">&nbsp;</div>
           <div class="hero-spark" id="heroSpark">
             <!-- Sparkline of last 7 school days (real data, JS-rendered) -->
@@ -131,7 +131,7 @@
         <div class="card-head">
           <div>
             <div class="card-title">Term clock</div>
-            <div class="card-sub" id="termSub">Loading…</div>
+            <div class="card-sub" id="termSub">Loading</div>
           </div>
         </div>
         <div class="card-body">
@@ -142,7 +142,7 @@
                 stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264"
                 transform="rotate(-90 50 50)"/>
               <text x="50" y="48" text-anchor="middle" class="ring-center" dominant-baseline="middle"
-                style="font-family:Fraunces;font-weight:600;font-size:22px;fill:var(--ink);">—</text>
+                style="font-family:Fraunces;font-weight:600;font-size:22px;fill:var(--ink);"></text>
               <text x="50" y="62" text-anchor="middle"
                 style="font-family:JetBrains Mono;font-size:8px;fill:var(--ink-3);letter-spacing:.08em;">LOADING</text>
             </svg>
@@ -154,54 +154,54 @@
       <!-- KPI tiles -->
       <div class="stat-card col-3">
         <div class="stat-label"><span class="stat-icon bl"><i class="fas fa-user-graduate"></i></span>Learners</div>
-        <div class="stat-value">—</div>
-        <div class="stat-delta flat">Loading…</div>
+        <div class="stat-value">--</div>
+        <div class="stat-delta flat">Loading</div>
       </div>
       <div class="stat-card col-3">
         <div class="stat-label"><span class="stat-icon pu"><i class="fas fa-chalkboard-user"></i></span>Teachers</div>
-        <div class="stat-value">—</div>
-        <div class="stat-delta flat">Loading…</div>
+        <div class="stat-value">--</div>
+        <div class="stat-delta flat">Loading</div>
       </div>
       <div class="stat-card col-3">
-        <div class="stat-label"><span class="stat-icon gr"><i class="fas fa-chart-line"></i></span>School mean</div>
-        <div class="stat-value">—</div>
-        <div class="stat-delta flat">Loading…</div>
+        <div class="stat-label"><span class="stat-icon gr"><i class="fas fa-chart-line"></i></span>School average</div>
+        <div class="stat-value">--</div>
+        <div class="stat-delta flat">Loading</div>
       </div>
       <div class="stat-card col-3">
-        <div class="stat-label"><span class="stat-icon or"><i class="fas fa-triangle-exclamation"></i></span>Need attention</div>
-        <div class="stat-value">—</div>
-        <div class="stat-delta flat">Loading…</div>
+        <div class="stat-label"><span class="stat-icon or"><i class="fas fa-triangle-exclamation"></i></span>Need support</div>
+        <div class="stat-value">--</div>
+        <div class="stat-delta flat">Loading</div>
       </div>
 
       <!-- Trend small multiples -->
       <div class="card col-8">
         <div class="card-head">
           <div>
-            <div class="card-title">Performance by grade</div>
-            <div class="card-sub">Class mean · weeks 1–8 this term</div>
+            <div class="card-title">Learning progress by class</div>
+            <div class="card-sub">Current published assessment data</div>
           </div>
-          <a class="card-link" href="/admin/analysis.html">Open analysis <i class="fas fa-arrow-right"></i></a>
+          <a class="card-link" href="/admin/analysis.html">View insights <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="card-body">
           <div class="tm-grid">
             <!-- JS renders one tile per active class from /api/admin/classes -->
-            <div class="tm-card"><div class="tm-name">Loading classes…</div><div class="tm-val">—</div></div>
+            <div class="tm-card"><div class="tm-name">Loading classes</div><div class="tm-val">--</div></div>
           </div>
         </div>
       </div>
 
-      <!-- Top classes -->
+      <!-- Operational action queue -->
       <div class="card col-4">
         <div class="card-head">
           <div>
-            <div class="card-title">Top classes</div>
-            <div class="card-sub">This term</div>
+            <div class="card-title">Operational action queue</div>
+            <div class="card-sub">Priority follow-ups from live records</div>
           </div>
-          <a class="card-link" href="/admin/classes.html">All <i class="fas fa-arrow-right"></i></a>
+          <span id="queueFreshness"></span>
         </div>
         <div class="card-body">
-          <div class="rank-list" id="topClassList">
-            <div class="rank-row"><div class="rank-info"><div class="rank-name" style="color:var(--ink-3);font-weight:500;">Loading classes…</div></div></div>
+          <div id="actionQueueList">
+            <div class="rank-row"><div class="rank-info"><div class="rank-name" style="color:var(--ink-3);font-weight:500;">Checking operations</div></div></div>
           </div>
         </div>
       </div>
@@ -210,8 +210,8 @@
       <div class="card col-6">
         <div class="card-head">
           <div>
-            <div class="card-title">Needs attention</div>
-            <div class="card-sub">Dropped band or 3+ absences this fortnight</div>
+            <div class="card-title">Learners needing support</div>
+            <div class="card-sub">Low progress or repeated absence</div>
           </div>
           <a class="card-link" href="/admin/people.html?filter=at-risk">View all <i class="fas fa-arrow-right"></i></a>
         </div>
@@ -225,13 +225,13 @@
         <div class="card-head">
           <div>
             <div class="card-title">This week</div>
-            <div class="card-sub">Assessments · events · meetings</div>
+            <div class="card-sub">Assessments  events  meetings</div>
           </div>
           <a class="card-link" href="/admin/calendar.html">Calendar <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="card-body">
           <div class="up-list" id="weekList">
-            <div class="up-row"><div class="up-info"><div class="up-name" style="color:var(--ink-3);font-weight:500;">Loading events…</div></div></div>
+            <div class="up-row"><div class="up-info"><div class="up-name" style="color:var(--ink-3);font-weight:500;">Loading events</div></div></div>
           </div>
         </div>
       </div>
@@ -240,7 +240,7 @@
       <div class="card col-6">
         <div class="card-head">
           <div>
-            <div class="card-title">Get something done</div>
+            <div class="card-title">Quick actions</div>
             <div class="card-sub">Common admin actions</div>
           </div>
         </div>
@@ -248,17 +248,17 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <a class="rank-row" href="/admin/marks.html" style="background:var(--surface-2);padding:14px;border-radius:10px;">
               <div class="feed-icon gr" style="width:34px;height:34px;font-size:13px;"><i class="fas fa-clipboard-list"></i></div>
-              <div class="rank-info"><div class="rank-name">Enter marks</div><div class="rank-meta">Score sheet</div></div>
+              <div class="rank-info"><div class="rank-name">Enter assessment results</div><div class="rank-meta">Score sheet</div></div>
               <i class="fas fa-arrow-right" style="color:var(--ink-3);font-size:11px;"></i>
             </a>
             <a class="rank-row" href="/admin/attendance.html" style="background:var(--surface-2);padding:14px;border-radius:10px;">
               <div class="feed-icon bl" style="width:34px;height:34px;font-size:13px;"><i class="fas fa-user-check"></i></div>
-              <div class="rank-info"><div class="rank-name">Mark attendance</div><div class="rank-meta">Today's roll</div></div>
+              <div class="rank-info"><div class="rank-name">Record attendance</div><div class="rank-meta">Today's roll</div></div>
               <i class="fas fa-arrow-right" style="color:var(--ink-3);font-size:11px;"></i>
             </a>
             <a class="rank-row" href="/admin/notifications.html" style="background:var(--surface-2);padding:14px;border-radius:10px;">
               <div class="feed-icon or" style="width:34px;height:34px;font-size:13px;"><i class="fas fa-bullhorn"></i></div>
-              <div class="rank-info"><div class="rank-name">Broadcast</div><div class="rank-meta">To parents</div></div>
+              <div class="rank-info"><div class="rank-name">Send message</div><div class="rank-meta">To parents</div></div>
               <i class="fas fa-arrow-right" style="color:var(--ink-3);font-size:11px;"></i>
             </a>
             <a class="rank-row" href="/admin/people.html?add=1" style="background:var(--surface-2);padding:14px;border-radius:10px;">
@@ -268,12 +268,12 @@
             </a>
             <a class="rank-row" href="/admin/reports.html" style="background:var(--surface-2);padding:14px;border-radius:10px;">
               <div class="feed-icon" style="width:34px;height:34px;font-size:13px;background:rgba(201,151,50,.10);color:var(--gold);"><i class="fas fa-file-alt"></i></div>
-              <div class="rank-info"><div class="rank-name">Generate report</div><div class="rank-meta">Cards · broadsheet</div></div>
+              <div class="rank-info"><div class="rank-name">Generate report</div><div class="rank-meta">Report cards  broadsheet</div></div>
               <i class="fas fa-arrow-right" style="color:var(--ink-3);font-size:11px;"></i>
             </a>
             <a class="rank-row" href="/admin/analysis.html" style="background:var(--surface-2);padding:14px;border-radius:10px;">
               <div class="feed-icon" style="width:34px;height:34px;font-size:13px;background:rgba(20,184,166,.10);color:var(--d3);"><i class="fas fa-chart-area"></i></div>
-              <div class="rank-info"><div class="rank-name">Open analysis</div><div class="rank-meta">School trends</div></div>
+              <div class="rank-info"><div class="rank-name">View insights</div><div class="rank-meta">School trends</div></div>
               <i class="fas fa-arrow-right" style="color:var(--ink-3);font-size:11px;"></i>
             </a>
           </div>
@@ -314,16 +314,16 @@ function stats(s, a){
   Joy.tickUp(document.getElementById('heroNum'), p, { duration: 1100, decimals: p % 1 ? 1 : 0 });
   const present = a.present || 0;
   const total = a.total || s.learners || 0;
-  const meanText = s.school_mean !== null && s.school_mean !== undefined ? pct(s.school_mean) : '—';
+  const meanText = s.school_mean !== null && s.school_mean !== undefined ? pct(s.school_mean) : '-';
   document.getElementById('heroSub').innerHTML =
-    '<b>' + present + ' of ' + total + '</b> learners marked present today · <b>' +
-    (s.classes || 0) + ' active classes</b> · school mean <b>' + meanText + '</b>.';
+    '<b>' + present + ' of ' + total + '</b> learners marked present today - <b>' +
+    (s.classes || 0) + ' active classes</b> - school average <b>' + meanText + '</b>.';
   const cards = document.querySelectorAll('.stat-card');
   const tiles = [
     [s.learners || 0, 'Live learner records'],
     [s.teachers || 0, 'Live staff records'],
-    [meanText,        'Current term mean'],
-    [s.at_risk || 0,  'Below ME band', 'learners']
+    [meanText,        'Current term average'],
+    [s.at_risk || 0,  'Below expected progress', 'learners']
   ];
   tiles.forEach((d, i) => {
     if(!cards[i]) return;
@@ -331,6 +331,29 @@ function stats(s, a){
     cards[i].querySelector('.stat-delta').innerHTML = '<i class="fas fa-circle-info"></i>' + d[1];
     cards[i].querySelector('.stat-delta').className = 'stat-delta flat';
   });
+  const queue = [];
+  if(!total){
+    queue.push({ tone:'warn', icon:'fa-user-check', title:'Attendance has no learner base', meta:'Check learner records before recording attendance.', href:'/admin/people.html' });
+  } else if(!a.total){
+    queue.push({ tone:'warn', icon:'fa-user-check', title:'Record today\'s attendance', meta:'No attendance has been recorded for today yet.', href:'/admin/attendance.html' });
+  } else if(p < 95){
+    queue.push({ tone:'danger', icon:'fa-user-check', title:'Review attendance exceptions', meta:pct(p) + ' present today. Confirm absences and follow up where needed.', href:'/admin/attendance.html' });
+  } else {
+    queue.push({ tone:'ok', icon:'fa-user-check', title:'Attendance is current', meta:present + ' of ' + total + ' learners marked present today.', href:'/admin/attendance.html' });
+  }
+  if(s.school_mean === null || s.school_mean === undefined){
+    queue.push({ tone:'warn', icon:'fa-clipboard-list', title:'Publish assessment results', meta:'No current term school average is available yet.', href:'/admin/marks.html' });
+  } else {
+    queue.push({ tone:'ok', icon:'fa-chart-line', title:'Assessment data available', meta:'School average is ' + meanText + ' from published results.', href:'/admin/analysis.html' });
+  }
+  if(Number(s.at_risk || 0) > 0){
+    queue.push({ tone:'danger', icon:'fa-hands-holding-child', title:'Support learners needing attention', meta:(s.at_risk || 0) + ' learners are below expected progress.', href:'/admin/people.html?filter=at-risk' });
+  } else {
+    queue.push({ tone:'ok', icon:'fa-hands-holding-child', title:'No learners currently flagged', meta:'Support alerts will appear here when risk signals are detected.', href:'/admin/people.html' });
+  }
+  queue.push({ tone:'info', icon:'fa-bullhorn', title:'Keep families informed', meta:'Send a clear update to parents when attendance or assessment patterns change.', href:'/admin/notifications.html?compose=1' });
+  document.getElementById('actionQueueList').innerHTML = Joy.actionQueue(queue);
+  document.getElementById('queueFreshness').innerHTML = Joy.freshnessBadge('Live', 'ok');
 }
 
 function term(p){
@@ -342,7 +365,7 @@ function term(p){
     const label = (p.stage_label || p.period_label || 'Term').toUpperCase();
     center.textContent = label;
     /* Auto-fit inside the ring (interior ~84 viewBox units wide).
-       Fraunces glyphs run ~12 viewBox units per char at 22px — anything
+       Fraunces glyphs run ~12 viewBox units per char at 22px  anything
        7+ chars (MIDTERM, ENDTERM, HOLIDAY) needs to step down. */
     const size = label.length >= 8 ? 16 : label.length >= 7 ? 18 : label.length >= 6 ? 20 : 22;
     center.style.fontSize = size + 'px';
@@ -354,7 +377,7 @@ function term(p){
     const end = p.term?.end_date ? new Date(p.term.end_date + 'T00:00:00') : null;
     const days = end ? Math.max(0, Math.ceil((end - new Date()) / 86400000)) : 0;
     meta.innerHTML = p.in_term
-      ? '<b>' + days + ' school days</b> left this term<br>' + esc(p.stage_label || p.period_label || '') + ' · Source: ' + esc(p.source || 'Joyland Sessions & Terms')
+      ? '<b>' + days + ' school days</b> left this term<br>' + esc(p.stage_label || p.period_label || '') + '  Source: ' + esc(p.source || 'Joyland Sessions & Terms')
       : '<b>' + esc(p.period_label || 'Break') + '</b>';
   }
   /* Term clock sub-label + page eyebrow */
@@ -362,19 +385,19 @@ function term(p){
   const sessionName = p.term?.session_name || '';
   const sub = document.getElementById('termSub');
   if(sub) sub.textContent = p.in_term
-    ? (termName + ' · ' + (p.stage_label || p.period_label || '') + ' · Week ' + p.week_no + '/' + p.total_weeks)
-    : (sessionName ? (sessionName + ' · ' + termName) : termName);
+    ? (termName + '  ' + (p.stage_label || p.period_label || '') + '  Week ' + p.week_no + '/' + p.total_weeks)
+    : (sessionName ? (sessionName + '  ' + termName) : termName);
   const eyebrow = document.getElementById('termEyebrow');
-  if(eyebrow) eyebrow.textContent = 'Joyland Schools · ' + (sessionName ? sessionName + ' · ' : '') + termName + (p.in_term ? (' · ' + (p.stage_label || p.period_label || '')) : '');
+  if(eyebrow) eyebrow.textContent = 'Joyland Schools  ' + (sessionName ? sessionName + '  ' : '') + termName + (p.in_term ? ('  ' + (p.stage_label || p.period_label || '')) : '');
 }
-/* Pretty-case a class name like "GRADE 9" → "Grade 9", keep "PP1" / "PP2" intact */
+/* Pretty-case a class name like "GRADE 9"  "Grade 9", keep "PP1" / "PP2" intact */
 function prettyClass(name){
   if(!name) return '';
   const n = String(name).trim();
   if(/^PP\d+$/i.test(n)) return n.toUpperCase();
   return n.replace(/\b([A-Z])([A-Z]+)\b/g, (_,a,b) => a + b.toLowerCase());
 }
-/* Order classes: PP1, PP2, GRADE 1 … GRADE 9 */
+/* Order classes: PP1, PP2, GRADE 1  GRADE 9 */
 function classOrderKey(name){
   const n = String(name||'').toUpperCase().trim();
   if(/^PP1\b/.test(n)) return -2;
@@ -411,65 +434,70 @@ function analysis(a, allClasses){
     })
     .sort((x,y) => classOrderKey(x.rawName) - classOrderKey(y.rawName));
 
-  /* Performance by grade — every active class, in academic order */
+  /* Performance by grade  every active class, in academic order */
   document.querySelector('.tm-grid').innerHTML = list.map((c,i) => {
     const color = colors[i % colors.length];
     const hasMarks = c.mean !== null;
     return '<div class="tm-card" style="'+(hasMarks?'':'opacity:.68;')+'">'+
              '<div class="tm-name">'+esc(c.name)+'</div>'+
-             '<div class="tm-val">'+(hasMarks?pct(c.mean):'<span style="color:var(--ink-3);font-weight:500;">no marks yet</span>')+
+             '<div class="tm-val">'+(hasMarks?pct(c.mean):'<span style="color:var(--ink-3);font-weight:500;">no results yet</span>')+
                (hasMarks?'':'')+'</div>'+
              (hasMarks ? spark(c.pts, color)
                        : '<svg viewBox="0 0 100 30" style="width:100%;height:30px;" preserveAspectRatio="none"><line x1="0" y1="20" x2="100" y2="20" stroke="var(--line)" stroke-width="1.4" stroke-dasharray="3 4"/></svg>')+
            '</div>';
   }).join('') || '<div class="tm-card"><div class="tm-name">No classes</div><div class="tm-val">-</div></div>';
 
-  /* Top classes — ranked by mean, only classes that have marks; fall back to enrollment if none have marks */
+  /* Top classes  ranked by mean, only classes that have marks; fall back to enrollment if none have marks */
   const topList = document.getElementById('topClassList');
+  if(topList){
   const ranked = list.filter(c => c.mean !== null).sort((x,y) => y.mean - x.mean);
   if(ranked.length){
     topList.innerHTML = ranked.slice(0,5).map((c,i) => '<a class="rank-row" href="/admin/class.html?id='+c.id+'">'+
         '<span class="rank-pos '+(i===0?'gold':i===1?'silver':i===2?'bronze':'')+'">'+(i+1)+'</span>'+
-        '<div class="rank-info"><div class="rank-name">'+esc(c.name)+'</div><div class="rank-meta">'+(c.teacher?esc(c.teacher)+' · ':'')+(c.count||0)+' learners</div></div>'+
+        '<div class="rank-info"><div class="rank-name">'+esc(c.name)+'</div><div class="rank-meta">'+(c.teacher?esc(c.teacher)+'  ':'')+(c.count||0)+' learners</div></div>'+
         '<span class="rank-stat">'+pct(c.mean)+'</span></a>').join('');
   } else {
-    /* No marks anywhere yet — show classes by enrollment so the page still feels alive */
+    /* No marks anywhere yet  show classes by enrollment so the page still feels alive */
     const byEnrollment = [...list].sort((x,y) => (y.count||0) - (x.count||0)).slice(0,5);
-    topList.innerHTML = '<div style="font-size:11.5px;color:var(--ink-3);padding:6px 8px 10px;line-height:1.5;">No marks recorded this term yet — showing classes by enrollment.</div>' +
+    topList.innerHTML = '<div style="font-size:11.5px;color:var(--ink-3);padding:6px 8px 10px;line-height:1.5;">No assessment results recorded this term yet - showing classes by enrollment.</div>' +
       byEnrollment.map((c,i) => '<a class="rank-row" href="/admin/class.html?id='+c.id+'">'+
         '<span class="rank-pos">'+(i+1)+'</span>'+
-        '<div class="rank-info"><div class="rank-name">'+esc(c.name)+'</div><div class="rank-meta">'+(c.teacher?esc(c.teacher)+' · ':'')+(c.count||0)+' learners</div></div>'+
-        '<span class="rank-stat" style="color:var(--ink-3);">—</span></a>').join('');
+        '<div class="rank-info"><div class="rank-name">'+esc(c.name)+'</div><div class="rank-meta">'+(c.teacher?esc(c.teacher)+'  ':'')+(c.count||0)+' learners</div></div>'+
+        '<span class="rank-stat" style="color:var(--ink-3);">--</span></a>').join('');
+  }
   }
 
-  /* At-risk learners — from any class that has marks */
+  /* At-risk learners  from any class that has marks */
   const risk = list.flatMap(c => (c.risk||[]).map(l => Object.assign({class_name:c.name}, l)))
                    .sort((x,y) => Number(x.average||0) - Number(y.average||0))
                    .slice(0,5);
   document.getElementById('atriskList').innerHTML = risk.length
     ? risk.map(p => '<a class="rank-row" href="/admin/people.html?learner='+encodeURIComponent(p.id)+'">'+
         '<div class="ava ava-md" style="'+Joy.avaStyle(p.name)+'">'+Joy.initials(p.name)+'</div>'+
-        '<div class="rank-info"><div class="rank-name">'+esc(p.name)+'</div><div class="rank-meta">'+esc(p.class_name)+' · below ME band</div></div>'+
+        '<div class="rank-info"><div class="rank-name">'+esc(p.name)+'</div><div class="rank-meta">'+esc(p.class_name)+' - below expected progress</div></div>'+
         '<span class="rank-stat" style="color:var(--danger);">'+pct(p.average)+'</span></a>').join('')
-    : '<div class="rank-row"><div class="rank-info"><div class="rank-name" style="color:var(--ink-3);font-weight:500;">No learners currently flagged</div><div class="rank-meta">All learners are tracking on or above their CBC band.</div></div></div>';
+    : '<div class="rank-row"><div class="rank-info"><div class="rank-name" style="color:var(--ink-3);font-weight:500;">No learners currently flagged</div><div class="rank-meta">All learners are tracking at or above the expected progress level.</div></div></div>';
 }
 function fallbackBanner(displayTerm, requestedTerm, clock){
   document.querySelector('.fallback-banner')?.remove();
   if(!displayTerm?.is_fallback || !requestedTerm) return;
   const current = clock?.in_term
-    ? (esc(clock.term?.term_name || 'Current term') + ' · ' + esc(clock.stage_label || clock.period_label || 'Term') + ' · Week ' + esc(clock.week_no || '-') + '/' + esc(clock.total_weeks || '-'))
+    ? (esc(clock.term?.term_name || 'Current term') + '  ' + esc(clock.stage_label || clock.period_label || 'Term') + '  Week ' + esc(clock.week_no || '-') + '/' + esc(clock.total_weeks || '-'))
     : esc(clock?.period_label || 'Current period');
   const banner = document.createElement('div');
   banner.className = 'fallback-banner';
-  banner.innerHTML =
-    '<i class="fas fa-circle-info"></i>' +
-    '<span>You are in <b>' + current + '</b>. Performance is showing <b>' + esc(displayTerm.name) +
-    '</b> because Joyland records marks only for <b>Midterm</b> and <b>Endterm</b>.</span>' +
-    '<a class="cta" href="/admin/marks.html"><i class="fas fa-pen"></i> Enter marks</a>';
+  banner.innerHTML = Joy.statusBanner({
+    tone:'warn',
+    icon:'fa-circle-info',
+    title:'Showing the latest available assessment period.',
+    message:'You are in ' + current + '. Performance is showing ' + (displayTerm.name || 'the latest term') + ' because Joyland records assessment results only for Midterm and Endterm.',
+    actionLabel:'Enter results',
+    actionHref:'/admin/marks.html'
+  });
   const grid = document.querySelector('.grid');
   grid.parentNode.insertBefore(banner, grid);
 }
-/* ─── "This week" — real events from /api/admin/calendar/events ───── */
+/*  "This week"  real events from /api/admin/calendar/events  */
 function ymd(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
@@ -491,7 +519,7 @@ async function loadWeek(){
     }
     list.innerHTML = events.slice(0, 6).map(e => {
       const d = new Date((e.date || '') + 'T00:00:00');
-      const day = isNaN(d) ? '—' : d.getDate();
+      const day = isNaN(d) ? '' : d.getDate();
       const mon = isNaN(d) ? '' : d.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
       const tag = TYPE_TAG[e.type] || 'Event';
       const tagCls = TYPE_CLASS[e.type] || 'event';
@@ -509,7 +537,7 @@ async function loadWeek(){
   }
 }
 
-/* ─── Hero sparkline — last 7 school days from attendance summary ── */
+/*  Hero sparkline  last 7 school days from attendance summary  */
 async function loadHeroSpark(){
   const today = new Date();
   const dates = [];
@@ -523,7 +551,7 @@ async function loadHeroSpark(){
     const valid = pts.filter(v => v !== null);
     const host = document.getElementById('heroSpark');
     if(valid.length < 2){
-      host.innerHTML = '<div style="font-size:11px;color:var(--ink-3);padding:14px 0;font-family:var(--mono);">No attendance history yet — sparkline appears once at least 2 days have been marked.</div>';
+      host.innerHTML = '<div style="font-size:11px;color:var(--ink-3);padding:14px 0;font-family:var(--mono);">No attendance history yet  sparkline appears once at least 2 days have been marked.</div>';
       return;
     }
     const min = Math.min(...valid), max = Math.max(...valid), span = Math.max(1, max - min);
@@ -545,13 +573,13 @@ async function loadHeroSpark(){
     host.innerHTML =
       '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:120px;" preserveAspectRatio="none">'+
         '<defs><linearGradient id="gHero" x1="0" y1="0" x2="0" y2="1">'+
-          '<stop offset="0" stop-color="#1B5E20" stop-opacity=".18"/>'+
-          '<stop offset="1" stop-color="#1B5E20" stop-opacity="0"/>'+
+          '<stop offset="0" stop-color="#14532d" stop-opacity=".18"/>'+
+          '<stop offset="1" stop-color="#14532d" stop-opacity="0"/>'+
         '</linearGradient></defs>'+
         '<path d="' + area + '" fill="url(#gHero)"/>'+
-        '<path d="' + path + '" fill="none" stroke="#1B5E20" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'+
-        '<circle cx="' + Math.round(last.x) + '" cy="' + Math.round(last.y) + '" r="4" fill="#1B5E20"/>'+
-        '<circle cx="' + Math.round(last.x) + '" cy="' + Math.round(last.y) + '" r="8" fill="#1B5E20" opacity=".18"/>'+
+        '<path d="' + path + '" fill="none" stroke="#14532d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'+
+        '<circle cx="' + Math.round(last.x) + '" cy="' + Math.round(last.y) + '" r="4" fill="#14532d"/>'+
+        '<circle cx="' + Math.round(last.x) + '" cy="' + Math.round(last.y) + '" r="8" fill="#14532d" opacity=".18"/>'+
       '</svg>'+
       '<div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);">'+
         '<span>7 school days ago</span><span>Today</span>'+
@@ -561,18 +589,18 @@ async function loadHeroSpark(){
   }
 }
 
-/* ─── Export snapshot — CSV of school state right now ─────────────── */
+/*  Export snapshot  CSV of school state right now  */
 async function exportSnapshot(){
   try {
-    Joy.toast('Preparing snapshot…');
+    Joy.toast('Preparing snapshot');
     const [s, classes] = await Promise.all([api(API+'/stats'), api(API+'/classes')]);
     const today = new Date().toISOString().slice(0,10);
     const lines = [
-      'Joyland Schools · Overview snapshot · ' + today,
+      'Joyland Schools  Overview snapshot  ' + today,
       '',
       'Learners,' + (s.learners||0),
       'Teachers,' + (s.teachers||0),
-      'School mean,' + (s.school_mean ?? ''),
+      'School average,' + (s.school_mean ?? ''),
       'Classes,' + (s.classes||0),
       '',
       'Class,Stream,Teacher,Learners,Subjects'
@@ -603,7 +631,7 @@ async function exportSnapshot(){
 }
 
 async function loadOverview(){
-  document.getElementById('atriskList').innerHTML = '<div class="rank-row"><div class="rank-info"><div class="rank-name" style="color:var(--ink-3)">Loading learners…</div></div></div>';
+  document.getElementById('atriskList').innerHTML = '<div class="rank-row"><div class="rank-info"><div class="rank-name" style="color:var(--ink-3)">Loading learners</div></div></div>';
   try{
     const r = await Promise.all([
       api(API+'/stats'),
@@ -620,7 +648,7 @@ async function loadOverview(){
     Joy.toast("Couldn't load overview", {type:'danger'});
     console.error(e);
   }
-  /* Independent loads — don't block the rest of the page if these fail */
+  /* Independent loads  don't block the rest of the page if these fail */
   loadWeek();
   loadHeroSpark();
 }
@@ -628,3 +656,4 @@ loadOverview();
 </script>
 </body>
 </html>
+

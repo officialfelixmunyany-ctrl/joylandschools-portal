@@ -237,7 +237,7 @@ function paletteFor(name){
   return PALETTE[h % PALETTE.length];
 }
 
-const BAND_COLORS = { ee:['#10b981','#059669'], me:['#3b82f6','#2563eb'], ae:['#f59e0b','#d97706'], be:['#ef4444','#dc2626'] };
+const BAND_COLORS = { ee:['var(--ee)','var(--ee-2)'], me:['var(--me)','var(--me-2)'], ae:['var(--ae)','var(--ae-2)'], be:['var(--be)','var(--be-2)'] };
 function bandFor(p){
   if(p == null) return null;
   if(p >= 75) return 'ee';
@@ -310,7 +310,7 @@ async function load(){
     } else {
       perfList.innerHTML = rows.map(r => {
         const band = bandFor(r.average);
-        const [c1,c2] = BAND_COLORS[band] || ['#3b82f6','#2563eb'];
+        const [c1,c2] = BAND_COLORS[band] || ['var(--me)','var(--me-2)'];
         const width = Math.max(2, Math.round(r.average / max * 100));
         return '<a class="perf-row" href="/admin/class.html?id=' + r.class_id + '" style="text-decoration:none;color:inherit;">' +
           '<span class="perf-name">' + esc(r.class_name) + '</span>' +
@@ -437,7 +437,13 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 
 document.getElementById('delBtn').addEventListener('click', async () => {
   if(!state.subject) return;
-  if(!confirm('Delete "' + state.subject.name + '" permanently?\n\nThis cannot be undone. Subjects assigned to any class cannot be deleted until they\'re removed from those classes first.')) return;
+  const ok = await Joy.confirm({
+    title:'Delete learning area?',
+    message:'This permanently removes "' + state.subject.name + '". Learning areas assigned to any class must be removed from those classes first.',
+    actionLabel:'Delete learning area',
+    tone:'danger'
+  });
+  if(!ok) return;
   try {
     await api(API + '/subjects/' + state.subject.id, { method:'DELETE' });
     Joy.toast('Subject deleted');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Timetable · Joyland Admin</title>
+<title>Timetable - Joyland Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
@@ -18,25 +18,62 @@
 .tt-banner{margin-bottom:18px;padding:12px 16px;background:linear-gradient(135deg,var(--gold-tint),#fff);border:1px solid rgba(201,151,50,.30);border-radius:12px;display:flex;align-items:center;gap:11px;font-size:13px;color:var(--ink-2);}
 .tt-banner i{color:var(--gold);font-size:14px;}
 .tt-banner b{color:var(--ink);font-weight:600;}
+.tt-status{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px;}
+.tt-status-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;box-shadow:var(--sh-1);min-width:0;}
+.tt-status-card .k{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:6px;}
+.tt-status-card .v{margin-top:7px;font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tt-status-card .m{margin-top:3px;font-size:11.5px;color:var(--ink-3);line-height:1.35;}
+.tt-status-card.action{cursor:pointer;transition:.16s var(--ease);}
+.tt-status-card.action:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--line) 52%,var(--ink-4));box-shadow:var(--sh-2);}
+.tt-status-card.ok .k i{color:var(--ok);}
+.tt-status-card.warn .k i{color:var(--warn);}
+.tt-status-card.danger .k i{color:var(--danger);}
+.tt-status-card.info .k i{color:var(--d1);}
 
 /* ── GRID TAB ────────────────────────────────────────────────────── */
 .grid-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .grid-toolbar select.input{height:36px;min-width:200px;}
+.schedule-canvas{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start;}
 .tt-grid{display:grid;grid-template-columns:90px repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-1);}
-.tt-h{background:var(--surface-2);padding:11px 12px;font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;text-align:center;}
+.tt-h{background:var(--surface-2);padding:11px 12px;font-size:11px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:.07em;text-align:center;border-bottom:2px solid color-mix(in srgb,var(--line) 60%,var(--ink-4));}
 .tt-time{background:var(--surface-2);padding:14px 10px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);font-weight:600;text-align:center;line-height:1.4;}
 .tt-time .label{display:block;font-family:var(--body);font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-4);margin-top:3px;}
 .tt-cell{background:var(--surface);min-height:78px;padding:8px 10px;position:relative;cursor:pointer;transition:.12s var(--ease);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:3px;}
 .tt-cell:hover{background:#fdfdfa;}
 .tt-cell.empty{color:var(--ink-4);font-size:11px;}
 .tt-cell.empty:hover::after{content:'+ add';font-size:11px;color:var(--ink-3);font-weight:600;}
+.tt-cell.past{background:var(--surface-2);opacity:.62;color:var(--ink-3);}
+.tt-cell.past:hover{background:var(--surface-2);}
+.tt-cell.past::after{content:'Taught';position:absolute;top:6px;left:6px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-4);}
+.tt-cell.past .subj,.tt-cell.past .teach,.tt-cell.past .room{color:var(--ink-3);}
+.tt-cell.past .past-ico{position:absolute;right:7px;top:6px;font-size:10px;color:var(--ink-4);}
 .tt-cell.break{background:repeating-linear-gradient(45deg,var(--surface-2),var(--surface-2) 6px,transparent 6px,transparent 12px);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
 .tt-cell.lunch{background:rgba(245,158,11,.06);color:var(--warn);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;}
 .tt-cell.assembly{background:rgba(201,151,50,.08);color:var(--gold-2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;}
-.tt-cell .subj{font-family:var(--display);font-size:13px;font-weight:600;color:var(--ink);line-height:1.15;letter-spacing:-.01em;}
+.tt-cell .subj{font-family:var(--display);font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.15;letter-spacing:-.01em;}
 .tt-cell .teach{font-size:10.5px;color:var(--ink-3);font-family:var(--mono);}
+
+/* ── aSc-style colored lesson blocks ────────────────────────────── */
 .tt-cell .lock{position:absolute;top:5px;right:6px;font-size:8px;color:var(--gold);}
 .tt-cell.conflict{outline:2px solid var(--danger);outline-offset:-2px;}
+.tt-cell.selected{outline:2px solid var(--gold);outline-offset:-2px;background:linear-gradient(135deg,var(--gold-tint),var(--surface));}
+.lesson-inspector{position:sticky;top:76px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-1);overflow:hidden;}
+.lesson-inspector .li-head{padding:15px 16px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,var(--surface),var(--surface-2));}
+.lesson-inspector .li-label{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:7px;}
+.lesson-inspector .li-title{margin-top:7px;font-family:var(--display);font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1.1;}
+.lesson-inspector .li-sub{margin-top:5px;font-size:12px;color:var(--ink-3);line-height:1.4;}
+.lesson-inspector .li-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.li-row{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--ink-2);}
+.li-row i{width:16px;margin-top:2px;color:var(--ink-4);}
+.li-row b{display:block;color:var(--ink);font-weight:700;margin-bottom:2px;}
+.li-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.li-actions .btn{height:32px;padding:0 10px;font-size:12px;}
+.li-room-picker{display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:5px;}
+.li-room-picker select{height:32px;min-width:0;}
+.li-empty{padding:20px 16px;color:var(--ink-3);font-size:12.5px;line-height:1.5;}
+.alt-list{display:flex;flex-direction:column;gap:6px;margin-top:2px;}
+.alt-chip{display:flex;justify-content:space-between;gap:8px;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:11.5px;color:var(--ink-2);}
+.alt-chip strong{color:var(--ink);}
 .tt-cell.conflict::before{content:'⚠';position:absolute;top:5px;left:6px;font-size:11px;color:var(--danger);}
 
 .subj-color-0{background:linear-gradient(135deg,#3b82f6,#2563eb);}
@@ -49,6 +86,16 @@
 .subj-color-7{background:linear-gradient(135deg,#f43f5e,#dc2626);}
 .subj-color-8{background:linear-gradient(135deg,#4a504e,#1a1d1c);}
 .tt-cell .subj-chip{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+.tt-cell .room{font-size:10px;color:var(--ink-4);font-family:var(--mono);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+.rooms-layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px;align-items:start;}
+.room-form{display:flex;flex-direction:column;gap:12px;}
+.room-list{display:grid;gap:8px;}
+.room-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 84px 128px;gap:10px;align-items:center;padding:11px 12px;background:var(--surface);border:1px solid var(--line);border-radius:9px;}
+.room-name{font-size:13px;font-weight:700;color:var(--ink);}
+.room-meta{font-size:11px;color:var(--ink-3);margin-top:2px;line-height:1.35;}
+.room-tags{font-size:11px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (max-width:900px){.rooms-layout{grid-template-columns:1fr;}.room-row{grid-template-columns:1fr;}}
 
 /* ── BELL TAB ────────────────────────────────────────────────────── */
 .bell-list{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
@@ -74,7 +121,7 @@
 .bell-head .bhc{text-align:left;}
 .bell-head .bhc.center{text-align:center;}
 
-/* Class-hours card — per-class active periods */
+/* Class-hours card - per-class active periods */
 .ch-row{display:grid;grid-template-columns:140px 60px 1fr 100px 30px;gap:14px;padding:11px 12px;align-items:center;border-bottom:1px solid var(--line-2);position:relative;}
 .ch-row:last-of-type{border-bottom:none;}
 .ch-name{font-size:13px;font-weight:600;color:var(--ink);}
@@ -99,7 +146,7 @@
 .ch-popover .lbl{padding:6px 10px;font-size:10px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;}
 .ch-popover select{width:calc(100% - 16px);margin:0 8px 6px;padding:6px 8px;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-family:inherit;}
 
-/* Print stylesheet — only the active grid prints, sidebar/topbar/tabs hidden */
+/* Print stylesheet - only the active grid prints, sidebar/topbar/tabs hidden */
 @media print{
   @page{ size: A4 landscape; margin: 12mm; }
   body{ display:block !important; background:#fff !important; padding:0 !important; }
@@ -107,7 +154,7 @@
   .shell{ display:block; }
   .content{ padding:0; }
   .tab-panel:not(.show){ display:none !important; }
-  /* Print only the visible tab — usually Grid */
+  /* Print only the visible tab - usually Grid */
   .tt-grid{ break-inside:avoid; border:1px solid #000 !important; box-shadow:none !important; }
   .tt-cell{ box-shadow:none !important; }
   .tt-cell.break, .tt-cell.lunch, .tt-cell.assembly{ background:#eee !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -126,7 +173,8 @@
 .print-class-header{ display:none; }
 .print-only{ display:none; }
 @media print{ .print-only{ display:block; } .screen-only{ display:none !important; } }
-
+@media (max-width:1180px){.tt-status{grid-template-columns:repeat(3,minmax(0,1fr));}.schedule-canvas{grid-template-columns:1fr;}.lesson-inspector{position:relative;top:auto;}}
+@media (max-width:720px){.tt-status,.ops-grid{grid-template-columns:1fr;}}
 /* ── Verification panel ─────────────────────────────────────────── */
 .verify-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-1);overflow:hidden;}
 .verify-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--line);}
@@ -292,6 +340,14 @@
 .conflict-item i{color:var(--warn);font-size:12px;margin-top:2px;}
 .conflict-item.hard{background:rgba(185,28,28,.06);border-color:rgba(185,28,28,.18);}
 .conflict-item.hard i{color:var(--danger);}
+.ops-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px;}
+.ops-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-1);padding:14px;min-width:0;}
+.ops-card .k{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:7px;align-items:center;}
+.ops-card .v{margin-top:8px;font-family:var(--display);font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
+.ops-card .m{margin-top:4px;font-size:12px;color:var(--ink-3);line-height:1.4;}
+.ops-list{display:flex;flex-direction:column;gap:7px;margin-top:10px;}
+.ops-list .mini{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line-2);padding-top:7px;font-size:11.5px;color:var(--ink-2);}
+.ops-list .mini b{color:var(--ink);font-weight:700;}
 
 /* ── SETTINGS TAB ────────────────────────────────────────────────── */
 .s-row{display:grid;grid-template-columns:1fr 320px;gap:24px;padding:14px 0;border-bottom:1px solid var(--line-2);align-items:center;}
@@ -312,8 +368,8 @@
     <!-- ─── Page head ─────────────────────────────────────────── -->
     <div class="page-head">
       <div>
-        <div class="eyebrow" id="ttEyebrow">Joyland Schools · Loading current term…</div>
-        <h1 class="h1">Timetable <em id="ttTerm">· current term</em></h1>
+        <div class="eyebrow" id="ttEyebrow">Joyland Schools - Loading current term…</div>
+        <h1 class="h1">Timetable <em id="ttTerm">- current term</em></h1>
         <div class="h-sub">Set the school day, decide what's taught and how often, then press <b>Generate</b> to auto-place every lesson.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -329,6 +385,10 @@
     </div>
 
     <!-- ─── Tabs ──────────────────────────────────────────────── -->
+    <div class="tt-status" id="ttStatus">
+      <div class="tt-status-card info"><div class="k"><i class="fas fa-spinner fa-spin"></i>Status</div><div class="v">Loading</div><div class="m">Checking timetable data</div></div>
+    </div>
+
     <div class="tabs">
       <div class="tab active" data-tab="grid">Grid</div>
       <div class="tab" data-tab="bell">Bell schedule</div>
@@ -336,7 +396,8 @@
       <div class="tab" data-tab="teachers">Teachers</div>
       <div class="tab" data-tab="constraints">Constraints</div>
       <div class="tab" data-tab="generate">Generate</div>
-      <div class="tab" data-tab="substitutions">Substitutions <span class="count" id="subTabCount">—</span></div>
+      <div class="tab" data-tab="substitutions">Substitutions <span class="count" id="subTabCount">-</span></div>
+      <div class="tab" data-tab="rooms">Rooms</div>
       <div class="tab" data-tab="settings">Settings</div>
     </div>
 
@@ -352,13 +413,18 @@
         <div class="spacer"></div>
         <span style="font-size:11.5px;color:var(--ink-3);font-family:var(--mono);" id="gridMeta">No timetable published yet</span>
       </div>
-      <div class="tt-grid" id="ttGrid">
-        <div class="tt-h"></div>
-        <div class="tt-h">Monday</div>
-        <div class="tt-h">Tuesday</div>
-        <div class="tt-h">Wednesday</div>
-        <div class="tt-h">Thursday</div>
-        <div class="tt-h">Friday</div>
+      <div class="schedule-canvas">
+        <div class="tt-grid" id="ttGrid">
+          <div class="tt-h"></div>
+          <div class="tt-h">Monday</div>
+          <div class="tt-h">Tuesday</div>
+          <div class="tt-h">Wednesday</div>
+          <div class="tt-h">Thursday</div>
+          <div class="tt-h">Friday</div>
+        </div>
+        <aside class="lesson-inspector" id="lessonInspector">
+          <div class="li-empty">Select a lesson in the grid to see its teacher, class, timing, lock state, and safer repair options.</div>
+        </aside>
       </div>
     </div>
 
@@ -366,8 +432,8 @@
     <div class="tab-panel" data-panel="bell">
       <div class="card">
         <div class="card-head">
-          <div><div class="card-title">School day · bell schedule</div><div class="card-sub">Periods, breaks, lunch and assembly · drag to reorder</div></div>
-          <span style="font-size:11px;color:var(--ink-3);font-family:var(--mono);" id="bellSummary">—</span>
+          <div><div class="card-title">School day - bell schedule</div><div class="card-sub">Periods, breaks, lunch and assembly - drag to reorder</div></div>
+          <span style="font-size:11px;color:var(--ink-3);font-family:var(--mono);" id="bellSummary">-</span>
         </div>
         <div class="card-body">
           <div class="bell-list" id="bellList"></div>
@@ -390,7 +456,7 @@
         <select class="input" id="lessonsClassFilter" style="max-width:240px;">
           <option value="">All classes</option>
         </select>
-        <span style="font-size:11.5px;color:var(--ink-3);" id="lessonsMeta">—</span>
+        <span style="font-size:11.5px;color:var(--ink-3);" id="lessonsMeta">-</span>
         <div class="spacer"></div>
         <button class="btn" id="lessonsApplyDefaults">Apply CBC defaults</button>
         <button class="btn btn-primary" id="lessonsSave"><i class="fas fa-check"></i>Save all</button>
@@ -405,7 +471,7 @@
           <i class="fas fa-search"></i>
           <input class="input input-search" id="teacherSearch" placeholder="Search teacher…"/>
         </div>
-        <span style="font-size:11.5px;color:var(--ink-3);" id="teachersMeta">—</span>
+        <span style="font-size:11.5px;color:var(--ink-3);" id="teachersMeta">-</span>
         <div class="spacer"></div>
         <button class="btn btn-primary" id="teachersSaveBtn"><i class="fas fa-check"></i>Save teacher constraints</button>
       </div>
@@ -415,7 +481,7 @@
     <!-- ─── CONSTRAINTS TAB ───────────────────────────────────── -->
     <div class="tab-panel" data-panel="constraints">
       <div class="card" style="margin-bottom:14px;">
-        <div class="card-head"><div><div class="card-title">Hard constraints</div><div class="card-sub">Always enforced · solver will never break these</div></div></div>
+        <div class="card-head"><div><div class="card-title">Hard constraints</div><div class="card-sub">Always enforced - solver will never break these</div></div></div>
         <div class="card-body">
           <div id="hardList"></div>
         </div>
@@ -435,11 +501,11 @@
     <div class="tab-panel" data-panel="generate">
       <div class="gen-hero">
         <div class="label">Lessons to place this week</div>
-        <div class="num"><span id="genTotal">—</span></div>
+        <div class="num"><span id="genTotal">-</span></div>
         <div class="gen-stats">
-          <div class="gen-stat"><div class="v" id="genClasses">—</div><div class="l">Classes</div></div>
-          <div class="gen-stat"><div class="v" id="genTeachers">—</div><div class="l">Teachers</div></div>
-          <div class="gen-stat"><div class="v" id="genCells">—</div><div class="l">Available cells</div></div>
+          <div class="gen-stat"><div class="v" id="genClasses">-</div><div class="l">Classes</div></div>
+          <div class="gen-stat"><div class="v" id="genTeachers">-</div><div class="l">Teachers</div></div>
+          <div class="gen-stat"><div class="v" id="genCells">-</div><div class="l">Available cells</div></div>
         </div>
         <div class="gen-action">
           <button class="btn" id="verifyBtn" title="Check setup before generating"><i class="fas fa-shield-halved"></i>Verify setup</button>
@@ -453,8 +519,12 @@
         <div id="verifyBody"></div>
       </div>
 
+      <div class="ops-grid" id="opsGrid">
+        <div class="ops-card"><div class="k"><i class="fas fa-spinner fa-spin"></i>Scheduling intelligence</div><div class="v">Loading</div><div class="m">Checking workload and unplaced lessons.</div></div>
+      </div>
+
       <div class="card">
-        <div class="card-head"><div><div class="card-title">Generation history</div><div class="card-sub">Every run is kept · publish or roll back at any time</div></div></div>
+        <div class="card-head"><div><div class="card-title">Generation history</div><div class="card-sub">Every run is kept - publish or roll back at any time</div></div></div>
         <div class="card-body">
           <div class="gen-history" id="genHistory">
             <div style="font-size:12px;color:var(--ink-3);padding:14px;">No generations yet. Configure your bell schedule and lessons per week, then press <b>Generate timetable</b>.</div>
@@ -473,7 +543,7 @@
       <div class="sub-hero">
         <div class="left">
           <input type="date" class="input date-pick" id="subDatePick"/>
-          <span style="font-size:12.5px;color:var(--ink-2);" id="subDateLabel">—</span>
+          <span style="font-size:12.5px;color:var(--ink-2);" id="subDateLabel">-</span>
         </div>
         <div class="actions">
           <button class="btn" id="subTodayBtn"><i class="fas fa-calendar-day"></i>Today</button>
@@ -484,7 +554,7 @@
       <div class="card" style="margin-bottom:14px;">
         <div class="card-head">
           <div>
-            <div class="card-title">Absent teachers · <span id="subAbsCount">—</span></div>
+            <div class="card-title">Absent teachers - <span id="subAbsCount">-</span></div>
             <div class="card-sub">Select an absent teacher to plan covers for their lessons</div>
           </div>
         </div>
@@ -510,7 +580,7 @@
         </div>
         <div id="covList"></div>
         <div class="cov-foot">
-          <span class="ct" id="covStatus">—</span>
+          <span class="ct" id="covStatus">-</span>
           <div class="spacer"></div>
           <button class="btn" id="covNotifyParentsBtn"><i class="fas fa-bullhorn"></i>Notify parents</button>
           <button class="btn btn-primary" id="covNotifyTeachersBtn"><i class="fas fa-paper-plane"></i>Notify substitute teachers</button>
@@ -519,13 +589,74 @@
     </div>
 
     <!-- ─── SETTINGS TAB ──────────────────────────────────────── -->
+    <div class="tab-panel" data-panel="rooms">
+      <div class="rooms-layout">
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">Bookable rooms</div><div class="card-sub">Create classrooms, labs, halls and specialist spaces for timetable assignment</div></div>
+          </div>
+          <div class="card-body">
+            <div class="room-form">
+              <input type="hidden" id="roomId"/>
+              <div class="field">
+                <label class="field-label">Room name</label>
+                <input class="input" id="roomName" placeholder="e.g. Grade 4 East, Science Lab"/>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="field">
+                  <label class="field-label">Capacity</label>
+                  <input class="input" id="roomCapacity" type="number" min="0" placeholder="40"/>
+                </div>
+                <div class="field">
+                  <label class="field-label">Type</label>
+                  <select class="input" id="roomType">
+                    <option value="classroom">Classroom</option>
+                    <option value="lab">Lab</option>
+                    <option value="hall">Hall</option>
+                    <option value="field">Field</option>
+                    <option value="studio">Studio</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">Subject tags</label>
+                <input class="input" id="roomTags" placeholder="science, music, ict"/>
+              </div>
+              <div class="field">
+                <label class="field-label">Assigned grade</label>
+                <select class="input" id="roomHomeClass"><option value="">Not assigned to a grade</option></select>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);">
+                <input type="checkbox" id="roomSharing"/> Allow same-time sharing
+              </label>
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button class="btn" id="roomClearBtn">Clear</button>
+                <button class="btn btn-primary" id="roomSaveBtn"><i class="fas fa-check"></i>Save room</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">Room inventory</div><div class="card-sub">Use the Grid inspector to assign a room to a lesson</div></div>
+            <span style="font-size:11px;color:var(--ink-3);font-family:var(--mono);" id="roomsMeta">-</span>
+          </div>
+          <div class="card-body">
+            <div class="ops-grid" id="roomsStatus" style="grid-template-columns:repeat(3,minmax(0,1fr));"></div>
+            <div class="room-list" id="roomsList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="tab-panel" data-panel="settings">
       <div class="card">
-        <div class="card-head"><div><div class="card-title">Timetable settings</div><div class="card-sub">Working days &amp; visibility · saved to the live database</div></div></div>
+        <div class="card-head"><div><div class="card-title">Timetable settings</div><div class="card-sub">Working days &amp; visibility - saved to the live database</div></div></div>
         <div class="card-body">
           <div class="s-row">
-            <div><div class="lbl">Cycle length</div><div class="help">Joyland uses a 1-week cycle — the same timetable repeats every week. Regenerate when you want a new pattern.</div></div>
-            <select class="input" id="setCycle" disabled><option>1 week · repeating</option></select>
+            <div><div class="lbl">Cycle length</div><div class="help">Joyland uses a 1-week cycle - the same timetable repeats every week. Regenerate when you want a new pattern.</div></div>
+            <select class="input" id="setCycle" disabled><option>1 week - repeating</option></select>
           </div>
           <div class="s-row">
             <div><div class="lbl">Working days</div><div class="help">Which days of the week lessons are scheduled</div></div>
@@ -553,7 +684,7 @@
       <div class="card" style="margin-top:14px;">
         <div class="card-head">
           <div>
-            <div class="card-title">Class hours · who attends which periods</div>
+            <div class="card-title">Class hours - who attends which periods</div>
             <div class="card-sub">Toggle chips per class. Use the row <i class="fas fa-ellipsis-v" style="font-size:10px;color:var(--ink-3);"></i> menu to copy from another class or apply across all classes.</div>
           </div>
         </div>
@@ -561,7 +692,7 @@
           <div style="display:grid;grid-template-columns:140px 60px 1fr 100px 30px;gap:14px;padding:0 12px 10px;font-size:10px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line);">
             <div>Class</div>
             <div style="text-align:center;">Slots</div>
-            <div>Periods attended · click to toggle</div>
+            <div>Periods attended - click to toggle</div>
             <div style="text-align:right;">School day</div>
             <div></div>
           </div>
@@ -591,7 +722,7 @@
   <div class="slide-body">
     <div class="field">
       <label class="field-label">Teacher</label>
-      <select class="input" id="absTeacherSel"><option value="">— pick a teacher —</option></select>
+      <select class="input" id="absTeacherSel"><option value="">- pick a teacher -</option></select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
       <div class="field">
@@ -683,6 +814,29 @@ function colorForSubject(name){
   return SUBJECT_COLOR_MAP[name];
 }
 
+function minutesFromTime(value){
+  const parts = String(value || '').split(':').map(Number);
+  return Number.isFinite(parts[0]) && Number.isFinite(parts[1]) ? parts[0] * 60 + parts[1] : null;
+}
+function todayGridDay(){
+  const d = new Date().getDay();
+  return d >= 1 && d <= 5 ? d : null;
+}
+function currentMinutes(){
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+}
+function isPastSlot(slot){
+  const today = todayGridDay();
+  if(!today || Number(slot.day_of_week) !== today) return false;
+  const period = periodForSlot(slot);
+  const end = minutesFromTime(period?.end_time);
+  return end != null && currentMinutes() >= end;
+}
+function classNameById(id){
+  return (state.classes || []).find(c => String(c.id) === String(id))?.name || '';
+}
+
 const state = {
   classes: [],
   subjects: [],
@@ -694,7 +848,13 @@ const state = {
   constraints: {},        // { soft.key: bool }
   generations: [],
   activeGen: null,
-  slots: []               // current published timetable cells
+  slots: [],              // current published timetable cells
+  rooms: [],
+  roomStatus: [],
+  unplaced: [],
+  workload: [],
+  lastExplanation: {},
+  selectedSlotId: null
 };
 SOFT_CONSTRAINTS.forEach(c => state.constraints[c.key] = c.defaultOn);
 
@@ -712,6 +872,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   if(key === 'constraints') renderConstraints();
   if(key === 'generate')      { renderGenerate(); renderVerification(); }
   if(key === 'substitutions') { renderSubstitutions(); }
+  if(key === 'rooms')         { renderRooms(); }
   if(key === 'settings')      { renderSettings(); renderClassHours(); }
 }));
 
@@ -728,6 +889,376 @@ function renderSettings(){
   if(vt) vt.classList.toggle('on', s.visible_to_teachers !== 0);
   if(vp) vp.classList.toggle('on', s.visible_to_parents !== 0);
 }
+
+function getNextTimetableAction(){
+  const totalDemand = Object.values(state.lessonsPerWeek).reduce((sum, v) => sum + Number(v.count || 0), 0);
+  const placed = (state.slots || []).length;
+  const absences = state.subAbsences || [];
+  if(!state.bell.length || !state.bell.some(p => p.type === 'lesson')){
+    return { tone:'danger', icon:'fa-bell', value:'Fix bell schedule', meta:'Add lesson periods before generating', tab:'bell' };
+  }
+  if(!state.classSubjects.length){
+    return { tone:'danger', icon:'fa-book-open', value:'Assign subjects', meta:'Classes need subjects and teachers', href:'/admin/subjects.html' };
+  }
+  if(!totalDemand){
+    return { tone:'warn', icon:'fa-list-check', value:'Set weekly lessons', meta:'Open Lessons per week', tab:'lessons' };
+  }
+  if(!state.activeGen){
+    return { tone:'warn', icon:'fa-wand-magic-sparkles', value:'Generate timetable', meta:'Create and publish a candidate', tab:'generate' };
+  }
+  if(placed < totalDemand){
+    return { tone:'warn', icon:'fa-screwdriver-wrench', value:'Review gaps', meta:(totalDemand - placed) + ' lesson' + (totalDemand - placed === 1 ? '' : 's') + ' not placed', tab:'generate' };
+  }
+  if(absences.length){
+    return { tone:'warn', icon:'fa-user-clock', value:'Assign covers', meta:'Open substitutions for today', tab:'substitutions' };
+  }
+  return { tone:'ok', icon:'fa-circle-check', value:'Ready', meta:'Published timetable is operational', tab:'grid' };
+}
+
+function renderTimetableStatus(){
+  const host = document.getElementById('ttStatus');
+  if(!host) return;
+  const active = state.activeGen;
+  const activeSlots = state.slots || [];
+  const totalDemand = Object.values(state.lessonsPerWeek).reduce((sum, v) => sum + Number(v.count || 0), 0);
+  const placed = activeSlots.length;
+  const placementPct = totalDemand ? Math.round((placed / totalDemand) * 100) : 0;
+  const settings = state.settings || {};
+  const teacherVisible = settings.visible_to_teachers !== 0;
+  const parentVisible = settings.visible_to_parents !== 0;
+  const absences = state.subAbsences || [];
+  const occupiedRooms = (state.roomStatus || []).filter(r => Array.isArray(r.current) && r.current.length).length;
+  const nextRoomUse = (state.roomStatus || []).filter(r => !Array.isArray(r.current) || !r.current.length).find(r => r.next);
+  const teacherOverloads = state.teachers.filter(t => {
+    const assigned = state.classSubjects
+      .filter(cs => String(cs.teacher_id) === String(t.id))
+      .reduce((sum, cs) => sum + Number(state.lessonsPerWeek[cs.class_id + ':' + cs.subject_id]?.count || 0), 0);
+    const maxWeek = Number(state.teacherLoad[t.id]?.max_week || 30);
+    return assigned > maxWeek;
+  }).length;
+  const next = getNextTimetableAction();
+  const cards = [
+    { tone:active ? 'ok' : 'warn', icon:active ? 'fa-circle-check' : 'fa-circle-info', key:'Published', value:active ? ('v' + active.id) : 'No active timetable', meta:active ? (placed + ' lessons in active timetable') : 'Generate and publish before sharing' },
+    { tone:placementPct >= 95 ? 'ok' : placementPct ? 'warn' : 'danger', icon:'fa-table-cells', key:'Placement', value:totalDemand ? (placed + '/' + totalDemand) : placed, meta:totalDemand ? (placementPct + '% of weekly demand') : 'Set lessons per week to measure demand' },
+    { tone:teacherOverloads ? 'warn' : 'ok', icon:'fa-chalkboard-user', key:'Teacher load', value:teacherOverloads ? (teacherOverloads + ' risk' + (teacherOverloads === 1 ? '' : 's')) : 'Balanced', meta:teacherOverloads ? 'Review teacher constraints' : state.teachers.length + ' active teachers' },
+    { tone:occupiedRooms ? 'warn' : 'ok', icon:'fa-door-open', key:'Rooms now', value:occupiedRooms ? (occupiedRooms + ' occupied') : 'Available', meta:nextRoomUse ? ('Next use: ' + nextRoomUse.name + ' in ' + nextRoomUse.countdown_minutes + ' min') : 'No immediate room pressure' },
+    { tone:(teacherVisible || parentVisible) ? 'ok' : 'warn', icon:'fa-eye', key:'Visibility', value:((teacherVisible ? 'Teachers' : '') + (teacherVisible && parentVisible ? ' + ' : '') + (parentVisible ? 'Parents' : '')) || 'Hidden', meta:'Controlled from Settings' },
+    { tone:absences.length ? 'warn' : 'ok', icon:'fa-user-clock', key:'Today cover', value:absences.length ? (absences.length + ' absence' + (absences.length === 1 ? '' : 's')) : 'Clear', meta:absences.length ? 'Open Substitutions to assign cover' : 'No teacher absences loaded today' },
+    { ...next, key:'Next action', action:true }
+  ];
+  host.innerHTML = cards.map(c =>
+    '<div class="tt-status-card ' + c.tone + (c.action ? ' action' : '') + '"' + (c.action ? ' data-next-action="1"' : '') + '>' +
+      '<div class="k"><i class="fas ' + c.icon + '"></i>' + c.key + '</div>' +
+      '<div class="v">' + esc(c.value) + '</div>' +
+      '<div class="m">' + esc(c.meta) + '</div>' +
+    '</div>'
+  ).join('');
+  host.querySelector('[data-next-action]')?.addEventListener('click', () => {
+    if(next.href) location.href = next.href;
+    else if(next.tab) document.querySelector('.tab[data-tab="' + next.tab + '"]')?.click();
+  });
+}
+
+function renderOpsSummary(){
+  const host = document.getElementById('opsGrid');
+  if(!host) return;
+  const unplaced = state.unplaced || [];
+  const workload = state.workload || [];
+  const overloaded = workload.filter(t => t.risk === 'overload');
+  const tight = workload.filter(t => t.risk === 'tight');
+  const explain = state.lastExplanation || {};
+  host.innerHTML =
+    '<div class="ops-card">' +
+      '<div class="k"><i class="fas fa-layer-group"></i>Unplaced lessons</div>' +
+      '<div class="v">' + unplaced.reduce((sum, row) => sum + Number(row.missing || 0), 0) + '</div>' +
+      '<div class="m">' + (unplaced.length ? 'Lessons still need timetable space.' : 'All configured weekly lessons are placed.') + '</div>' +
+      '<div class="ops-list">' + unplaced.slice(0,3).map(row => '<div class="mini"><b>' + esc(row.class_name) + '</b><span>' + esc(row.subject_name) + ' - ' + row.missing + '</span></div>').join('') + '</div>' +
+    '</div>' +
+    '<div class="ops-card">' +
+      '<div class="k"><i class="fas fa-gauge-high"></i>Teacher workload</div>' +
+      '<div class="v">' + overloaded.length + '</div>' +
+      '<div class="m">' + (overloaded.length ? 'Teachers exceed their weekly limit.' : (tight.length ? tight.length + ' teacher load is tight.' : 'No weekly overloads detected.')) + '</div>' +
+      '<div class="ops-list">' + workload.filter(t => t.risk !== 'ok').slice(0,3).map(t => '<div class="mini"><b>' + esc(t.name) + '</b><span>' + t.assigned + '/' + t.max_per_week + '</span></div>').join('') + '</div>' +
+    '</div>' +
+    '<div class="ops-card">' +
+      '<div class="k"><i class="fas fa-brain"></i>Solver explanation</div>' +
+      '<div class="v">' + (explain.engine || 'Greedy') + '</div>' +
+      '<div class="m">' + (explain.note ? esc(explain.note) : 'Generate a draft to see scoring and compromise details.') + '</div>' +
+      '<div class="ops-list">' + (explain.placement_score != null ? '<div class="mini"><b>Placement score</b><span>' + explain.placement_score + '/60</span></div><div class="mini"><b>Soft score</b><span>' + explain.soft_score + '/40</span></div>' : '') + '</div>' +
+    '</div>';
+}
+
+async function reloadOperationalSummaries(generationId){
+  const suffix = generationId ? ('?generationId=' + generationId) : '';
+  try { state.unplaced = await api(TT_API + '/unplaced' + suffix); } catch { state.unplaced = []; }
+  try { state.workload = await api(TT_API + '/workload' + suffix); } catch { state.workload = []; }
+  renderOpsSummary();
+}
+
+function periodForSlot(slot){
+  return state.bell.find(p => Number(p.period_no) === Number(slot?.period_no)) || null;
+}
+
+function teacherWeeklyLoad(teacherId){
+  if(!teacherId) return 0;
+  return state.classSubjects
+    .filter(cs => String(cs.teacher_id) === String(teacherId))
+    .reduce((sum, cs) => sum + Number(state.lessonsPerWeek[cs.class_id + ':' + cs.subject_id]?.count || 0), 0);
+}
+
+function legalAlternativesFor(slot, limit=4){
+  if(!slot) return [];
+  const options = [];
+  state.bell.filter(p => p.type === 'lesson').forEach(p => {
+    const activeDays = Array.isArray(p.active_days) && p.active_days.length ? p.active_days : [...ALL_DAYS];
+    activeDays.forEach(dayKey => {
+      const day = DAY_NUM[dayKey];
+      if(day === slot.day_of_week && Number(p.period_no) === Number(slot.period_no)) return;
+      const classBusy = state.slots.some(s =>
+        String(s.class_id) === String(slot.class_id) &&
+        s.day_of_week === day &&
+        Number(s.period_no) === Number(p.period_no)
+      );
+      const teacherBusy = slot.teacher_id && state.slots.some(s =>
+        String(s.teacher_id) === String(slot.teacher_id) &&
+        s.day_of_week === day &&
+        Number(s.period_no) === Number(p.period_no)
+      );
+      const classSet = state.classHours?.get(String(slot.class_id));
+      const classAttends = !classSet || classSet.has(Number(p.period_no));
+      if(!classBusy && !teacherBusy && classAttends){
+        options.push({ day, dayName:DAY_NAMES[day - 1], period:p });
+      }
+    });
+  });
+  return options.slice(0, limit);
+}
+
+function renderLessonInspector(){
+  const host = document.getElementById('lessonInspector');
+  if(!host) return;
+  const slot = state.slots.find(s => String(s.id) === String(state.selectedSlotId));
+  if(!slot){
+    host.innerHTML = '<div class="li-empty">Select a lesson in the grid to see its teacher, class, timing, lock state, and safer repair options.</div>';
+    return;
+  }
+  const period = periodForSlot(slot);
+  const alternatives = legalAlternativesFor(slot);
+  const load = teacherWeeklyLoad(slot.teacher_id);
+  const maxWeek = Number(state.teacherLoad[slot.teacher_id]?.max_week || 30);
+  const activeRooms = (state.rooms || []).filter(r => r.status !== 'inactive');
+  const past = isPastSlot(slot);
+  const defaultRoomText = slot.room_is_default ? 'Grade room' : 'No room assigned';
+  const roomOptions = '<option value="">' + esc(defaultRoomText) + '</option>' + activeRooms.map(r =>
+    '<option value="' + r.id + '"' + (String(slot.assigned_room_id || '') === String(r.id) ? ' selected' : '') + '>' + esc(r.name) + (r.capacity ? ' (' + r.capacity + ')' : '') + '</option>'
+  ).join('');
+  const roomLine = slot.room_name
+    ? esc(slot.room_name) + (slot.room_is_default ? ' <span style="color:var(--ink-4);font-size:11px;">grade default</span>' : '')
+    : 'No room assigned';
+  host.innerHTML =
+    '<div class="li-head">' +
+      '<div class="li-label"><i class="fas fa-magnifying-glass-chart"></i>Lesson inspector</div>' +
+      '<div class="li-title">' + esc(slot.subject_name || 'Lesson') + '</div>' +
+      '<div class="li-sub">' + esc(DAY_NAMES[(slot.day_of_week || 1) - 1] || 'Day') + ' - ' + esc(period?.label || ('Period ' + slot.period_no)) + '</div>' +
+    '</div>' +
+    '<div class="li-body">' +
+      '<div class="li-row"><i class="fas fa-chalkboard-user"></i><div><b>Teacher</b>' + esc(slot.teacher_name || 'Unassigned') + '</div></div>' +
+      '<div class="li-row"><i class="fas fa-users"></i><div><b>Class</b>' + esc(slot.class_name || 'Class') + '</div></div>' +
+      '<div class="li-row"><i class="fas fa-clock"></i><div><b>Time</b>' + esc((period?.start_time || '-') + ' - ' + (period?.end_time || '-')) + '</div></div>' +
+      (past ? '<div class="li-row"><i class="fas fa-circle-check"></i><div><b>Already taught</b>This lesson period has passed today. Room and grid changes are closed for the taught lesson.</div></div>' : '') +
+      '<div class="li-row"><i class="fas fa-door-open"></i><div><b>Room</b>' + roomLine +
+        '<div class="li-room-picker"><select class="input" id="liRoomPick"' + (past ? ' disabled' : '') + '>' + roomOptions + '</select><button class="btn" type="button" data-inspector="room" aria-label="Confirm room"' + (past ? ' disabled title="Already taught"' : '') + '><i class="fas fa-check"></i></button></div>' +
+      '</div></div>' +
+      '<div class="li-row"><i class="fas fa-gauge-high"></i><div><b>Teacher load</b>' + load + '/' + maxWeek + ' weekly lessons</div></div>' +
+      '<div class="li-row"><i class="fas ' + (slot.locked ? 'fa-lock' : 'fa-lock-open') + '"></i><div><b>Grid control</b>' + (slot.locked ? 'Locked - solver should preserve this slot' : 'Unlocked - can be moved or swapped') + '</div></div>' +
+      '<div class="li-row"><i class="fas fa-route"></i><div><b>Available alternatives</b>' +
+        (alternatives.length ? '<div class="alt-list">' + alternatives.map(a => '<span class="alt-chip"><strong>' + esc(a.dayName) + '</strong><span>' + esc(a.period.label || ('Period ' + a.period.period_no)) + '</span></span>').join('') + '</div>' : '<span>No obvious open slot found for this lesson.</span>') +
+      '</div></div>' +
+      '<div class="li-actions">' +
+        '<button class="btn" type="button" data-inspector="lock"><i class="fas ' + (slot.locked ? 'fa-lock-open' : 'fa-lock') + '"></i>' + (slot.locked ? 'Unlock' : 'Lock') + '</button>' +
+        '<button class="btn" type="button" data-inspector="generate"><i class="fas fa-wand-magic-sparkles"></i>Review generation</button>' +
+      '</div>' +
+    '</div>';
+  host.querySelector('[data-inspector="lock"]')?.addEventListener('click', async () => {
+    slot.locked = slot.locked ? 0 : 1;
+    renderGrid();
+    try {
+      await api(TT_API + '/slots/' + slot.id + '/lock', {
+        method:'PATCH',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ locked: slot.locked ? 1 : 0 })
+      });
+      Joy.toast(slot.locked ? 'Lesson locked' : 'Lesson unlocked');
+    } catch(e){
+      Joy.toast('Saved locally - server did not accept the lock change', { type:'warn' });
+    }
+  });
+  host.querySelector('[data-inspector="generate"]')?.addEventListener('click', () => {
+    document.querySelector('.tab[data-tab="generate"]')?.click();
+  });
+  host.querySelector('[data-inspector="room"]')?.addEventListener('click', async () => {
+    if(isPastSlot(slot)){
+      Joy.toast('Already taught lessons cannot be changed', { type:'warn' });
+      return;
+    }
+    const roomValue = document.getElementById('liRoomPick')?.value || null;
+    try {
+      const updated = await api(TT_API + '/slots/' + slot.id, {
+        method:'PATCH',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ day_of_week:slot.day_of_week, period_no:slot.period_no, room_id:roomValue })
+      });
+      const nextSlot = updated.slot || updated;
+      const idx = state.slots.findIndex(s => String(s.id) === String(slot.id));
+      if(idx >= 0) state.slots[idx] = nextSlot;
+      renderGrid();
+      Joy.toast(roomValue ? 'Room assigned' : 'Room cleared');
+    } catch(e){
+      Joy.toast(e.message || "Couldn't assign room", { type:'danger' });
+    }
+  });
+}
+
+function clearRoomForm(){
+  const id = document.getElementById('roomId');
+  const name = document.getElementById('roomName');
+  const cap = document.getElementById('roomCapacity');
+  const type = document.getElementById('roomType');
+  const tags = document.getElementById('roomTags');
+  const home = document.getElementById('roomHomeClass');
+  const sharing = document.getElementById('roomSharing');
+  if(id) id.value = '';
+  if(name) name.value = '';
+  if(cap) cap.value = '';
+  if(type) type.value = 'classroom';
+  if(tags) tags.value = '';
+  if(home) home.value = '';
+  if(sharing) sharing.checked = false;
+}
+
+function renderRooms(){
+  const host = document.getElementById('roomsList');
+  const meta = document.getElementById('roomsMeta');
+  const statusHost = document.getElementById('roomsStatus');
+  if(!host) return;
+  const rooms = state.rooms || [];
+  const active = rooms.filter(r => r.status !== 'inactive');
+  const homeSelect = document.getElementById('roomHomeClass');
+  if(homeSelect){
+    const current = homeSelect.value;
+    homeSelect.innerHTML = '<option value="">Not assigned to a grade</option>' +
+      (state.classes || []).map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+    homeSelect.value = current;
+  }
+  if(meta) meta.textContent = active.length + ' active / ' + rooms.length + ' total';
+  if(statusHost){
+    const statusRooms = state.roomStatus || [];
+    statusHost.innerHTML = statusRooms.slice(0, 6).map(r => {
+      const current = Array.isArray(r.current) ? r.current : [];
+      const next = r.next || null;
+      const tone = current.length ? 'warn' : next ? 'ok' : 'info';
+      const value = current.length ? 'Occupied' : (next ? 'Available' : 'Unused');
+      const metaText = current.length
+        ? current.map(x => (x.class_name || '') + ' ' + (x.subject_name || '')).join(', ')
+        : (next ? ('Next: ' + (next.class_name || '') + ' P' + next.period_no + (r.countdown_minutes != null ? ' in ' + r.countdown_minutes + ' min' : '')) : 'No more lessons today');
+      return '<div class="ops-card ' + tone + '"><div class="k"><i class="fas fa-door-open"></i>' + esc(r.name) + '</div><div class="v">' + value + '</div><div class="m">' + esc(metaText) + '</div></div>';
+    }).join('');
+  }
+  if(!rooms.length){
+    host.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;line-height:1.6;">No rooms added yet. Add classrooms, labs, halls, fields or studios, then assign them from the Grid inspector.</div>';
+    return;
+  }
+  host.innerHTML = rooms.map(r => {
+    const tags = Array.isArray(r.subject_tags) ? r.subject_tags : [];
+    return '<div class="room-row" data-room="' + r.id + '">' +
+      '<div><div class="room-name">' + esc(r.name) + '</div><div class="room-meta">' + esc(r.room_type || 'room') + (r.capacity ? ' - ' + r.capacity + ' seats' : '') + (r.home_class_name ? ' - ' + esc(r.home_class_name) : '') + '</div></div>' +
+      '<div class="room-tags">' + esc((r.allow_sharing ? 'shared; ' : '') + (tags.join(', ') || '-')) + '</div>' +
+      '<span class="status status-' + (r.status === 'inactive' ? 'inactive' : 'active') + '">' + esc(r.status || 'active') + '</span>' +
+      '<div style="display:flex;gap:6px;justify-content:flex-end;"><button class="btn btn-sm" data-room-edit="' + r.id + '"><i class="fas fa-pen"></i>Edit</button><button class="btn btn-sm btn-icon" data-room-delete="' + r.id + '" title="Delete room"><i class="fas fa-trash"></i></button></div>' +
+    '</div>';
+  }).join('');
+  host.querySelectorAll('[data-room-edit]').forEach(btn => btn.addEventListener('click', () => {
+    const room = rooms.find(r => String(r.id) === String(btn.dataset.roomEdit));
+    if(!room) return;
+    document.getElementById('roomId').value = room.id;
+    document.getElementById('roomName').value = room.name || '';
+    document.getElementById('roomCapacity').value = room.capacity || '';
+    document.getElementById('roomType').value = room.room_type || 'classroom';
+    document.getElementById('roomTags').value = (Array.isArray(room.subject_tags) ? room.subject_tags : []).join(', ');
+    document.getElementById('roomHomeClass').value = room.home_class_id || '';
+    document.getElementById('roomSharing').checked = !!room.allow_sharing;
+  }));
+  host.querySelectorAll('[data-room-delete]').forEach(btn => btn.addEventListener('click', async () => {
+    const room = rooms.find(r => String(r.id) === String(btn.dataset.roomDelete));
+    if(!room) return;
+    const ok = await Joy.confirm({
+      title:'Delete room?',
+      message:'Delete ' + room.name + '. Existing lessons and bookings using this room will keep their timetable slot but lose this room assignment.',
+      actionLabel:'Delete room',
+      tone:'danger'
+    });
+    if(!ok) return;
+    try {
+      await api(TT_API + '/rooms/' + room.id, { method:'DELETE' });
+      state.rooms = state.rooms.filter(r => String(r.id) !== String(room.id));
+      clearRoomForm();
+      await reloadRooms();
+      await reloadGenerations();
+      renderGrid();
+      Joy.toast('Room deleted');
+    } catch(e){
+      Joy.toast(e.message || "Couldn't delete room", { type:'danger' });
+    }
+  }));
+}
+
+async function reloadRooms(){
+  try { state.rooms = await api(TT_API + '/rooms'); }
+  catch { state.rooms = []; }
+  try {
+    const status = await api(TT_API + '/rooms/status');
+    state.roomStatus = status.rooms || [];
+  } catch { state.roomStatus = []; }
+  renderRooms();
+  renderTimetableStatus();
+  renderLessonInspector();
+}
+
+document.getElementById('roomClearBtn')?.addEventListener('click', clearRoomForm);
+document.getElementById('roomSaveBtn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('roomSaveBtn');
+  const id = document.getElementById('roomId').value;
+  const body = {
+    name: document.getElementById('roomName').value.trim(),
+    capacity: document.getElementById('roomCapacity').value,
+    room_type: document.getElementById('roomType').value,
+    subject_tags: document.getElementById('roomTags').value.split(',').map(s => s.trim()).filter(Boolean),
+    home_class_id: document.getElementById('roomHomeClass').value || null,
+    allow_sharing: document.getElementById('roomSharing').checked ? 1 : 0,
+    status: 'active'
+  };
+  if(!body.name){ Joy.toast('Room name is required', { type:'warn' }); return; }
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving';
+  try {
+    const saved = await api(TT_API + '/rooms' + (id ? '/' + id : ''), {
+      method: id ? 'PUT' : 'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+    const idx = state.rooms.findIndex(r => String(r.id) === String(saved.id));
+    if(idx >= 0) state.rooms[idx] = saved; else state.rooms.push(saved);
+    clearRoomForm();
+    await reloadRooms();
+    await reloadGenerations();
+    renderGrid();
+    renderLessonInspector();
+    Joy.toast('Room saved');
+  } catch(e){
+    Joy.toast(e.message || "Couldn't save room", { type:'danger' });
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Save room';
+  }
+});
 document.getElementById('setVisTeachers')?.addEventListener('click', e => e.currentTarget.classList.toggle('on'));
 document.getElementById('setVisParents')?.addEventListener('click',  e => e.currentTarget.classList.toggle('on'));
 document.getElementById('setDiscardBtn')?.addEventListener('click', renderSettings);
@@ -742,10 +1273,11 @@ document.getElementById('setSaveBtn')?.addEventListener('click', async () => {
   try {
     await api(TT_API + '/settings', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     Object.assign(state.settings, body);
+    renderTimetableStatus();
     Joy.toast('Timetable settings saved');
   } catch(e){
     const msg = String(e.message || '');
-    Joy.toast(msg.includes('404') ? "Backend not yet enabled — see CODEX_TIMETABLE_AMENDMENTS.md" : (e.message || "Couldn't save"), { type: msg.includes('404') ? 'warn' : 'danger' });
+    Joy.toast(msg.includes('404') ? "Timetable settings endpoint is not available on this server" : (e.message || "Couldn't save"), { type: msg.includes('404') ? 'warn' : 'danger' });
   } finally {
     btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Save settings';
   }
@@ -761,7 +1293,7 @@ function renderGrid(){
   } else if(view === 'teacher'){
     picker.innerHTML = state.teachers.map(t => '<option value="' + t.id + '">' + esc(t.name) + '</option>').join('') || '<option>No teachers</option>';
   } else {
-    picker.innerHTML = '<option>Today · ' + new Date().toLocaleDateString('en-GB', { weekday:'long' }) + '</option>';
+    picker.innerHTML = '<option>Today - ' + new Date().toLocaleDateString('en-GB', { weekday:'long' }) + '</option>';
   }
   /* Build the grid: one row per non-break/lunch/assembly period */
   const grid = document.getElementById('ttGrid');
@@ -771,7 +1303,7 @@ function renderGrid(){
     DAY_NAMES.map(d => '<div class="tt-h">' + d + '</div>').join('');
   state.bell.forEach((p, idx) => {
     const activeDays = Array.isArray(p.active_days) && p.active_days.length ? p.active_days : [...ALL_DAYS];
-    /* Time gutter cell — show day badges if not all 5 active */
+    /* Time gutter cell - show day badges if not all 5 active */
     const dayBadge = activeDays.length < 5
       ? '<span class="label" style="color:var(--gold);font-weight:700;">' + activeDays.map(d => DAY_LABEL[d]).join(' ') + ' only</span>'
       : '<span class="label">' + esc(p.label || p.type) + '</span>';
@@ -787,7 +1319,7 @@ function renderGrid(){
       const dayKey = ALL_DAYS[d];
       /* If this period isn't active on this day, render a dimmed cell */
       if(!activeDays.includes(dayKey)){
-        grid.innerHTML += '<div class="tt-cell empty" style="background:repeating-linear-gradient(45deg,var(--surface-2),var(--surface-2) 3px,transparent 3px,transparent 6px);color:var(--ink-4);" title="' + esc(p.label) + ' not scheduled on this day">·</div>';
+        grid.innerHTML += '<div class="tt-cell empty" style="background:repeating-linear-gradient(45deg,var(--surface-2),var(--surface-2) 3px,transparent 3px,transparent 6px);color:var(--ink-4);" title="' + esc(p.label) + ' not scheduled on this day">-</div>';
         continue;
       }
       /* If this class doesn't attend this period (e.g. PP1 skips afternoon), dim it */
@@ -810,25 +1342,36 @@ function renderGrid(){
       }
       if(slot){
         const col = colorForSubject(slot.subject_name || '');
-        const draggable = view === 'class' && !slot.locked ? ' draggable="true"' : '';
-        grid.innerHTML += '<div class="tt-cell" data-slot-id="' + slot.id + '" data-day="' + (d+1) + '" data-period="' + p.period_no + '"' + draggable + ' title="' + esc(slot.subject_name) + ' · ' + esc(slot.teacher_name || '') + (view === 'class' ? ' · drag to move' : '') + '">' +
+        const past = isPastSlot(slot);
+        const draggable = view === 'class' && !slot.locked && !past ? ' draggable="true"' : '';
+        const selected = String(state.selectedSlotId) === String(slot.id) ? ' selected' : '';
+        grid.innerHTML += '<div class="tt-cell' + selected + (past ? ' past' : '') + '" data-slot-id="' + slot.id + '" data-day="' + (d+1) + '" data-period="' + p.period_no + '"' + draggable + ' title="' + esc(slot.subject_name) + ' - ' + esc(slot.teacher_name || '') + (slot.room_name ? ' - ' + esc(slot.room_name) : '') + (past ? ' - already taught today' : (view === 'class' ? ' - drag to move' : '')) + '">' +
           '<div class="subj"><span class="subj-chip subj-color-' + col + '" style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;background:linear-gradient(135deg,var(--d' + ((col%8)+1) + '),var(--d' + (((col+1)%8)+1) + '));"></span>' + esc(slot.subject_name) + '</div>' +
-          (view === 'teacher' ? '<div class="teach">' + esc(slot.class_name || '') + '</div>' : '<div class="teach">' + esc((slot.teacher_name || '—').split(' ').map(w => w[0]).join('').slice(0,3)) + '</div>') +
+          (view === 'teacher' ? '<div class="teach">' + esc(slot.class_name || '') + '</div>' : '<div class="teach">' + esc((slot.teacher_name || '-').split(' ').map(w => w[0]).join('').slice(0,3)) + '</div>') +
+          (slot.room_name ? '<div class="room">' + esc(slot.room_name) + '</div>' : '') +
+          (past ? '<i class="fas fa-circle-check past-ico"></i>' : '') +
           (slot.locked ? '<i class="fas fa-lock lock"></i>' : '') +
         '</div>';
       } else {
         const dropTarget = view === 'class' ? ' data-day="' + (d+1) + '" data-period="' + p.period_no + '" data-empty="1"' : '';
-        grid.innerHTML += '<div class="tt-cell empty"' + dropTarget + '>—</div>';
+        grid.innerHTML += '<div class="tt-cell empty"' + dropTarget + '>-</div>';
       }
     }
   });
   /* Wire drag-and-drop after every render (in class view only) */
   if(view === 'class') wireGridDragDrop(picker.value);
+  grid.querySelectorAll('.tt-cell[data-slot-id]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      state.selectedSlotId = cell.dataset.slotId;
+      renderGrid();
+    });
+  });
+  renderLessonInspector();
   /* Update meta */
   const filled = state.slots.length;
   document.getElementById('gridMeta').textContent = filled
-    ? filled + ' lessons placed · last generated ' + (state.activeGen?.generated_at || '—')
-    : 'No timetable published yet — configure setup and press Generate';
+    ? filled + ' lessons placed - last generated ' + (state.activeGen?.generated_at || '-')
+    : 'No timetable published yet - configure setup and press Generate';
 }
 document.getElementById('gridPicker').addEventListener('change', renderGrid);
 
@@ -845,6 +1388,7 @@ function wireGridDragDrop(classId){
       const slotId = cell.dataset.slotId;
       const slot = state.slots.find(s => String(s.id) === String(slotId));
       if(!slot){ e.preventDefault(); return; }
+      if(isPastSlot(slot)){ e.preventDefault(); Joy.toast('Already taught lessons cannot be moved', { type:'warn' }); return; }
       dragState = { slot, fromCell: cell, classId };
       cell.classList.add('dragging');
       try { e.dataTransfer.setData('text/plain', String(slotId)); e.dataTransfer.effectAllowed = 'move'; } catch {}
@@ -859,7 +1403,7 @@ function wireGridDragDrop(classId){
   /* Drop targets: empty lesson cells + other lesson cells (for swap) */
   grid.querySelectorAll('.tt-cell').forEach(cell => {
     if(cell.classList.contains('break') || cell.classList.contains('lunch') || cell.classList.contains('assembly')) return;
-    if(cell.textContent.trim() === '·' || cell.textContent.trim() === 'home') return;
+    if(cell.textContent.trim() === '-' || cell.textContent.trim() === 'home') return;
     cell.addEventListener('dragover', e => {
       if(!dragState) return;
       const dropInfo = classifyDrop(cell, dragState);
@@ -889,8 +1433,16 @@ function classifyDrop(targetCell, ds){
   const day = Number(targetCell.dataset.day);
   const period = Number(targetCell.dataset.period);
   if(!day || !period) return null;
+  const targetPeriod = state.bell.find(p => Number(p.period_no) === period);
+  const targetEnd = minutesFromTime(targetPeriod?.end_time);
+  if(day === todayGridDay() && targetEnd != null && currentMinutes() >= targetEnd){
+    return { action:'conflict', cls:'drop-conflict', reason:'That period has already been taught today.' };
+  }
   /* Find slot at target (if any) for same class */
   const targetSlot = state.slots.find(s => String(s.class_id) === String(ds.classId) && s.day_of_week === day && s.period_no === period);
+  if(targetSlot && isPastSlot(targetSlot)){
+    return { action:'conflict', cls:'drop-conflict', reason:'Already taught lessons cannot be swapped.' };
+  }
   /* Check teacher availability for the dragged lesson in the target slot */
   const teacherId = ds.slot.teacher_id;
   if(teacherId){
@@ -900,12 +1452,23 @@ function classifyDrop(targetCell, ds){
       String(s.class_id) !== String(ds.classId)
     );
     if(teacherBusy){
-      /* Allow swap if target slot's teacher could also fit in source — too complex; just flag */
+      /* Allow swap if target slot's teacher could also fit in source - too complex; just flag */
       return { action:'conflict', cls:'drop-conflict', reason:(ds.slot.teacher_name || 'Teacher') + ' is already teaching ' + teacherBusy.class_name + ' at that time.' };
     }
   }
+  if(ds.slot.room_id){
+    const roomBusy = state.slots.find(s =>
+      String(s.room_id) === String(ds.slot.room_id) &&
+      s.day_of_week === day && s.period_no === period &&
+      String(s.id) !== String(ds.slot.id) &&
+      (!targetSlot || String(s.id) !== String(targetSlot.id))
+    );
+    if(roomBusy){
+      return { action:'conflict', cls:'drop-conflict', reason:(ds.slot.room_name || 'Room') + ' is already booked at that time.' };
+    }
+  }
   if(targetSlot){
-    /* Swapping with another lesson — also check the target's teacher could fit at source */
+    /* Swapping with another lesson - also check the target's teacher could fit at source */
     if(targetSlot.teacher_id && String(targetSlot.teacher_id) !== String(teacherId)){
       const targetTeacherBusy = state.slots.find(s =>
         String(s.teacher_id) === String(targetSlot.teacher_id) &&
@@ -916,6 +1479,17 @@ function classifyDrop(targetCell, ds){
         return { action:'conflict', cls:'drop-conflict', reason:(targetSlot.teacher_name || 'Other teacher') + ' is already teaching at the source slot.' };
       }
     }
+    if(targetSlot.room_id && String(targetSlot.room_id) !== String(ds.slot.room_id || '')){
+      const targetRoomBusy = state.slots.find(s =>
+        String(s.room_id) === String(targetSlot.room_id) &&
+        s.day_of_week === ds.slot.day_of_week && s.period_no === ds.slot.period_no &&
+        String(s.id) !== String(targetSlot.id) &&
+        String(s.id) !== String(ds.slot.id)
+      );
+      if(targetRoomBusy){
+        return { action:'conflict', cls:'drop-conflict', reason:(targetSlot.room_name || 'Target room') + ' is already booked at the source slot.' };
+      }
+    }
     return { action:'swap', cls:'drop-swap', src: ds.slot, dst: targetSlot, day, period };
   }
   return { action:'move', cls:'drop-ok', src: ds.slot, day, period };
@@ -924,6 +1498,7 @@ function classifyDrop(targetCell, ds){
 async function applyDragDrop(info){
   if(info.action === 'move'){
     /* Update local first for snappy UI */
+    const oldDay = info.src.day_of_week, oldPeriod = info.src.period_no;
     info.src.day_of_week = info.day;
     info.src.period_no = info.period;
     renderGrid();
@@ -934,12 +1509,20 @@ async function applyDragDrop(info){
       });
       Joy.toast('Moved ' + info.src.subject_name);
     } catch(e){
-      Joy.toast('Saved locally — backend endpoint missing', { type:'warn' });
+      info.src.day_of_week = oldDay;
+      info.src.period_no = oldPeriod;
+      renderGrid();
+      Joy.toast(e.message || "Couldn't move lesson", { type:'danger' });
     }
     return;
   }
   if(info.action === 'swap'){
-    if(!confirm('Swap ' + info.src.subject_name + ' with ' + info.dst.subject_name + '?')) return;
+    const ok = await Joy.confirm({
+      title:'Swap lessons?',
+      message:'Swap ' + info.src.subject_name + ' with ' + info.dst.subject_name + ' in the timetable grid.',
+      actionLabel:'Swap lessons'
+    });
+    if(!ok) return;
     const srcDay = info.src.day_of_week, srcPeriod = info.src.period_no;
     info.src.day_of_week = info.day; info.src.period_no = info.period;
     info.dst.day_of_week = srcDay;   info.dst.period_no = srcPeriod;
@@ -951,7 +1534,10 @@ async function applyDragDrop(info){
       });
       Joy.toast('Swapped ' + info.src.subject_name + ' ⇄ ' + info.dst.subject_name);
     } catch(e){
-      Joy.toast('Saved locally — backend endpoint missing', { type:'warn' });
+      info.src.day_of_week = srcDay; info.src.period_no = srcPeriod;
+      info.dst.day_of_week = info.day; info.dst.period_no = info.period;
+      renderGrid();
+      Joy.toast(e.message || "Couldn't swap lessons", { type:'danger' });
     }
   }
 }
@@ -970,7 +1556,7 @@ function renderBell(){
     '<div class="bhc">Label</div>' +
     '<div class="bhc">Start</div>' +
     '<div class="bhc">End</div>' +
-    '<div class="bhc center">Active days · click to toggle</div>' +
+    '<div class="bhc center">Active days - click to toggle</div>' +
     '<div class="bhc">Type</div>' +
     '<div class="bhc"></div>' +
   '</div>';
@@ -992,12 +1578,12 @@ function renderBell(){
   }).join('');
   list.innerHTML = html;
   const lessons = state.bell.filter(p => p.type === 'lesson').length;
-  const dur = state.bell.length ? (state.bell[0].start_time + ' → ' + state.bell[state.bell.length-1].end_time) : '—';
-  document.getElementById('bellSummary').textContent = lessons + ' teaching periods · ' + dur;
+  const dur = state.bell.length ? (state.bell[0].start_time + ' → ' + state.bell[state.bell.length-1].end_time) : '-';
+  document.getElementById('bellSummary').textContent = lessons + ' teaching periods - ' + dur;
   wireBellDragDrop();
 }
 
-/* Bell row drag-to-reorder · only the grip handle starts the drag */
+/* Bell row drag-to-reorder - only the grip handle starts the drag */
 let bellDragIdx = null;
 function wireBellDragDrop(){
   const list = document.getElementById('bellList');
@@ -1040,7 +1626,7 @@ function wireBellDragDrop(){
       state.bell.splice(adjusted, 0, item);
       state.bell.forEach((p, i) => p.period_no = i + 1);
       renderBell();
-      Joy.toast('Reordered · click Save schedule to persist');
+      Joy.toast('Reordered - click Save schedule to persist');
     });
   });
 }
@@ -1102,13 +1688,13 @@ document.getElementById('bellSave').addEventListener('click', async () => {
     await api(TT_API + '/periods', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ periods: state.bell }) });
     Joy.toast('Bell schedule saved');
   } catch(e) {
-    Joy.toast("Saved locally — backend endpoint not yet enabled", { type:'warn' });
+    Joy.toast("Saved locally - backend endpoint not yet enabled", { type:'warn' });
   }
 });
 
 /* ─── LESSONS PER WEEK rendering ─────────────────────────────────── */
 const CBC_DEFAULTS = {
-  /* Per-subject default lessons/week — admins can override */
+  /* Per-subject default lessons/week - admins can override */
   'Mathematics': 6, 'Mathematical Activities': 5,
   'English': 6, 'English Activities': 5,
   'Kiswahili': 4, 'Kusoma': 3, 'Reading': 4,
@@ -1150,7 +1736,7 @@ function renderLessons(){
     return '<div class="lessons-card">' +
       '<div class="lessons-head">' +
         '<div class="crest">' + esc((c.name.match(/\d+/) || [c.name[0]])[0]) + '</div>' +
-        '<div class="info"><div class="name">' + esc(c.name) + '</div><div class="sub">' + subjects.length + ' subjects assigned · ' + weeklyCells + ' available cells/week</div></div>' +
+        '<div class="info"><div class="name">' + esc(c.name) + '</div><div class="sub">' + subjects.length + ' subjects assigned - ' + weeklyCells + ' available cells/week</div></div>' +
         '<div class="total"><div>' + total + ' / ' + weeklyCells + '</div><div class="l">Weekly lessons</div></div>' +
       '</div>' +
       (subjects.length ?
@@ -1225,7 +1811,7 @@ document.getElementById('lessonsSave').addEventListener('click', async () => {
     await api(TT_API + '/lessons', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ rows: payload }) });
     Joy.toast('Lessons saved');
   } catch(e) {
-    Joy.toast('Saved locally — backend not yet enabled', { type:'warn' });
+    Joy.toast('Saved locally - backend not yet enabled', { type:'warn' });
   }
 });
 
@@ -1252,7 +1838,7 @@ function renderTeachers(){
     return '<div class="teacher-card" data-id="' + t.id + '">' +
       '<div class="teacher-head">' +
         '<div class="ava" style="' + Joy.avaStyle(t.name) + '">' + Joy.initials(t.name) + '</div>' +
-        '<div class="info"><div class="name">' + esc(t.name) + '</div><div class="meta">' + esc(t.subject || 'Teacher') + ' · ' + (t.primary_class || 'No class') + '</div></div>' +
+        '<div class="info"><div class="name">' + esc(t.name) + '</div><div class="meta">' + esc(t.subject || 'Teacher') + ' - ' + (t.primary_class || 'No class') + '</div></div>' +
         '<div class="load"><div>' + assigned + ' / ' + load.max_week + '</div><div class="lbl">Weekly load</div></div>' +
       '</div>' +
       '<div class="teacher-body">' +
@@ -1322,8 +1908,8 @@ document.getElementById('teachersSaveBtn')?.addEventListener('click', async () =
       ok++;
     } catch(e){ fail++; console.error(e); }
   }
-  if(ok && !fail) Joy.toast('Saved constraints for ' + ok + ' teacher' + (ok===1?'':'s'));
-  else if(ok && fail) Joy.toast(ok + ' saved · ' + fail + ' failed', { type:'warn' });
+  if(ok && !fail) Joy.toast('Saved constraints for ' + cleared + ' teacher' + (ok===1?'':'s'));
+  else if(ok && fail) Joy.toast(ok + ' saved - ' + fail + ' failed', { type:'warn' });
   else Joy.toast("Couldn't save (backend not enabled?)", { type:'danger' });
   btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Save teacher constraints';
 });
@@ -1363,7 +1949,7 @@ document.getElementById('constraintsSaveBtn')?.addEventListener('click', async (
   } catch(e){
     const msg = String(e.message || '');
     if(msg.includes('404') || msg.toLowerCase().includes('not found')){
-      Joy.toast("Backend not yet enabled — see CODEX_TIMETABLE_AMENDMENTS.md", { type:'warn', duration: 5000 });
+      Joy.toast("Timetable settings endpoint is not available on this server", { type:'warn', duration: 5000 });
     } else {
       Joy.toast(e.message || "Couldn't save", { type:'danger' });
     }
@@ -1396,12 +1982,13 @@ function renderGenerate(){
   hist.innerHTML = state.generations.map(g => {
     const conflictsCount = Array.isArray(g.conflicts) ? g.conflicts.length : (g.conflicts || 0);
     return '<div class="gen-history-row">' +
-      '<div class="ts">' + esc(formatGenTime(g.generated_at)) + '<div class="sub">v' + g.id + ' · ' + g.placed + '/' + g.total + ' placed</div></div>' +
+      '<div class="ts">' + esc(formatGenTime(g.generated_at)) + '<div class="sub">v' + g.id + ' - ' + g.placed + '/' + g.total + ' placed</div></div>' +
       '<div class="pill">' + g.score + '/100</div>' +
-      '<div class="pill" style="color:' + (conflictsCount > 0 ? 'var(--warn)' : 'var(--ok)') + ';">' + conflictsCount + ' · soft</div>' +
+      '<div class="pill" style="color:' + (conflictsCount > 0 ? 'var(--warn)' : 'var(--ok)') + ';">' + conflictsCount + ' - soft</div>' +
       '<span class="status status-' + (g.status === 'active' ? 'active' : 'inactive') + '">' + g.status + '</span>' +
       '<div style="display:flex;gap:5px;justify-content:flex-end;">' +
-        (g.status === 'active' ? '<span class="status status-active" title="Currently active"><i class="fas fa-check"></i> live</span>' : '<button class="btn btn-sm btn-primary" data-act="publish" data-id="' + g.id + '" title="Publish — make this the active timetable"><i class="fas fa-check"></i></button>') +
+        (g.status === 'active' ? '<span class="status status-active" title="Currently active"><i class="fas fa-check"></i> live</span>' : '<button class="btn btn-sm btn-primary" data-act="publish" data-id="' + g.id + '" title="Publish - make this the active timetable"><i class="fas fa-check"></i></button>') +
+        '<button class="btn btn-sm btn-icon" data-act="diff" data-id="' + g.id + '" title="Compare with active timetable"><i class="fas fa-code-compare"></i></button>' +
         '<button class="btn btn-sm btn-icon" data-act="view" data-id="' + g.id + '" title="Preview in Grid tab"><i class="fas fa-eye"></i></button>' +
         (g.status === 'active' ? '' : '<button class="btn btn-sm btn-icon" data-act="delete" data-id="' + g.id + '" title="Delete this generation" style="color:var(--ink-3);"><i class="fas fa-trash"></i></button>') +
       '</div>' +
@@ -1409,7 +1996,7 @@ function renderGenerate(){
   }).join('');
 }
 function formatGenTime(t){
-  if(!t) return '—';
+  if(!t) return '-';
   const d = new Date(t);
   if(isNaN(d)) return t;
   return d.toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
@@ -1423,11 +2010,21 @@ document.getElementById('genHistory').addEventListener('click', async e => {
   const act = btn.dataset.act;
 
   if(act === 'publish'){
-    if(!confirm('Publish this generation as the active timetable?\n\nIt will replace whatever is currently published.')) return;
+    let diff = null;
+    try { diff = await api(TT_API + '/generations/' + id + '/diff'); } catch {}
+    const diffCopy = diff
+      ? ('This affects ' + diff.affected_classes.length + ' class' + (diff.affected_classes.length === 1 ? '' : 'es') + ' and ' + diff.affected_teachers.length + ' teacher' + (diff.affected_teachers.length === 1 ? '' : 's') + '. ' + diff.added_count + ' lessons added, ' + diff.removed_count + ' removed from the active version.')
+      : 'This generation becomes the active timetable and replaces the currently published timetable.';
+    const ok = await Joy.confirm({
+      title:'Publish timetable?',
+      message:diffCopy,
+      actionLabel:'Publish timetable'
+    });
+    if(!ok) return;
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     try {
       await api(TT_API + '/generations/' + id + '/publish', { method:'POST' });
-      Joy.toast('Published — this is now the active timetable');
+      Joy.toast('Published - this is now the active timetable');
       /* Re-fetch generations + the active grid */
       await reloadGenerations();
       renderGenerate();
@@ -1439,13 +2036,32 @@ document.getElementById('genHistory').addEventListener('click', async e => {
     return;
   }
 
+  if(act === 'diff'){
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    try {
+      const diff = await api(TT_API + '/generations/' + id + '/diff');
+      const classes = (diff.affected_classes || []).slice(0, 6).join(', ') || 'No class changes';
+      const teachers = (diff.affected_teachers || []).slice(0, 6).join(', ') || 'No teacher changes';
+      await Joy.confirm({
+        title:'Generation impact',
+        message:'Compared with the active timetable: ' + diff.added_count + ' lessons added, ' + diff.removed_count + ' removed. Classes: ' + classes + '. Teachers: ' + teachers + '.',
+        actionLabel:'OK'
+      });
+    } catch(err){
+      Joy.toast(err.message || "Couldn't compare", { type:'danger' });
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-code-compare"></i>';
+    }
+    return;
+  }
+
   if(act === 'view'){
     /* Load that generation's slots into the grid for preview */
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     try {
       const slots = await api(TT_API + '/grid?generationId=' + id);
       state.slots = slots || [];
-      Joy.toast('Loaded v' + id + ' into Grid · ' + state.slots.length + ' lessons');
+      Joy.toast('Loaded v' + id + ' into Grid - ' + state.slots.length + ' lessons');
       document.querySelector('.tab[data-tab="grid"]').click();
     } catch(err){
       Joy.toast(err.message || "Couldn't load", { type:'danger' });
@@ -1457,8 +2073,14 @@ document.getElementById('genHistory').addEventListener('click', async e => {
 
   if(act === 'delete'){
     const gen = state.generations.find(g => String(g.id) === String(id));
-    const label = gen ? ('v' + gen.id + ' · ' + (gen.placed || 0) + '/' + (gen.total || 0) + ' placed') : ('v' + id);
-    if(!confirm('Delete generation ' + label + ' permanently?\n\nThis cannot be undone.')) return;
+    const label = gen ? ('v' + gen.id + ' - ' + (gen.placed || 0) + '/' + (gen.total || 0) + ' placed') : ('v' + id);
+    const ok = await Joy.confirm({
+      title:'Delete timetable draft?',
+      message:'Delete generation ' + label + ' permanently. This cannot be undone.',
+      actionLabel:'Delete draft',
+      tone:'danger'
+    });
+    if(!ok) return;
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     try {
       await api(TT_API + '/generations/' + id, { method:'DELETE' });
@@ -1468,7 +2090,7 @@ document.getElementById('genHistory').addEventListener('click', async e => {
     } catch(err){
       const msg = String(err.message || '');
       if(msg.includes('404') || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('cannot')){
-        Joy.toast("Delete endpoint isn't enabled yet — see CODEX_TIMETABLE_AMENDMENTS.md", { type:'warn', duration: 6000 });
+        Joy.toast("Delete endpoint is not available on this server", { type:'warn', duration: 6000 });
       } else {
         Joy.toast(err.message || "Couldn't delete", { type:'danger' });
       }
@@ -1481,15 +2103,21 @@ document.getElementById('genHistory').addEventListener('click', async e => {
 async function clearEmptyDrafts(){
   const empties = state.generations.filter(g => g.status !== 'active' && (g.placed || 0) === 0);
   if(!empties.length){ Joy.toast('No empty drafts to clear'); return; }
-  if(!confirm('Delete ' + empties.length + ' empty draft generation' + (empties.length === 1 ? '' : 's') + '?')) return;
-  let ok = 0, fail = 0;
+  const confirmed = await Joy.confirm({
+    title:'Clear empty drafts?',
+    message:'Delete ' + empties.length + ' empty draft generation' + (empties.length === 1 ? '' : 's') + '.',
+    actionLabel:'Clear drafts',
+    tone:'danger'
+  });
+  if(!confirmed) return;
+  let cleared = 0, fail = 0;
   for(const g of empties){
     try {
       await api(TT_API + '/generations/' + g.id, { method:'DELETE' });
-      ok++;
+      cleared++;
     } catch { fail++; }
   }
-  Joy.toast('Cleared ' + ok + (fail ? (' · ' + fail + ' failed') : '') + ' empty drafts', fail ? { type:'warn' } : {});
+  Joy.toast('Cleared ' + cleared + (fail ? (' - ' + fail + ' failed') : '') + ' empty drafts', fail ? { type:'warn' } : {});
   await reloadGenerations();
   renderGenerate();
 }
@@ -1509,12 +2137,19 @@ async function reloadGenerations(){
       state.slots = [];
     }
   } catch(e){ console.error(e); }
+  await reloadOperationalSummaries(state.activeGen?.id);
 }
 document.getElementById('generateBtn').addEventListener('click', async () => {
-  /* Run verification first — if there are hard blockers, surface them and ask */
+  /* Run verification first - if there are hard blockers, surface them and ask */
   const verification = renderVerification();
   if(verification.blockers.length){
-    if(!confirm('Verification found ' + verification.blockers.length + ' blocker' + (verification.blockers.length === 1 ? '' : 's') + ' that will cause the generation to fail or place nothing.\n\nContinue anyway?')){
+    const ok = await Joy.confirm({
+      title:'Continue with blockers?',
+      message:'Verification found ' + verification.blockers.length + ' blocker' + (verification.blockers.length === 1 ? '' : 's') + ' that may cause generation to fail or place nothing.',
+      actionLabel:'Generate anyway',
+      tone:'danger'
+    });
+    if(!ok){
       Joy.toast('Fix the blockers in the panel below, then generate', { type:'warn', duration: 4000 });
       return;
     }
@@ -1535,7 +2170,10 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     });
     state.generations.unshift(result);
     state.slots = result.slots || [];
-    Joy.toast('Generated v' + result.id + ' · ' + result.placed + '/' + result.total + ' placed · score ' + result.score + '/100');
+    state.unplaced = result.unplaced || [];
+    state.lastExplanation = result.explanation || {};
+    await reloadOperationalSummaries(result.id);
+    Joy.toast('Generated v' + result.id + ' - ' + result.placed + '/' + result.total + ' placed - score ' + result.score + '/100');
     renderGenerate();
     if(result.conflicts?.length){
       document.getElementById('conflictCard').style.display = '';
@@ -1543,11 +2181,19 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
         '<div class="conflict-item ' + (c.severity === 'hard' ? 'hard' : '') + '"><i class="fas fa-triangle-exclamation"></i><span>' + esc(c.message) + '</span></div>'
       ).join('');
     }
-    /* Auto-publish prompt — if score >= 70 and no active timetable yet, offer to publish */
-    if(result.placed > 0 && (!state.activeGen || confirm('Publish this generation (v' + result.id + ') and make it the active timetable?\n\nScore: ' + result.score + '/100 · ' + result.placed + ' lessons placed.'))){
+    /* Auto-publish prompt - if score >= 70 and no active timetable yet, offer to publish */
+    let shouldPublish = result.placed > 0 && !state.activeGen;
+    if(result.placed > 0 && state.activeGen){
+      shouldPublish = await Joy.confirm({
+        title:'Publish generated timetable?',
+        message:'Publish generation v' + result.id + ' as the active timetable. Score: ' + result.score + '/100, ' + result.placed + ' lessons placed.',
+        actionLabel:'Publish timetable'
+      });
+    }
+    if(result.placed > 0 && shouldPublish){
       try {
         await api(TT_API + '/generations/' + result.id + '/publish', { method:'POST' });
-        Joy.toast('Published — now active');
+        Joy.toast('Published - now active');
         await reloadGenerations();
         renderGenerate();
         renderGrid();
@@ -1569,7 +2215,7 @@ document.getElementById('quickGenBtn').addEventListener('click', () => {
 document.getElementById('clearDraftsBtn').addEventListener('click', clearEmptyDrafts);
 
 /* ─── VERIFICATION MODE ──────────────────────────────────────────
-   Pure frontend feasibility check — runs against the current state.
+   Pure frontend feasibility check - runs against the current state.
    Reports blockers (will fail), warnings (will compromise), info (heads-up),
    and successful checks (passed). Helps admin fix setup before generating.
    ───────────────────────────────────────────────────────────────── */
@@ -1612,7 +2258,7 @@ function runVerification(){
   const unassigned = state.classSubjects.filter(cs => !cs.teacher_id);
   if(unassigned.length){
     const sample = unassigned.slice(0,3).map(cs => cs.subject_name + ' in ' + cs.class_name).join(', ');
-    warnings.push({ msg:'<b>' + unassigned.length + '</b> class-subject' + (unassigned.length===1?'':'s') + ' have no teacher assigned (e.g. ' + esc(sample) + (unassigned.length > 3 ? ', …' : '') + '). The solver will skip these — they appear as "Unassigned" in the grid.', fix:'Open <a href="/admin/classes.html">Classes</a> and assign teachers.' });
+    warnings.push({ msg:'<b>' + unassigned.length + '</b> class-subject' + (unassigned.length===1?'':'s') + ' have no teacher assigned (e.g. ' + esc(sample) + (unassigned.length > 3 ? ', …' : '') + '). The solver will skip these - they appear as "Unassigned" in the grid.', fix:'Open <a href="/admin/classes.html">Classes</a> and assign teachers.' });
   } else if(state.classSubjects.length){
     passed.push({ msg:'Every class-subject has a teacher assigned.' });
   }
@@ -1626,7 +2272,7 @@ function runVerification(){
   if(zeroLessons.length === state.classSubjects.length && state.classSubjects.length){
     blockers.push({ msg:'<b>lessons_per_week is 0</b> for every class-subject. The solver will place nothing.', fix:'Open the <a href="#" data-jump="lessons">Lessons tab</a> and click <b>Apply CBC defaults</b>, or set values per class.' });
   } else if(zeroLessons.length){
-    warnings.push({ msg:'<b>' + zeroLessons.length + '</b> class-subject' + (zeroLessons.length===1?' has':'s have') + ' <b>0 lessons/week</b> set — these will be skipped.', fix:'Open the <a href="#" data-jump="lessons">Lessons tab</a> and review.' });
+    warnings.push({ msg:'<b>' + zeroLessons.length + '</b> class-subject' + (zeroLessons.length===1?' has':'s have') + ' <b>0 lessons/week</b> set - these will be skipped.', fix:'Open the <a href="#" data-jump="lessons">Lessons tab</a> and review.' });
   }
 
   /* ── 5. Slot capacity per class ──────────────────────────────── */
@@ -1648,7 +2294,7 @@ function runVerification(){
     if(lessonsNeeded > cellsThisClass){
       blockers.push({ msg:'<b>' + esc(c.name) + '</b> needs <b>' + lessonsNeeded + ' lessons</b> but only has <b>' + cellsThisClass + ' attendable slots</b> per week.', fix:'Increase active periods in <a href="#" data-jump="settings">Class hours</a>, or reduce lessons in <a href="#" data-jump="lessons">Lessons</a>.' });
     } else if(lessonsNeeded > 0 && lessonsNeeded === cellsThisClass){
-      warnings.push({ msg:'<b>' + esc(c.name) + '</b> is at exactly 100% capacity (' + lessonsNeeded + '/' + cellsThisClass + ' slots used) — no room for changes or breaks.' });
+      warnings.push({ msg:'<b>' + esc(c.name) + '</b> is at exactly 100% capacity (' + lessonsNeeded + '/' + cellsThisClass + ' slots used) - no room for changes or breaks.' });
     } else if(lessonsNeeded > 0){
       passed.push({ msg:'<b>' + esc(c.name) + '</b>: ' + lessonsNeeded + '/' + cellsThisClass + ' slots used (' + Math.round(lessonsNeeded/cellsThisClass*100) + '%).' });
     }
@@ -1711,12 +2357,12 @@ function renderVerification(){
   const body = document.getElementById('verifyBody');
   let html = '';
   if(r.blockers.length){
-    html += '<div class="verify-section"><h4><i class="fas fa-circle-xmark" style="color:var(--danger);"></i>Blockers · generation will fail or place nothing</h4>';
+    html += '<div class="verify-section"><h4><i class="fas fa-circle-xmark" style="color:var(--danger);"></i>Blockers - generation will fail or place nothing</h4>';
     r.blockers.forEach(b => html += '<div class="verify-row blocker"><i class="fas fa-circle-xmark lead"></i><div class="body">' + b.msg + (b.fix ? '<div class="fix">' + b.fix + '</div>' : '') + '</div></div>');
     html += '</div>';
   }
   if(r.warnings.length){
-    html += '<div class="verify-section"><h4><i class="fas fa-triangle-exclamation" style="color:var(--warn);"></i>Warnings · solver will compromise</h4>';
+    html += '<div class="verify-section"><h4><i class="fas fa-triangle-exclamation" style="color:var(--warn);"></i>Warnings - solver will compromise</h4>';
     r.warnings.forEach(w => html += '<div class="verify-row warning"><i class="fas fa-triangle-exclamation lead"></i><div class="body">' + w.msg + (w.fix ? '<div class="fix">' + w.fix + '</div>' : '') + '</div></div>');
     html += '</div>';
   }
@@ -1749,15 +2395,15 @@ document.getElementById('verifyBtn')?.addEventListener('click', () => {
   const stamp = r.blockers.length ? 'danger' : r.warnings.length ? 'warn' : '';
   Joy.toast(
     'Verification: ' + r.blockers.length + ' blocker' + (r.blockers.length===1?'':'s') +
-    ' · ' + r.warnings.length + ' warning' + (r.warnings.length===1?'':'s') +
-    ' · ' + r.passed.length + ' passed',
+    ' - ' + r.warnings.length + ' warning' + (r.warnings.length===1?'':'s') +
+    ' - ' + r.passed.length + ' passed',
     stamp ? { type: stamp } : {}
   );
   /* Scroll to the panel */
   document.getElementById('verifyPanel').scrollIntoView({ behavior:'smooth', block:'start' });
 });
 
-/* ─── Class hours · per-class active periods ─────────────────────── */
+/* ─── Class hours - per-class active periods ─────────────────────── */
 /* state.classHours: Map<classId, Set<period_no>>  (period_no excludes break/lunch automatically) */
 function ensureClassHoursState(){
   if(state.classHours) return;
@@ -1775,9 +2421,9 @@ function ensureClassHoursState(){
 
 function dayWindowForClass(classId){
   const set = state.classHours.get(String(classId));
-  if(!set || !set.size) return '—';
+  if(!set || !set.size) return '-';
   const attended = state.bell.filter(p => set.has(p.period_no) && p.type !== 'break' && p.type !== 'lunch');
-  if(!attended.length) return '—';
+  if(!attended.length) return '-';
   return attended[0].start_time + ' → ' + attended[attended.length-1].end_time;
 }
 
@@ -1811,10 +2457,10 @@ function renderClassHours(){
                   : p.type === 'break' ? 'BRK'
                   : p.type === 'lunch' ? 'LUN'
                   : (p.label || '').slice(0,3).toUpperCase();
-      return '<div class="ch-chip ' + cls + '" ' + (interactive ? 'data-period="' + p.period_no + '"' : '') + ' title="' + esc(p.label) + ' · ' + p.start_time + '–' + p.end_time + '">' + label + '</div>';
+      return '<div class="ch-chip ' + cls + '" ' + (interactive ? 'data-period="' + p.period_no + '"' : '') + ' title="' + esc(p.label) + ' - ' + p.start_time + '–' + p.end_time + '">' + label + '</div>';
     }).join('');
     return '<div class="ch-row" data-cls="' + c.id + '">' +
-      '<div class="ch-name">' + esc(c.name) + '<div class="sub">' + (c.grade_level || c.template_name || '—') + '</div></div>' +
+      '<div class="ch-name">' + esc(c.name) + '<div class="sub">' + (c.grade_level || c.template_name || '-') + '</div></div>' +
       '<div class="ch-count">' + lessonCount + ' lessons</div>' +
       '<div class="ch-chips">' + chips + '</div>' +
       '<div class="ch-window">' + dayWindowForClass(c.id) + '</div>' +
@@ -1857,7 +2503,7 @@ document.getElementById('chSaveBtn')?.addEventListener('click', async () => {
   } catch(e){
     const msg = String(e.message || '');
     if(msg.includes('404') || msg.toLowerCase().includes('not found')){
-      Joy.toast("Backend not yet enabled — saved locally (see CODEX_TIMETABLE_AMENDMENTS.md)", { type:'warn', duration: 6000 });
+      Joy.toast("Class hours saved locally because the server endpoint is unavailable", { type:'warn', duration: 6000 });
     } else {
       Joy.toast(e.message || "Couldn't save", { type:'danger' });
     }
@@ -1867,15 +2513,20 @@ document.getElementById('chSaveBtn')?.addEventListener('click', async () => {
 });
 
 /* Reset all classes to full day */
-document.getElementById('chResetBtn')?.addEventListener('click', () => {
-  if(!confirm('Reset every class to attend every period?')) return;
+document.getElementById('chResetBtn')?.addEventListener('click', async () => {
+  const ok = await Joy.confirm({
+    title:'Reset class hours?',
+    message:'Every class will be set to attend every teaching period.',
+    actionLabel:'Reset hours'
+  });
+  if(!ok) return;
   const allLessonPeriods = state.bell.filter(p => p.type !== 'break' && p.type !== 'lunch').map(p => p.period_no);
   state.classes.forEach(c => state.classHours.set(String(c.id), new Set(allLessonPeriods)));
   renderClassHours();
   Joy.toast('Reset to full day for all classes');
 });
 
-/* Row action menu — Copy from another class · Apply to all · Set to full day */
+/* Row action menu - Copy from another class - Apply to all - Set to full day */
 function closeChPopovers(){ document.querySelectorAll('.ch-popover').forEach(p => p.remove()); }
 document.addEventListener('click', e => {
   if(!e.target.closest('.ch-popover') && !e.target.closest('.ch-row-menu')) closeChPopovers();
@@ -1895,13 +2546,13 @@ document.getElementById('chList')?.addEventListener('click', e => {
   pop.className = 'ch-popover';
   pop.innerHTML =
     '<div class="lbl">Copy this row\'s hours to…</div>' +
-    '<select data-act="copy-to"><option value="">— choose a class —</option>' +
+    '<select data-act="copy-to"><option value="">- choose a class -</option>' +
       otherClasses.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('') +
       '<option value="__ALL__">Apply to ALL other classes</option>' +
     '</select>' +
     '<hr/>' +
     '<div class="lbl">Or fill this row from another class</div>' +
-    '<select data-act="copy-from"><option value="">— choose a source class —</option>' +
+    '<select data-act="copy-from"><option value="">- choose a source class -</option>' +
       otherClasses.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('') +
     '</select>' +
     '<hr/>' +
@@ -1982,7 +2633,7 @@ document.getElementById('printBtn').addEventListener('click', () => {
   popover.style.cssText = 'position:fixed;top:64px;right:108px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh-3);padding:5px;min-width:240px;z-index:200;';
   const activeView = document.querySelector('.grid-toolbar .toggle-pair button.on')?.dataset.view || 'class';
   const picker = document.getElementById('gridPicker');
-  const currentName = picker?.selectedOptions?.[0]?.textContent || '—';
+  const currentName = picker?.selectedOptions?.[0]?.textContent || '-';
   popover.innerHTML =
     '<div style="padding:6px 10px;font-size:10px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;">Print options</div>' +
     '<button data-print="current" style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:none;background:transparent;font-family:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer;border-radius:6px;text-align:left;"><i class="fas fa-print" style="width:14px;color:var(--ink-3);"></i>Print current view (' + esc(currentName) + ')</button>' +
@@ -2001,7 +2652,7 @@ document.getElementById('printBtn').addEventListener('click', () => {
     if(mode === 'pdf-hint') return;
     if(mode === 'current'){
       const termName = state.period?.term?.name || 'Current term';
-      doPrint(currentName, 'Joyland Schools · ' + termName);
+      doPrint(currentName, 'Joyland Schools - ' + termName);
     } else if(mode === 'all-classes'){
       await printEachClass();
     } else if(mode === 'all-teachers'){
@@ -2038,7 +2689,7 @@ async function printEachTeacher(){
 }
 
 function buildPrintMultiView(mode){
-  /* Build a stack of grids — one per class or per teacher — only visible during print */
+  /* Build a stack of grids - one per class or per teacher - only visible during print */
   const targets = mode === 'class' ? state.classes : state.teachers;
   const termName = state.period?.term?.name || 'Current term';
   const container = document.createElement('div');
@@ -2052,8 +2703,8 @@ function buildPrintMultiView(mode){
     page.className = idx < targets.length - 1 ? 'print-class-page' : '';
     page.innerHTML =
       '<div class="print-class-header" style="display:block;margin-bottom:14px;">' +
-        '<h2>' + esc(t.name) + ' · ' + (mode === 'class' ? 'Class timetable' : 'Teacher timetable') + '</h2>' +
-        '<div class="sub">Joyland Schools · ' + esc(termName) + '</div>' +
+        '<h2>' + esc(t.name) + ' - ' + (mode === 'class' ? 'Class timetable' : 'Teacher timetable') + '</h2>' +
+        '<div class="sub">Joyland Schools - ' + esc(termName) + '</div>' +
       '</div>' +
       buildGridHTML(mode, t.id);
     container.appendChild(page);
@@ -2084,7 +2735,7 @@ function buildGridHTML(mode, targetId){
     html += '<div class="tt-time">' + p.start_time + '<br>' + p.end_time + '<span class="label">' + esc(p.label || p.type) + '</span></div>';
     for(let d = 0; d < 5; d++){
       const dayKey = ALL_DAYS[d];
-      if(!activeDays.includes(dayKey)){ html += '<div class="tt-cell empty" style="background:#f4f4f0;color:#888;">·</div>'; continue; }
+      if(!activeDays.includes(dayKey)){ html += '<div class="tt-cell empty" style="background:#f4f4f0;color:#888;">-</div>'; continue; }
       if(classHoursSet && !classHoursSet.has(p.period_no)){ html += '<div class="tt-cell empty" style="background:#f4f4f0;color:#888;">home</div>'; continue; }
       if(p.type === 'break')    { html += '<div class="tt-cell break">' + esc(p.label || 'Break') + '</div>'; continue; }
       if(p.type === 'lunch')    { html += '<div class="tt-cell lunch">' + esc(p.label || 'Lunch') + '</div>'; continue; }
@@ -2092,10 +2743,10 @@ function buildGridHTML(mode, targetId){
       if(p.type === 'other')    { html += '<div class="tt-cell assembly">' + esc(p.label) + '</div>'; continue; }
       const slot = targetSlots.find(s => s.day_of_week === d+1 && s.period_no === p.period_no);
       if(slot){
-        const second = mode === 'class' ? ((slot.teacher_name || '—').split(' ').map(w => w[0]).join('').slice(0,3)) : (slot.class_name || '—');
+        const second = mode === 'class' ? ((slot.teacher_name || '-').split(' ').map(w => w[0]).join('').slice(0,3)) : (slot.class_name || '-');
         html += '<div class="tt-cell"><div class="subj">' + esc(slot.subject_name) + '</div><div class="teach">' + esc(second) + '</div></div>';
       } else {
-        html += '<div class="tt-cell empty">—</div>';
+        html += '<div class="tt-cell empty">-</div>';
       }
     }
   });
@@ -2136,13 +2787,13 @@ async function renderSubstitutions(){
   const dStr = state.subDate;
   const d = new Date(dStr + 'T00:00:00');
   const dayNum = d.getDay(); /* 0 Sun, 1 Mon, ... */
-  document.getElementById('subDateLabel').textContent = isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('subDateLabel').textContent = isNaN(d) ? '-' : d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
   /* Load absences for this date */
   try {
     state.subAbsences = await api(TT_API + '/absences?date=' + dStr);
   } catch(e){
-    /* Backend not yet enabled — keep whatever is in memory */
+    /* Backend not yet enabled - keep whatever is in memory */
     state.subAbsences = state.subAbsences.filter(a => dateInRange(dStr, a.date_from, a.date_to));
   }
   document.getElementById('subAbsCount').textContent = state.subAbsences.length;
@@ -2152,6 +2803,7 @@ async function renderSubstitutions(){
   if(!state.subAbsences.length){
     list.innerHTML = '<div style="font-size:12.5px;color:var(--ink-3);padding:14px;line-height:1.6;">No absences recorded for ' + (dayNum === 0 || dayNum === 6 ? 'this weekend' : 'this date') + '. Click <b>Mark teacher absent</b> to add one.</div>';
     document.getElementById('covSection').style.display = 'none';
+    renderTimetableStatus();
     return;
   }
 
@@ -2175,6 +2827,7 @@ async function renderSubstitutions(){
   }
   if(state.subSelected) renderCoverage();
   else document.getElementById('covSection').style.display = 'none';
+  renderTimetableStatus();
 }
 
 document.getElementById('absList').addEventListener('click', async e => {
@@ -2182,7 +2835,13 @@ document.getElementById('absList').addEventListener('click', async e => {
   if(remove){
     e.stopPropagation();
     const absId = remove.dataset.abs;
-    if(!confirm('Cancel this absence record?')) return;
+    const ok = await Joy.confirm({
+      title:'Cancel absence record?',
+      message:'This removes the absence record and clears the related coverage view.',
+      actionLabel:'Cancel absence',
+      tone:'danger'
+    });
+    if(!ok) return;
     try {
       await api(TT_API + '/absences/' + absId, { method:'DELETE' });
     } catch {}
@@ -2217,8 +2876,8 @@ function renderCoverage(){
   const d = new Date(state.subDate + 'T00:00:00');
   const lessons = lessonsForTeacherOnDay(abs.teacher_id, d.getDay());
 
-  const teacherName = abs.teacher_name || state.teachers.find(t => String(t.id) === String(abs.teacher_id))?.name || '—';
-  document.getElementById('covTitle').innerHTML = teacherName + '\'s lessons · ' + lessons.length + ' to cover';
+  const teacherName = abs.teacher_name || state.teachers.find(t => String(t.id) === String(abs.teacher_id))?.name || '-';
+  document.getElementById('covTitle').innerHTML = teacherName + '\'s lessons - ' + lessons.length + ' to cover';
   document.getElementById('covSub').textContent = d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' });
   document.getElementById('covSection').style.display = '';
 
@@ -2233,12 +2892,12 @@ function renderCoverage(){
     const candidates = rankSubstitutes(s, abs.teacher_id, d.getDay());
     const assigned = state.subAssignments[s.id] || s.substitute_teacher_id || '';
     return '<div class="cov-row" data-slot="' + s.id + '">' +
-      '<div class="cov-time">' + (period ? period.start_time : '—') + '<div class="sub">' + (period ? period.end_time : '') + '</div></div>' +
+      '<div class="cov-time">' + (period ? period.start_time : '-') + '<div class="sub">' + (period ? period.end_time : '') + '</div></div>' +
       '<div class="cov-class">' + esc(s.class_name) + '</div>' +
       '<div class="cov-subj">' + esc(s.subject_name) + '</div>' +
       '<div><select class="cov-pick" data-slot="' + s.id + '">' +
-        '<option value="">— pick a substitute —</option>' +
-        candidates.map(c => '<option value="' + c.id + '"' + (String(c.id) === String(assigned) ? ' selected' : '') + '>' + esc(c.name) + ' · ' + c.reasons.join(', ') + '</option>').join('') +
+        '<option value="">- pick a substitute -</option>' +
+        candidates.map(c => '<option value="' + c.id + '"' + (String(c.id) === String(assigned) ? ' selected' : '') + '>' + esc(c.name) + ' - ' + c.reasons.join(', ') + '</option>').join('') +
       '</select></div>' +
       '<div><span class="cov-status ' + (s.notified_at ? 'notified' : (assigned ? 'covered' : 'open')) + '">' + (s.notified_at ? 'Notified' : (assigned ? 'Covered' : 'Open')) + '</span></div>' +
       '<button class="cov-notify" data-act="notify-one" data-slot="' + s.id + '" title="Notify this substitute"' + (assigned ? '' : ' disabled') + '><i class="fas fa-paper-plane"></i></button>' +
@@ -2260,7 +2919,7 @@ function renderCoverage(){
       });
       Joy.toast(subId ? 'Cover assigned' : 'Cover cleared');
     } catch(e){
-      Joy.toast('Saved locally — backend missing', { type:'warn' });
+      Joy.toast('Saved locally - backend missing', { type:'warn' });
     }
     renderCoverage();
   }));
@@ -2325,7 +2984,7 @@ async function notifySubstitutes(slotIds){
     Joy.toast('Notified ' + slotIds.length + ' substitute' + (slotIds.length === 1 ? '' : 's'));
     renderCoverage();
   } catch(e){
-    Joy.toast('Backend endpoint missing — message not sent', { type:'warn' });
+    Joy.toast('Backend endpoint missing - message not sent', { type:'warn' });
   }
 }
 
@@ -2341,7 +3000,12 @@ document.getElementById('covNotifyTeachersBtn').addEventListener('click', async 
 document.getElementById('covNotifyParentsBtn').addEventListener('click', async () => {
   const abs = state.subAbsences.find(a => a.id === state.subSelected); if(!abs) return;
   const teacherName = abs.teacher_name || state.teachers.find(t => String(t.id) === String(abs.teacher_id))?.name || 'a teacher';
-  if(!confirm('Notify the parents of every class affected that ' + teacherName + ' is absent and a substitute is covering?')) return;
+  const ok = await Joy.confirm({
+    title:'Notify affected parents?',
+    message:'Notify parents for every affected class that ' + teacherName + ' is absent and a substitute is covering.',
+    actionLabel:'Notify parents'
+  });
+  if(!ok) return;
   try {
     await api(TT_API + '/substitutions/notify-parents', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
@@ -2349,7 +3013,7 @@ document.getElementById('covNotifyParentsBtn').addEventListener('click', async (
     });
     Joy.toast('Parents notified');
   } catch(e){
-    Joy.toast('Backend endpoint missing — parents not notified', { type:'warn' });
+    Joy.toast('Backend endpoint missing - parents not notified', { type:'warn' });
   }
 });
 
@@ -2357,7 +3021,7 @@ document.getElementById('covNotifyParentsBtn').addEventListener('click', async (
 document.getElementById('markAbsentBtn').addEventListener('click', () => {
   /* Populate teacher dropdown */
   const sel = document.getElementById('absTeacherSel');
-  sel.innerHTML = '<option value="">— pick a teacher —</option>' +
+  sel.innerHTML = '<option value="">- pick a teacher -</option>' +
     state.teachers.filter(t => t.status !== 'inactive').map(t => '<option value="' + t.id + '">' + esc(t.name) + '</option>').join('');
   document.getElementById('absFrom').value = state.subDate;
   document.getElementById('absTo').value = state.subDate;
@@ -2388,7 +3052,7 @@ document.getElementById('absSaveBtn').addEventListener('click', async () => {
     });
     Joy.toast('Absence recorded');
     Joy.closeSlide();
-    /* Refresh — if the new absence covers the current subDate, it'll appear */
+    /* Refresh - if the new absence covers the current subDate, it'll appear */
     renderSubstitutions();
   } catch(e){
     /* Frontend-only fallback: keep in memory so admin can still try the flow */
@@ -2399,7 +3063,7 @@ document.getElementById('absSaveBtn').addEventListener('click', async () => {
       teacher_name: t?.name || ('Teacher #' + teacherId),
       date_from: from, date_to: to, reason, notes
     });
-    Joy.toast('Saved locally — backend not enabled yet', { type:'warn' });
+    Joy.toast('Saved locally - backend not enabled yet', { type:'warn' });
     Joy.closeSlide();
     renderSubstitutions();
   } finally {
@@ -2416,12 +3080,12 @@ function updateSetupBanner(){
   if(!state.teachers.length) issues.push({ msg:'no teachers added', href:'/admin/people.html?tab=teachers' });
   /* Also flag if lessons_per_week is 0 across the board */
   const totalLessons = Object.values(state.lessonsPerWeek).reduce((s,v) => s + (v.count || 0), 0);
-  if(state.classSubjects.length && totalLessons === 0) issues.push({ msg:'no lessons_per_week configured — open the Lessons tab and set the values', tab:'lessons' });
+  if(state.classSubjects.length && totalLessons === 0) issues.push({ msg:'no lessons_per_week configured - open the Lessons tab and set the values', tab:'lessons' });
 
   const banner = document.getElementById('setupBanner');
   if(!issues.length){ banner.style.display = 'none'; return; }
   banner.style.display = '';
-  document.getElementById('setupStatus').textContent = issues.map(i => i.msg).join(' · ') + '.';
+  document.getElementById('setupStatus').textContent = issues.map(i => i.msg).join(' - ') + '.';
 
   /* Wire the Continue setup link to either switch to the right tab or navigate */
   const cta = document.getElementById('setupCta');
@@ -2453,10 +3117,10 @@ async function load(){
     const termName = period?.term?.name || 'Current term';
     const sessionName = period?.term?.session_name || '';
     document.getElementById('ttEyebrow').textContent =
-      'Joyland Schools · ' + (sessionName ? sessionName + ' · ' : '') + termName;
-    document.getElementById('ttTerm').textContent = '· ' + termName;
+      'Joyland Schools - ' + (sessionName ? sessionName + ' - ' : '') + termName;
+    document.getElementById('ttTerm').textContent = '- ' + termName;
 
-    /* New timetable endpoints (may 404 — fall back to defaults) */
+    /* New timetable endpoints (may 404 - fall back to defaults) */
     try {
       const periods = await api(TT_API + '/periods');
       if(periods && periods.length){
@@ -2482,6 +3146,7 @@ async function load(){
       state.activeGen = state.generations.find(g => g.status === 'active') || null;
       if(state.activeGen) state.slots = state.activeGen.slots || [];
     } catch {}
+    await reloadRooms();
     /* Load existing teacher constraints */
     try {
       const tcs = await api(TT_API + '/teachers');
@@ -2520,6 +3185,8 @@ async function load(){
     });
 
     updateSetupBanner();
+    await reloadOperationalSummaries(state.activeGen?.id);
+    renderTimetableStatus();
     renderGrid();
   } catch(e) {
     Joy.toast("Couldn't load timetable data", { type:'danger' });

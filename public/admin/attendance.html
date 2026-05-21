@@ -196,7 +196,7 @@
           </div>
         </div>
         <div class="trend-legend">
-          <span><span class="dot" style="background:#1B5E20;"></span>Present</span>
+          <span><span class="dot" style="background:#14532d;"></span>Present</span>
           <span><span class="dot" style="background:rgba(245,158,11,.6);"></span>Late</span>
           <span><span class="dot" style="background:rgba(185,28,28,.6);"></span>Absent</span>
         </div>
@@ -529,7 +529,7 @@ async function loadTrends(){
       let y = H - 30;
       if(aH > 0){ bars += '<rect x="' + x + '" y="' + (y - aH) + '" width="' + w + '" height="' + aH + '" fill="rgba(185,28,28,.6)"><title>Absent: ' + r.absent + '</title></rect>'; y -= aH; }
       if(lH > 0){ bars += '<rect x="' + x + '" y="' + (y - lH) + '" width="' + w + '" height="' + lH + '" fill="rgba(245,158,11,.6)"><title>Late: ' + r.late + '</title></rect>'; y -= lH; }
-      if(pH > 0){ bars += '<rect x="' + x + '" y="' + (y - pH) + '" width="' + w + '" height="' + pH + '" fill="#1B5E20"><title>Present: ' + r.present + '</title></rect>'; }
+      if(pH > 0){ bars += '<rect x="' + x + '" y="' + (y - pH) + '" width="' + w + '" height="' + pH + '" fill="#14532d"><title>Present: ' + r.present + '</title></rect>'; }
       /* Labels */
       bars += '<text x="' + (x + w/2) + '" y="' + (H - 14) + '" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink-3)">' + (r.label || '') + '</text>';
       if(r.total){

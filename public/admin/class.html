@@ -40,10 +40,10 @@
 .band-fill{height:100%;border-radius:5px;}
 .band-pct{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink);text-align:right;}
 .band-pct .of{color:var(--ink-3);font-weight:500;font-size:10px;margin-left:2px;}
-.band-ee .band-fill{background:linear-gradient(90deg,#10b981,#059669);}
-.band-me .band-fill{background:linear-gradient(90deg,#3b82f6,#2563eb);}
-.band-ae .band-fill{background:linear-gradient(90deg,#f59e0b,#d97706);}
-.band-be .band-fill{background:linear-gradient(90deg,#ef4444,#dc2626);}
+.band-ee .band-fill{background:linear-gradient(90deg,var(--ee),var(--ee-2));}
+.band-me .band-fill{background:linear-gradient(90deg,var(--me),var(--me-2));}
+.band-ae .band-fill{background:linear-gradient(90deg,var(--ae),var(--ae-2));}
+.band-be .band-fill{background:linear-gradient(90deg,var(--be),var(--be-2));}
 
 .heat-wrap{display:grid;grid-template-columns:80px 1fr;gap:14px;margin-top:8px;align-items:start;}
 .heat-days{display:flex;flex-direction:column;gap:5px;}
@@ -867,7 +867,13 @@ document.getElementById('sSave')?.addEventListener('click', async () => {
   }
 });
 document.getElementById('sDelete')?.addEventListener('click', async () => {
-  if(!confirm('Delete ' + state.cls.name + ' permanently?\n\nThis cannot be undone. The class must have no learners and no subject assignments.')) return;
+  const ok = await Joy.confirm({
+    title:'Delete class?',
+    message:'This permanently removes ' + state.cls.name + '. The class must have no learners and no learning area assignments.',
+    actionLabel:'Delete class',
+    tone:'danger'
+  });
+  if(!ok) return;
   try {
     await api(API + '/classes/' + CLASS_ID, { method:'DELETE' });
     Joy.toast('Class deleted');
