@@ -1,7 +1,7 @@
 export const CONFIG = {
-  appName: 'Civicom Learning Portal',
+  appName: 'Daraja Digital Library',
   org: 'Civicom',
-  tagline: 'Revision & Learning Materials',
+  tagline: 'Public School Resources',
   domain: 'schools.civicom.org',
   apiBase: '/api/portal',
   authBase: '/api',

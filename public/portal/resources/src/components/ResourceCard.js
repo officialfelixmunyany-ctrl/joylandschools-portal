@@ -48,12 +48,13 @@ export function ResourceCard(resource, { saved = false, read = false } = {}) {
   `;
 }
 
-export function ResourceListItem(resource) {
+export function ResourceListItem(resource, { saved = false, read = false } = {}) {
   const inner = `
     <span class="file-icon-wrap ${escapeHtml(fileIconTone(resource))}" aria-hidden="true">
       <i class="${escapeHtml(fileIconClass(resource))} file-icon"></i>
     </span>
-    <span class="resource-row-title">${escapeHtml(displayName(resource))}</span>`;
+    <span class="resource-row-title">${escapeHtml(displayName(resource))}</span>
+    ${read ? '<span class="resource-row-state">Opened</span>' : ''}`;
   const url = directFileUrl(resource);
   const control = url
     ? `<a class="resource-file-link" href="${escapeHtml(url)}" target="_blank" rel="noopener" data-action="track" data-id="${resource.id}">${inner}</a>`
@@ -61,6 +62,10 @@ export function ResourceListItem(resource) {
   return `
     <li class="resource-row" data-resource-id="${resource.id}">
       <div class="resource-row-main">${control}</div>
+      <button class="resource-row-save ${saved ? 'saved' : ''}" type="button" data-action="save" data-id="${resource.id}" aria-label="${saved ? 'Remove saved resource' : 'Save resource'}">
+        <span aria-hidden="true">${saved ? '&#9733;' : '&#9734;'}</span>
+        <span>${saved ? 'Saved' : 'Save'}</span>
+      </button>
     </li>
   `;
 }

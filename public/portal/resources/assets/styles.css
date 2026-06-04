@@ -294,8 +294,27 @@ h1, h2, h3, p { margin-top: 0; }
 /* ----------------------------------------------------- intro --- */
 
 .intro { padding: 2px 2px 0; }
-.intro h1 { margin: 0 0 6px; font-size: clamp(1.4rem, 3vw, 1.9rem); letter-spacing: -0.01em; }
-.intro p { margin: 0; color: var(--muted); line-height: 1.6; max-width: 640px; }
+.intro h1 { margin: 10px 0 6px; font-size: clamp(1.4rem, 3vw, 1.9rem); letter-spacing: -0.01em; }
+.intro p { margin: 0; color: var(--muted); line-height: 1.6; max-width: 700px; }
+.role-guide {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.role-guide a {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  padding: 11px;
+  color: var(--ink);
+}
+.role-guide a:hover { border-color: var(--brand); background: var(--brand-tint); }
+.role-guide strong { font-size: 0.88rem; }
+.role-guide span { color: var(--muted); font-size: 0.76rem; line-height: 1.35; }
 
 /* --------------------------------------------- subject axis --- */
 
@@ -466,7 +485,13 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 .resource-list { list-style: none; margin: 0; padding: 0; }
-.resource-row { padding: 2px 0; }
+.resource-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
 .resource-file-link {
   display: inline-flex;
   align-items: center;
@@ -486,6 +511,28 @@ h1, h2, h3, p { margin-top: 0; }
 .resource-file-link:hover { background: var(--brand-tint); }
 .resource-row-main { min-width: 0; }
 .resource-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resource-row-state {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.resource-row-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 0 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.resource-row-save:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+.resource-row-save.saved { border-color: var(--brand); background: var(--brand); color: #fff; }
 
 .file-icon-wrap {
   display: inline-grid;
@@ -1292,6 +1339,7 @@ h1, h2, h3, p { margin-top: 0; }
 @media (max-width: 960px) {
   .kcse-grid { display: flex; flex-direction: column; }
   .col-center { order: -1; }
+  .role-guide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rail-left, .rail-right { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .resource-catalog { flex-direction: column; align-items: stretch; gap: 12px; }
   .catalog-menus { gap: 6px; }
@@ -1305,6 +1353,7 @@ h1, h2, h3, p { margin-top: 0; }
   .center-results, .access-cards { grid-template-columns: 1fr; }
   .rail-left, .rail-right { grid-template-columns: 1fr; }
   .link-list { grid-template-columns: 1fr; }
+  .role-guide { grid-template-columns: 1fr; }
   .kcse-search-row { flex-direction: column; }
   .kcse-search input, .kcse-search .primary-btn { width: 100%; }
   .school-search-row, .school-form-grid, .contribute-grid { grid-template-columns: 1fr; }

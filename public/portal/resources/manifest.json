@@ -1,11 +1,11 @@
 {
-  "name": "Civicom Learning Portal",
-  "short_name": "Civicom Learn",
-  "description": "Browse Kenyan notes, past papers, schemes, revision and curriculum resources for learners and teachers.",
+  "name": "Daraja Digital Library",
+  "short_name": "Daraja Library",
+  "description": "Browse free Kenyan school resources, past papers, schemes, revision notes and CBC materials for learners, teachers, parents and schools.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f8fb",
-  "theme_color": "#174ea6",
+  "theme_color": "#134e8c",
   "icons": []
 }

@@ -12,6 +12,10 @@ const CATALOG_MENUS = [
     home: true
   },
   {
+    label: 'SAVED',
+    saved: true
+  },
+  {
     label: 'KCSE (Form 1-4)',
     items: [
       { label: 'All KCSE Resources', level: 'secondary-844', type: 'all' },
@@ -110,10 +114,10 @@ export function Home(state) {
       </section>
 
       <aside class="rail rail-right" aria-label="Account, subjects and exams">
-        ${loginRail()}
-        ${contributeRail()}
         ${subjectRail()}
         ${termlyRail()}
+        ${contributeRail()}
+        ${loginRail()}
       </aside>
     </div>
     ${footer()}
@@ -130,14 +134,18 @@ function catalogStrip() {
   return `
     <section class="resource-catalog" aria-label="Available learning resources">
       <div class="resource-catalog-copy">
-        <span>Available resources</span>
-        <strong>CBC &amp; KCSE library</strong>
-        <small>KCSE, CBC, exams, teacher materials and quick links.</small>
+        <span>Daraja library</span>
+        <strong>Public school resources</strong>
+        <small>KCSE, CBC, teacher documents and revision files.</small>
       </div>
       <div class="catalog-menus" role="list">
         ${CATALOG_MENUS.map((group, index) => `
           <div class="menu-item catalog-menu${index >= CATALOG_MENUS.length - 3 ? ' catalog-edge' : ''}" role="listitem">
-            ${group.home ? `<a class="catalog-menu-top catalog-home" href="#/" data-action="reset-filters">${escapeHtml(group.label)}</a>` : `<button class="catalog-menu-top" type="button" data-menu aria-haspopup="true" aria-expanded="false">
+            ${group.home
+              ? `<a class="catalog-menu-top catalog-home" href="#/" data-action="reset-filters">${escapeHtml(group.label)}</a>`
+              : group.saved
+                ? `<a class="catalog-menu-top catalog-home" href="#/saved">${escapeHtml(group.label)}</a>`
+                : `<button class="catalog-menu-top" type="button" data-menu aria-haspopup="true" aria-expanded="false">
               ${escapeHtml(group.label)}<span class="caret" aria-hidden="true">&#9662;</span>
             </button>
             <div class="catalog-drop" role="menu">
@@ -157,7 +165,7 @@ function searchBox(query = '') {
     <form class="kcse-search" id="home-search" role="search">
       <label for="home-search-input">Search resources</label>
       <div class="kcse-search-row">
-        <input id="home-search-input" type="search" value="${escapeHtml(query)}" placeholder="e.g. KCSE Biology past paper, Grade 7 opener exam, Form 4 setbooks" autocomplete="off" enterkeyhint="search" />
+        <input id="home-search-input" type="search" value="${escapeHtml(query)}" placeholder="Search by class, subject, exam or file type e.g. Form 4 Biology, Grade 7 opener" autocomplete="off" enterkeyhint="search" />
         <button class="primary-btn" type="submit">Search</button>
       </div>
     </form>
@@ -169,8 +177,27 @@ function searchBox(query = '') {
 function defaultCenter() {
   return `
     <section class="intro">
-      <h1>KCSE &amp; CBC resources for teachers and learners.</h1>
-      <p>Past papers and marking schemes, schemes of work and lesson plans, CBC assessment tools and revision - organised by subject, class and term. Free to browse, no account needed.</p>
+      <span class="eyebrow">Public school digital library</span>
+      <h1>Find Kenyan school resources without needing a login.</h1>
+      <p>Daraja brings together KCSE past papers, marking schemes, CBC notes, schemes of work, lesson plans and revision materials - organised by class, subject and term.</p>
+      <div class="role-guide" aria-label="Choose a starting point">
+        <a href="#" ${catAttrs({ level: 'secondary-844', type: 'past-paper', audience: 'learner' })}>
+          <strong>Learners</strong>
+          <span>Open past papers, notes and revision.</span>
+        </a>
+        <a href="#" ${catAttrs({ level: 'all', type: 'scheme', audience: 'teacher' })}>
+          <strong>Teachers</strong>
+          <span>Find schemes, lesson plans and assessment tools.</span>
+        </a>
+        <a href="#" ${catAttrs({ level: 'all', type: 'exam', audience: 'learner' })}>
+          <strong>Parents</strong>
+          <span>Help a learner practise by class or subject.</span>
+        </a>
+        <a href="${CONFIG.schoolLoginUrl}">
+          <strong>Schools</strong>
+          <span>Use login only for private school records.</span>
+        </a>
+      </div>
     </section>
     ${subjectStrip()}
     <div class="center-blocks">
@@ -302,7 +329,7 @@ function resultsPanel(state) {
   if (loading) body = `<ul class="resource-list skeleton-list" aria-label="Loading resources">${Array.from({ length: 6 }, () => '<li class="skeleton-row"></li>').join('')}</ul>`;
   else if (error) body = `<div class="empty"><h2>Could not load</h2><p>${escapeHtml(error)}</p></div>`;
   else if (!resources.length) body = `<div class="empty"><h2>Nothing here yet</h2><p>We may still be adding this category. Try another subject, class or term - or share what you have so other teachers and learners can use it.</p><div class="empty-actions"><button class="primary-btn" type="button" data-action="reset-filters">Show all resources</button><button class="secondary-btn" type="button" data-action="contribute-resource">Share a resource</button></div></div>`;
-  else body = groupedResourceList(resources);
+  else body = groupedResourceList(resources, state.savedIds, state.readIds);
 
   return `
     <section class="results-panel">
@@ -320,7 +347,7 @@ function resultsPanel(state) {
   `;
 }
 
-function groupedResourceList(resources) {
+function groupedResourceList(resources, savedIds = [], readIds = []) {
   const groups = new Map();
   resources.forEach(resource => {
     const label = gradeLabel(resource);
@@ -337,7 +364,10 @@ function groupedResourceList(resources) {
         <section class="resource-group" aria-label="${escapeHtml(label)}">
           <h3 class="resource-group-title">${escapeHtml(label)}</h3>
           <ul class="resource-list">
-            ${items.map(resource => ResourceListItem(resource)).join('')}
+            ${items.map(resource => ResourceListItem(resource, {
+              saved: savedIds.includes(Number(resource.id)),
+              read: readIds.includes(Number(resource.id))
+            })).join('')}
           </ul>
         </section>
       `).join('')}
@@ -393,9 +423,9 @@ function yearRail(title, level, type, noun) {
 function loginRail() {
   return `
     <div class="rail-box login-box">
-      <h3 class="rail-head">School Login</h3>
-      <p>Sign in to your school for records, dashboards, assignments and results.</p>
-      <a class="primary-btn" href="${CONFIG.schoolLoginUrl}">Find your school</a>
+      <h3 class="rail-head">School portals</h3>
+      <p>For registered schools only: records, dashboards, assignments and results. The library above stays open without login.</p>
+      <a class="primary-btn" href="${CONFIG.schoolLoginUrl}">Find school portal</a>
       <a class="secondary-btn" href="${CONFIG.createSchoolUrl}">Create a school portal</a>
     </div>
   `;
@@ -418,8 +448,8 @@ function subjectRail() {
 function contributeRail() {
   return `
     <div class="rail-box contribute-box">
-      <h3 class="rail-head">Share Resources</h3>
-      <p>Have schemes, notes, past papers or marking schemes? Share them - approved files are added for other teachers and learners.</p>
+      <h3 class="rail-head">Share a resource</h3>
+      <p>Have a useful scheme, note, past paper or marking scheme? Submit it for review so other teachers and learners can use it.</p>
       <button class="secondary-btn contribute-open" type="button" data-action="contribute-resource">Submit a resource</button>
     </div>
   `;
@@ -458,7 +488,7 @@ function footer() {
   return `
     <footer class="home-footer">
       <div class="home-footer-main">
-        <span>Free CBC &amp; KCSE revision and learning materials.</span>
+        <span>Daraja Digital Library: free CBC &amp; KCSE learning materials.</span>
         <a class="footer-contact" href="mailto:${escapeHtml(CONFIG.supportEmail)}">Contact support: ${escapeHtml(CONFIG.supportEmail)}</a>
       </div>
       <small>&copy; ${new Date().getFullYear()} ${escapeHtml(CONFIG.org)} &middot; ${escapeHtml(CONFIG.domain)}</small>
