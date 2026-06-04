@@ -372,7 +372,13 @@ document.getElementById('evSave').addEventListener('click', async () => {
 
 document.getElementById('evDelete').addEventListener('click', async () => {
   if(!state.editing) return;
-  if(!confirm('Delete "' + (state.editing.title || 'this event') + '"?')) return;
+  const ok = await Joy.confirm({
+    title:'Delete event?',
+    message:'This removes "' + (state.editing.title || 'this event') + '" from the school calendar.',
+    actionLabel:'Delete event',
+    tone:'danger'
+  });
+  if(!ok) return;
   try {
     await api(API + '/calendar/events/' + state.editing.id, { method:'DELETE' });
     Joy.closeSlide();

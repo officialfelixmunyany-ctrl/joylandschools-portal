@@ -105,7 +105,7 @@
     <div class="mass-bar">
       <button class="btn"><i class="fas fa-undo"></i>Reset row</button>
       <button class="btn"><i class="far fa-save"></i>Save draft</button>
-      <button class="btn btn-primary"><i class="fas fa-paper-plane"></i>Publish marks</button>
+      <button class="btn btn-primary" id="publishMarksBtn"><i class="fas fa-paper-plane"></i>Publish marks</button>
     </div>
 
   </div>
@@ -118,6 +118,11 @@
 const API = '/api/admin';
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(path, opts={}){ const r=await fetch(path,{credentials:'include',...opts}); const j=await r.json().catch(()=>({})); if(!r.ok||j.success===false) throw new Error(j.message||'Request failed'); return j.data!==undefined?j.data:j; }
+const initialParams = new URLSearchParams(location.search);
+const initialSubjectId = initialParams.get('subjectId') || initialParams.get('subject_id') || '';
+const initialAssessmentType = (initialParams.get('assessmentType') || initialParams.get('assessment_type') || '').toLowerCase();
+const initialComponentKey = initialParams.get('componentKey') || initialParams.get('component_key') || '';
+let initialContextApplied = false;
 const state = { classes:[], subjects:[], components:[], classId:null, subjectId:null, termId:null, assessmentType:'midterm', componentKey:'exam', max:100, learners:[], marks:new Map(), timers:new Map() };
 const selects = document.querySelectorAll('.context-bar select.input');
 const classSel = selects[0], subjectSel = selects[1], assessSel = selects[2];
@@ -125,7 +130,7 @@ const outOf = document.querySelector('.cb-val');
 const counter = document.querySelector('.context-bar span[style*="JetBrains"], .context-bar span[style*="mono"]') || document.querySelector('.context-bar div[style*="gap:8px"] span:last-child');
 function bandFor(v){ if(v == null || v === '') return ['sb-no','-']; v=Number(v); if(v>=75) return ['sb-ee','EE']; if(v>=60) return ['sb-me','ME']; if(v>=50) return ['sb-ae','AE']; return ['sb-be','BE']; }
 function deltaFor(c,p){ if(c == null || c === '' || p == null) return ['','']; const d=Number(c)-Number(p); if(d>0)return['up','+'+d]; if(d<0)return['dn',String(d)]; return['flat','0']; }
-function updateCounter(){ const done=[...state.marks.values()].filter(v=>v!==null&&v!==''&&v!==undefined).length; if(counter) counter.textContent = done + ' / ' + state.learners.length + ' done'; const pub=document.querySelector('.mass-bar .btn-primary'); if(pub) pub.innerHTML='<i class="fas fa-paper-plane"></i>Publish marks ? '+done+'/'+state.learners.length; }
+function updateCounter(){ const done=[...state.marks.values()].filter(v=>v!==null&&v!==''&&v!==undefined).length; if(counter) counter.textContent = done + ' / ' + state.learners.length + ' done'; const pub=document.getElementById('publishMarksBtn'); if(pub) pub.innerHTML='<i class="fas fa-paper-plane"></i>Publish marks - '+done+'/'+state.learners.length; }
 function renderRows(){
   const body=document.getElementById('marksBody');
   body.innerHTML = state.learners.map((l,i)=>{ const curr=state.marks.get(String(l.id)); const prev=l.previousScore; const b=bandFor(curr); const d=deltaFor(curr,prev); return '<tr data-id="'+l.id+'"><td><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">'+(i+1)+'</span></td><td><div class="person"><div class="ava ava-md" style="'+Joy.avaStyle(l.name)+'">'+Joy.initials(l.name)+'</div><div><div class="nm">'+esc(l.name)+'</div><div class="sub">'+esc(l.admission_no||l.user_id||'-')+'</div></div></div></td><td class="c"><input type="number" min="0" max="'+state.max+'" value="'+(curr ?? '')+'" placeholder="-"/></td><td class="c"><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">'+state.max+'</span></td><td class="c"><span class="score-band '+b[0]+'">'+b[1]+'</span></td><td class="r">'+(prev ?? '-')+'</td><td class="r"><span class="save-state">'+(d[1]?'<span class="tag '+d[0]+'" style="font-family:var(--mono);font-size:10.5px;font-weight:700;">'+d[1]+'</span>':'')+'</span></td></tr>'; }).join('') || '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">Choose a class and subject.</td></tr>';
@@ -136,7 +141,12 @@ async function loadSubjects(){
   const rows = await api(API + '/class-subjects?classId=' + state.classId);
   state.subjects = rows;
   subjectSel.innerHTML = rows.map(r => '<option value="'+r.subject_id+'">'+esc(r.subject_name)+'</option>').join('');
-  state.subjectId = subjectSel.value || rows[0]?.subject_id;
+  if(!initialContextApplied && initialSubjectId && rows.some(r => String(r.subject_id) === String(initialSubjectId))){
+    state.subjectId = initialSubjectId;
+  } else {
+    state.subjectId = subjectSel.value || rows[0]?.subject_id;
+  }
+  subjectSel.value = state.subjectId || '';
 }
 async function loadComponents(){
   if(!state.classId || !state.subjectId) return;
@@ -144,6 +154,20 @@ async function loadComponents(){
   state.components = chunks.flat();
   assessSel.innerHTML = state.components.map(c => '<option value="'+c.assessment_type+'|'+c.component_key+'">'+(c.assessment_type==='midterm'?'Midterm':'Endterm')+' ? '+esc(c.component_name)+' / '+c.max_score+'</option>').join('');
   if(!state.components.length) assessSel.innerHTML = '<option value="midterm|exam">Midterm ? Exam / 100</option>';
+  if(!initialContextApplied && (initialAssessmentType || initialComponentKey)){
+    const match = state.components.find(c =>
+      (!initialAssessmentType || c.assessment_type === initialAssessmentType) &&
+      (!initialComponentKey || c.component_key === initialComponentKey)
+    ) || state.components.find(c => initialAssessmentType && c.assessment_type === initialAssessmentType);
+    if(match){
+      assessSel.value = match.assessment_type + '|' + match.component_key;
+    } else if(!state.components.length && initialAssessmentType){
+      const fallbackKey = initialComponentKey || 'exam';
+      assessSel.innerHTML = '<option value="'+esc(initialAssessmentType)+'|'+esc(fallbackKey)+'">'+esc(initialAssessmentType.charAt(0).toUpperCase() + initialAssessmentType.slice(1))+' ? '+esc(fallbackKey)+' / 100</option>';
+      assessSel.value = initialAssessmentType + '|' + fallbackKey;
+    }
+  }
+  initialContextApplied = true;
   applyAssessment();
 }
 function applyAssessment(){ const parts=(assessSel.value || 'midterm|exam').split('|'); state.assessmentType=parts[0]; state.componentKey=parts[1] || 'exam'; const comp=state.components.find(c=>c.assessment_type===state.assessmentType && c.component_key===state.componentKey); state.max=Number(comp?.max_score || 100); outOf.textContent=state.max; document.querySelectorAll('thead th')[3].textContent='/ '+state.max; }
@@ -162,7 +186,7 @@ async function reloadAll(){ await loadSubjects(); await loadComponents(); await 
 async function init(){
   try{
     const [classes, period] = await Promise.all([api(API + '/classes'), api(API + '/current-period')]);
-    state.classes=classes; state.termId=period.term?.id; state.classId=new URLSearchParams(location.search).get('classId') || classes[0]?.id;
+    state.classes=classes; state.termId=period.term?.id; state.classId=initialParams.get('classId') || initialParams.get('class_id') || classes[0]?.id;
     classSel.innerHTML = classes.map(c => '<option value="'+c.id+'">'+esc(c.name)+'</option>').join(''); classSel.value=state.classId;
     await reloadAll();
   }catch(err){ Joy.toast("Couldn't initialize marks", {type:'danger'}); console.error(err); }
@@ -178,7 +202,20 @@ document.getElementById('marksBody').addEventListener('input', e => {
   input.style.borderColor=''; state.marks.set(String(id), v); st.textContent='saving...'; clearTimeout(state.timers.get(id));
   state.timers.set(id, setTimeout(async()=>{ try{ await api(API + '/marks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:state.classId,termId:state.termId,assessmentType:state.assessmentType,learnerId:id,subjectId:state.subjectId,componentKey:state.componentKey,score:v})}); st.textContent='?'; updateCounter(); }catch(err){ st.textContent='failed'; Joy.toast(err.message || 'Could not save mark',{type:'danger'}); } }, 800));
 });
-document.querySelector('.mass-bar .btn-primary').addEventListener('click', async()=>{ try{ await api(API + '/marks/publish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:state.classId,subjectId:state.subjectId,assessmentType:state.assessmentType})}); Joy.toast('Marks published'); location.href='/admin/assessments.html'; }catch(err){ Joy.toast(err.message || 'Could not publish marks',{type:'danger'}); } });
+document.getElementById('publishMarksBtn').addEventListener('click', async()=>{
+  const btn = document.getElementById('publishMarksBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Publishing...';
+  try{
+    const data = await api(API + '/marks/publish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:state.classId,termId:state.termId,subjectId:state.subjectId,assessmentType:state.assessmentType})});
+    Joy.toast('Published ' + (data.published_count || 0) + ' subject mark set(s)');
+  }catch(err){
+    Joy.toast(err.message || 'Could not publish marks',{type:'danger'});
+  }finally{
+    btn.disabled = false;
+    updateCounter();
+  }
+});
 init();
 </script>
 </body>

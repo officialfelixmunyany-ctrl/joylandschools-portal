@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Timetable Studio — Main</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   Timetable Studio · "Main" — desktop-app shell (visual only, no wiring)
+   Faithful re-imagining of the aSc Timetables 2026 Main menu page.
+   One viewport, no scrolling.
+   ════════════════════════════════════════════════════════════════════ */
+:root{
+  --app-bg:#eef0f4; --chrome:#f6f7f9; --chrome-2:#e7eaef; --chrome-3:#dadee5;
+  --line:#cdd3dc; --line-2:#e1e5ec;
+  --ink:#1f2733; --ink-2:#566072; --ink-3:#8a93a3; --ink-4:#aab2c0;
+  --titlebar:linear-gradient(180deg,#fbfcfe,#e9edf3);
+  --accent:#1B5E20; --accent-2:#2E7D32; --gold:#C99732;
+  --sel:#2563eb; --sel-tint:#e8f0fe;
+  --grid-line:#dde2ea; --grid-h:#eef1f6;
+  --display:'Fraunces','Inter',serif;
+  --body:'Inter',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--body);background:var(--app-bg);color:var(--ink);-webkit-font-smoothing:antialiased;letter-spacing:-.005em;display:flex;align-items:center;justify-content:center;}
+
+/* ── Window frame ──────────────────────────────────────────────────── */
+.win{width:100vw;height:100vh;display:flex;flex-direction:column;background:var(--chrome);overflow:hidden;}
+
+/* ── Menu bar ──────────────────────────────────────────────────────── */
+.menubar{height:32px;flex:0 0 32px;background:var(--chrome);border-bottom:1px solid var(--line);display:flex;align-items:stretch;padding:0 8px;gap:2px;user-select:none;}
+.menu-item{display:flex;align-items:center;padding:0 12px;font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;border-radius:5px 5px 0 0;margin-top:3px;transition:.12s var(--ease);}
+.menu-item:hover{background:var(--chrome-2);color:var(--ink);}
+.menu-item.active{background:var(--chrome);color:var(--accent);font-weight:700;border:1px solid var(--line);border-bottom:1px solid var(--chrome);position:relative;top:1px;}
+.menu-spacer{flex:1;}
+.menu-find{display:flex;align-items:center;gap:7px;align-self:center;}
+.menu-find label{font-size:12px;color:var(--ink-2);font-weight:600;}
+.menu-find .fbox{display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:6px;height:24px;padding:0 8px;min-width:190px;}
+.menu-find .fbox i{color:var(--ink-4);font-size:11px;margin-right:6px;}
+.menu-find .fbox input{border:none;outline:none;flex:1;font-family:inherit;font-size:12px;color:var(--ink);background:transparent;}
+.menu-customize{align-self:center;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer;padding:0 8px;}
+.menu-customize:hover{color:var(--ink);}
+.menu-customize .x{color:var(--ink-4);cursor:pointer;}
+
+/* ── Ribbon ────────────────────────────────────────────────────────── */
+.ribbon{flex:0 0 auto;background:linear-gradient(180deg,#fdfdfe,#eef1f6);border-bottom:1px solid var(--line);display:flex;align-items:stretch;padding:6px 6px 4px;gap:0;overflow:hidden;}
+.rg{display:flex;align-items:stretch;gap:2px;padding:0 8px;position:relative;}
+.rg + .rg::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--line-2);}
+.rb{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;min-width:54px;padding:7px 8px 5px;border-radius:7px;border:1px solid transparent;background:transparent;cursor:pointer;color:var(--ink-2);font-family:inherit;transition:.12s var(--ease);position:relative;}
+.rb:hover{background:#fff;border-color:var(--line);box-shadow:0 1px 2px rgba(15,23,42,.06);color:var(--ink);}
+.rb:active{background:var(--chrome-2);}
+.rb .ico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:21px;line-height:1;}
+.rb .lbl{font-size:11px;font-weight:600;line-height:1.15;text-align:center;color:var(--ink-2);max-width:74px;}
+.rb:hover .lbl{color:var(--ink);}
+.rb.sm{min-width:46px;}
+.rb.sm .ico{font-size:18px;width:26px;height:26px;}
+.rb .caret{position:absolute;bottom:2px;font-size:7px;color:var(--ink-4);}
+.rb.tall{min-width:64px;}
+
+/* the "Whole" view selector */
+.view-sel{align-self:center;display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:7px;height:34px;padding:0 6px 0 8px;gap:9px;cursor:pointer;min-width:118px;margin:0 4px;}
+.view-sel:hover{border-color:var(--ink-4);}
+.view-sel .vi{color:var(--accent);font-size:13px;}
+.view-sel .vt{font-size:13px;font-weight:600;color:var(--ink);flex:1;}
+.view-sel .vc{color:var(--ink-3);font-size:9px;}
+
+/* icon accent colors (echo aSc's colorful glyphs) */
+.c-blue{color:#2f6fed;} .c-green{color:#2E7D32;} .c-amber{color:#d98c1f;}
+.c-red{color:#d4452f;} .c-purple{color:#7c4dd1;} .c-teal{color:#0e9aa7;}
+.c-slate{color:#566072;} .c-gold{color:#C99732;} .c-cloud{color:#3aa0e3;}
+
+/* ── Timetable canvas ──────────────────────────────────────────────── */
+.canvas{flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;overflow:hidden;}
+.tt{flex:1;min-height:0;display:grid;grid-template-rows:auto auto 1fr;}
+.tt-row{display:grid;}
+.corner{background:var(--grid-h);border-right:1px solid var(--grid-line);border-bottom:1px solid var(--grid-line);}
+.day-cell{text-align:center;font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);padding:6px 0;background:linear-gradient(180deg,#f4f6fa,#e9edf3);border-bottom:1px solid var(--grid-line);border-right:1px solid #c7cdd7;letter-spacing:.01em;}
+.day-cell:last-child{border-right:none;}
+.per-cell{text-align:center;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink-3);padding:4px 0;background:var(--grid-h);border-bottom:1px solid var(--grid-line);border-right:1px solid var(--grid-line);}
+.per-cell.day-edge{border-right:1px solid #c7cdd7;}
+.tt-body{position:relative;overflow:hidden;}
+.tt-body .gcell{border-right:1px solid var(--grid-line);border-bottom:1px solid var(--grid-line);}
+.tt-body .gcell.day-edge{border-right:1px solid #c7cdd7;}
+.tt-body .gcell:hover{background:var(--sel-tint);}
+.tt-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;}
+.tt-empty .ill{width:60px;height:60px;border-radius:16px;background:var(--grid-h);display:flex;align-items:center;justify-content:center;color:var(--ink-4);font-size:26px;}
+.tt-empty .et{font-family:var(--display);font-weight:600;font-size:17px;color:var(--ink-2);}
+.tt-empty .ed{font-size:12.5px;color:var(--ink-3);max-width:360px;text-align:center;line-height:1.5;}
+.lesson{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:800;color:#050505;border:1px solid rgba(0,0,0,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.55);z-index:2;}
+.lesson.bad{background:#f10c12;}
+.lesson.good{background:#22f214;}
+.lesson.split{background:linear-gradient(135deg,#22f214 0 58%,#1017d9 59% 100%);color:#001;}
+.lesson.warn{background:#facc15;}
+
+/* ── Object dock + status bar ──────────────────────────────────────── */
+.dock{flex:0 0 auto;height:62px;background:linear-gradient(180deg,#eef1f6,#e3e7ee);border-top:1px solid var(--line);display:flex;align-items:stretch;}
+.dock-pad{width:220px;flex:0 0 220px;background:repeating-linear-gradient(135deg,#c9ced8,#c9ced8 7px,#c2c8d3 7px,#c2c8d3 14px);border-right:1px solid var(--line);}
+.dock-objs{flex:1;display:flex;align-items:center;justify-content:center;gap:30px;position:relative;}
+.card-tray{display:none;position:absolute;left:8px;right:8px;top:6px;align-items:center;justify-content:center;gap:10px;}
+.has-cards .card-tray{display:flex;}
+.has-cards .dock-obj{transform:translateY(17px);}
+.tray-card{width:58px;height:33px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:800;color:#050505;border:1px solid rgba(0,0,0,.55);box-shadow:4px 4px 0 rgba(40,40,55,.35),inset 0 1px 0 rgba(255,255,255,.55);}
+.tray-card.bad{background:#f10c12;}
+.tray-card.good{background:#22f214;}
+.tray-card.split{background:linear-gradient(135deg,#22f214 0 58%,#1017d9 59% 100%);}
+.dock-obj{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--ink-2);transition:.12s var(--ease);}
+.dock-obj:hover{color:var(--ink);transform:translateY(-1px);}
+.dock-obj i{font-size:22px;}
+.dock-obj span{font-size:9.5px;font-weight:600;color:var(--ink-3);}
+.statusbar{height:24px;flex:0 0 24px;background:#f5f7fb;border-top:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 10px;font-size:12px;color:var(--ink-2);}
+.statusbar .ready{font-weight:700;color:#173070;}
+.statusbar .log{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.statusbar .caps{font-family:var(--mono);color:#173070;}
+
+/* ── Settings dialog (classic Windows look) ────────────────────────── */
+.dlg-shroud{position:fixed;inset:0;background:rgba(15,23,42,.28);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .16s var(--ease);z-index:200;}
+.dlg-shroud.show{opacity:1;pointer-events:auto;}
+.dlg{width:min(960px,96vw);max-height:94vh;display:flex;flex-direction:column;background:#fff;border:1px solid #b6bdc8;border-radius:6px;box-shadow:0 24px 60px -12px rgba(15,23,42,.45);transform:translateY(8px) scale(.99);transition:transform .16s var(--ease);overflow:hidden;}
+.dlg-shroud.show .dlg{transform:none;}
+.dlg-title{height:38px;flex:0 0 38px;background:linear-gradient(180deg,#fbfcfe,#eef1f6);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 6px 0 14px;}
+.dlg-title .t{flex:1;font-size:14px;font-weight:700;color:var(--ink);}
+.dlg-x{width:30px;height:26px;border:none;background:transparent;color:var(--ink-2);cursor:pointer;border-radius:4px;font-size:13px;}
+.dlg-x:hover{background:#e81123;color:#fff;}
+.dlg-tabs{display:flex;gap:0;padding:8px 16px 0;border-bottom:1px solid var(--line);background:#fff;}
+.dlg-tab{padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink-3);cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:5px 5px 0 0;margin-bottom:-1px;}
+.dlg-tab:hover{color:var(--ink-2);}
+.dlg-tab.active{color:var(--sel);background:#fff;border-color:var(--line);border-bottom:1px solid #fff;}
+.dlg-body{flex:1;overflow-y:auto;padding:18px 20px;background:#fafbfc;display:flex;flex-direction:column;gap:14px;}
+.dlg-pane{display:none;flex-direction:column;gap:14px;}
+.dlg-pane.show{display:flex;}
+
+.set-card{display:flex;gap:18px;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:6px;}
+.set-ico{width:64px;flex:0 0 64px;display:flex;align-items:flex-start;justify-content:center;color:var(--sel);font-size:46px;opacity:.9;}
+.set-fields{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
+.set-row{display:flex;align-items:center;gap:12px;}
+.set-row > label.k{flex:0 0 168px;font-size:13px;color:var(--ink);}
+.set-in{height:30px;border:1px solid #9aa3b2;border-radius:3px;padding:0 9px;font-family:inherit;font-size:13px;color:var(--ink);background:#fff;outline:none;}
+.set-in:focus{border-color:var(--sel);box-shadow:0 0 0 2px var(--sel-tint);}
+.set-in.grow{flex:1;min-width:0;}
+.set-sel{height:30px;flex:0 0 88px;border:1px solid #9aa3b2;border-radius:3px;padding:0 6px;font-family:inherit;font-size:13px;background:#fff;cursor:pointer;}
+.set-sel.wide{flex:0 0 230px;}
+.set-btn{height:30px;padding:0 16px;border:1px solid #9aa3b2;border-radius:3px;background:linear-gradient(180deg,#fdfdfe,#eef1f6);font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;}
+.set-btn:hover{background:#e7ebf2;}
+.set-btn.flex{flex:1;}
+.set-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer;}
+.set-check input{width:15px;height:15px;accent-color:var(--sel);cursor:pointer;}
+.set-tools{display:flex;gap:14px;}
+.set-tool{flex:1;display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);}
+.set-tool:hover{background:#f1f4f8;border-color:var(--ink-4);}
+.set-tool i{font-size:24px;color:var(--gold);}
+
+.dlg-foot{flex:0 0 auto;display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid var(--line);background:#fff;}
+.dlg-foot .set-btn{min-width:96px;text-align:center;}
+.dlg-foot .ok{background:var(--sel);border-color:var(--sel);color:#fff;}
+.dlg-foot .ok:hover{background:#1d4ed8;}
+
+/* ── Parameters dialog ── */
+.prm-block{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px 16px;}
+.prm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.set-check.big{font-size:13.5px;font-weight:600;color:var(--ink);}
+.set-check.big b{font-weight:700;}
+.prm-help{margin-top:8px;font-size:12px;line-height:1.5;color:var(--ink-3);}
+.prm-val{width:80px;margin-top:10px;text-align:right;}
+.set-check input:not(:checked) ~ *{}
+/* dim the value/help of an unchecked option group */
+.prm-block:has(.set-check.big input:not(:checked)) .prm-help,
+.prm-block:has(.set-check.big input:not(:checked)) .prm-val{opacity:.5;}
+
+/* ── Custom fields dialog ── */
+.cf-head{display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:700;font-size:22px;color:var(--ink);}
+.cf-head i{font-size:30px;color:var(--gold);}
+.cf-layout{display:flex;gap:14px;align-items:flex-start;}
+.cf-table{flex:1;min-width:0;border:1px solid #9aa3b2;border-radius:4px;overflow:hidden;background:#fff;}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;}
+.cf-row > div{padding:7px 10px;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cf-row > div:first-child{border-right:1px solid var(--line-2);}
+.cf-th{background:#eef1f6;}
+.cf-th > div{font-weight:700;color:var(--ink-2);}
+.cf-scroll{max-height:240px;overflow-y:auto;}
+.cf-scroll .cf-row{cursor:pointer;}
+.cf-scroll .cf-row:hover{background:var(--sel-tint);}
+.cf-scroll .cf-row.sel > div{background:var(--sel);color:#fff;}
+.cf-actions{flex:0 0 130px;display:flex;flex-direction:column;gap:10px;}
+.cf-actions .set-btn{width:100%;text-align:center;}
+.cf-gap{flex:1;min-height:120px;}
+.cf-edit{display:flex;align-items:center;gap:12px;padding-top:6px;}
+.cf-edit .k{flex:0 0 130px;font-size:13px;color:var(--ink);}
+.cf-nav{flex:0 0 48px;min-width:0;}
+
+/* ── Timetable generation dialog ── */
+.gen-top{display:flex;gap:18px;align-items:flex-start;}
+.gen-warn{flex:1;font-size:13.5px;line-height:1.5;color:var(--ink);}
+.gen-warn b{font-weight:700;}
+.gen-test{flex:0 0 220px;height:48px;font-weight:700;}
+.gen-start{display:block;width:min(420px,80%);margin:4px auto 4px;height:64px;background:#fff;border:1px solid var(--sel);border-radius:6px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 3px rgba(37,99,235,.18);}
+.gen-start:hover{background:var(--sel-tint);}
+.gen-cols{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
+.gen-box{border:1px solid var(--line);border-radius:6px;padding:6px 16px 16px;background:#fff;}
+.gen-box legend{font-size:13px;color:var(--ink-2);padding:0 6px;display:flex;align-items:center;gap:8px;}
+.gen-help{color:var(--sel);font-size:13px;cursor:help;}
+.cx-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 6px;}
+.cx-opt{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 4px;border-radius:8px;border:1px solid transparent;cursor:pointer;color:var(--ink-2);}
+.cx-opt i{font-size:40px;color:var(--ink-3);}
+.cx-opt span{font-size:13px;font-weight:600;}
+.cx-opt.sel{border-color:var(--sel);background:var(--sel-tint);}
+.cx-opt.sel i{color:var(--sel);}
+.cx-slider{width:100%;accent-color:var(--sel);margin-bottom:14px;}
+.gen-choose{display:block;font-size:13px;color:var(--ink);margin-bottom:7px;}
+.gen-what{width:100%;flex:none;height:32px;}
+.cn-opts{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+.cn-opt{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);}
+.cn-opt:hover{background:var(--surface-2);}
+.cn-opt.sel{border-color:var(--sel);background:var(--sel-tint);box-shadow:inset 0 0 0 1px var(--sel);}
+.cn-ico{width:30px;height:30px;border-radius:6px;background:var(--grid-h);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.gen-flags{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.gen-foot{align-items:center;}
+.gen-foot .spacer{flex:1;}
+
+/* test / success / print structures */
+.test-dlg{width:min(860px,95vw);}
+.test-progress{height:24px;border:1px solid var(--line);background:#eef1f6;margin:8px 0 14px;position:relative;}
+.test-progress span{display:block;height:100%;width:84%;background:#20a335;}
+.test-tabs{display:flex;gap:34px;align-items:center;margin:8px 0 12px;padding-left:28px;}
+.test-tab{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--ink-2);}
+.test-tab .bubble{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;background:#3aa0e3;}
+.test-tab.ok .bubble{background:#51b747;}
+.test-log{height:260px;background:#fff;border:1px solid #9aa3b2;overflow:auto;padding:10px 12px;font-size:13px;line-height:1.55;color:var(--ink);}
+.test-log div::before{content:'✓ ';color:#263bd8;font-weight:800;}
+.success-body{display:grid;grid-template-columns:1fr 150px;gap:26px;align-items:center;padding:8px 8px 2px;}
+.success-stats{display:grid;grid-template-columns:1fr auto;gap:12px 42px;font-size:14px;}
+.success-stats b{font-weight:700;color:var(--ink);}
+.success-face{width:118px;height:92px;border-radius:18px;background:#e7e36a;display:flex;align-items:center;justify-content:center;font-size:56px;box-shadow:14px 15px 0 rgba(0,0,0,.16);transform:rotate(-8deg);}
+.success-check{font-size:54px;color:#1017d9;text-align:right;line-height:1;}
+.preview-mode .ribbon{display:none;}
+.printbar{display:none;height:126px;flex:0 0 126px;background:linear-gradient(180deg,#fdfdfe,#eef1f6);border-bottom:1px solid var(--line);align-items:stretch;padding:8px;gap:12px;}
+.preview-mode .printbar{display:flex;}
+.print-group{display:flex;align-items:center;gap:12px;padding:0 12px;border-right:1px solid var(--line);}
+.print-btn{border:0;background:transparent;color:#173070;display:flex;flex-direction:column;align-items:center;gap:5px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;}
+.print-btn i{font-size:30px;}
+.report-select{display:flex;flex-direction:column;gap:6px;min-width:390px;font-size:13px;font-weight:700;color:#173070;}
+.report-select select{height:34px;border:1px solid #9aa3b2;font-family:inherit;font-size:13px;padding:0 8px;background:#fff;}
+.paper-wrap{display:none;flex:1;min-height:0;background:#999;align-items:flex-start;justify-content:center;overflow:auto;padding:12px;}
+.preview-mode .canvas,.preview-mode .dock{display:none;}
+.preview-mode .paper-wrap{display:flex;}
+.paper{width:900px;height:650px;background:#fff;border:3px solid #555;box-shadow:0 2px 8px rgba(0,0,0,.28);padding:28px 34px;position:relative;}
+.paper h2{text-align:center;font-size:28px;letter-spacing:0;font-weight:600;margin-bottom:14px;}
+.paper-grid{display:grid;grid-template-columns:90px repeat(9,1fr);grid-template-rows:58px repeat(5,86px);border:2px solid #111;}
+.paper-grid div{border-right:1px solid #111;border-bottom:1px solid #111;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.paper-grid div:nth-child(10n){border-right:none;}
+.paper-grid .day{font-size:28px;justify-content:flex-start;padding-left:24px;}
+.paper-grid .break{font-size:28px;writing-mode:vertical-rl;grid-row:2/4;}
+.paper-register{position:absolute;right:44px;bottom:150px;color:#ef4062;font-size:34px;font-weight:400;}
+.paper-foot{position:absolute;left:36px;right:36px;bottom:22px;color:#ef4062;font-size:11px;text-align:right;}
+.cmd-flash{animation:cmdFlash .5s ease;}
+@keyframes cmdFlash{0%{box-shadow:inset 0 0 0 999px rgba(37,99,235,.12);}100%{box-shadow:inset 0 0 0 999px rgba(37,99,235,0);}}
+
+/* ── Schedule-type questionnaire ── */
+.q-intro{font-size:13px;color:var(--ink-2);font-style:italic;margin:-2px 2px 4px;}
+.q-list{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line);}
+.q-row{display:grid;grid-template-columns:64px 1fr 150px;gap:16px;align-items:flex-start;padding:14px 6px;border-bottom:1px solid var(--line);}
+.q-ico{width:54px;height:54px;display:flex;align-items:center;justify-content:center;font-size:34px;}
+.q-text{font-size:13px;line-height:1.45;color:var(--ink);padding-top:2px;}
+.q-opts{display:flex;flex-direction:column;gap:5px;}
+.q-opt{font-size:13px;font-weight:600;color:var(--sel);cursor:pointer;padding:2px 8px;border-radius:5px;width:fit-content;}
+.q-opt:hover{background:var(--sel-tint);}
+.q-opt.sel{background:var(--sel);color:#fff;}
+
+.wiz{width:min(1040px,96vw);}
+.wiz-step{display:grid;grid-template-columns:170px 1fr;gap:18px;min-height:500px;}
+.wiz-art{display:flex;flex-direction:column;gap:18px;align-items:center;padding-top:14px;}
+.wiz-art i{font-size:74px;color:#9fb2c8;}
+.wiz-art .stepno{font-family:var(--mono);font-size:12px;color:var(--ink-3);}
+.wiz-content{display:flex;flex-direction:column;gap:14px;}
+.wiz-card{background:#fff;border:1px solid var(--line);border-radius:5px;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.wiz-row{display:flex;align-items:center;gap:12px;}
+.wiz-row label{flex:0 0 170px;font-size:13px;color:var(--ink);}
+.wiz-flow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.wiz-pill{height:8px;border-radius:99px;background:#d9dee7;}
+.wiz-pill.on{background:#2563eb;}
+.wiz-list{background:#fff;border:1px solid #9aa3b2;min-height:190px;display:flex;flex-direction:column;}
+.wiz-list div{display:grid;grid-template-columns:28px 1fr 90px;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line-2);font-size:13px;}
+.wiz-list div:first-child{background:#eef1f6;font-weight:700;color:var(--ink-2);}
+.wiz-list .sel{background:var(--sel-tint);}
+.wiz-help{font-size:12.5px;line-height:1.55;color:var(--ink-3);}
+
+.data-grid{background:#fff;border:1px solid #9aa3b2;border-radius:4px;overflow:hidden;}
+.data-grid .hdr,.data-grid .row{display:grid;grid-template-columns:38px 1fr 82px 82px 82px 82px 1fr;}
+.data-grid .hdr{background:#eef1f6;font-size:12px;font-weight:800;color:var(--ink-2);}
+.data-grid .hdr div,.data-grid .row div{padding:7px 8px;border-right:1px solid var(--line-2);border-bottom:1px solid var(--line-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.data-grid .hdr div:last-child,.data-grid .row div:last-child{border-right:none;}
+.data-grid .row.sel div{background:var(--sel-tint);}
+.bulk-grid .hdr,.bulk-grid .row{grid-template-columns:52px 78px 94px 1fr 92px 88px 88px;}
+.two-pane{display:grid;grid-template-columns:1fr 1fr;gap:14px;min-height:340px;}
+.pane-list{background:#fff;border:1px solid #9aa3b2;border-radius:4px;overflow:auto;}
+.pane-list .item{display:grid;grid-template-columns:28px 1fr 48px;padding:7px 9px;border-bottom:1px solid var(--line-2);font-size:13px;}
+.pane-list .item.sel{background:#dff4df;}
+.matrix{background:#fff;border:1px solid #9aa3b2;border-radius:4px;padding:10px;display:grid;grid-template-columns:42px repeat(7,42px);gap:5px;width:max-content;}
+.matrix span{height:30px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;background:#fff;}
+.matrix .head{background:#eef1f6;color:var(--ink-2);font-size:12px;}
+.matrix .ok{color:#26983a;background:#eefbef;}
+.matrix .no{color:#d61f2b;background:#fff1f2;}
+.matrix .maybe{color:#1479bd;background:#eaf5ff;}
+.matrix .mark{background:#fff36d;}
+.constraint-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.constraint-card{background:#fff;border:1px solid var(--line);border-radius:5px;padding:13px;display:flex;flex-direction:column;gap:10px;}
+.constraint-card label{font-size:13px;color:var(--ink);}
+.constraint-card input[type=range]{width:100%;accent-color:var(--sel);}
+.verify-panel{display:none;height:132px;border-top:1px solid var(--line);background:#edf8df;grid-template-columns:220px 1fr;flex:0 0 132px;}
+.show-verify .verify-panel{display:grid;}
+.show-verify .dock{display:none;}
+.verify-icon{display:flex;align-items:center;justify-content:center;font-size:52px;color:#c07a2c;background:#d9f8c8;}
+.verify-list{background:#fff;border-left:1px solid var(--line);overflow:auto;font-size:12px;}
+.verify-row{display:grid;grid-template-columns:70px 1fr;gap:10px;padding:7px 10px;border-bottom:1px solid var(--line-2);}
+.verify-row b{color:#173070;}
+.view-pop{position:absolute;top:150px;left:384px;width:220px;background:#fff;border:1px solid #9aa3b2;border-radius:4px;box-shadow:0 10px 28px rgba(15,23,42,.2);display:none;z-index:120;padding:5px;}
+.view-pop.show{display:block;}
+.view-pop button{width:100%;height:34px;border:0;background:#fff;display:flex;align-items:center;gap:10px;padding:0 10px;font-family:inherit;font-size:13px;cursor:pointer;text-align:left;}
+.view-pop button:hover,.view-pop button.active{background:#ffe88f;}
+.view-pop i{width:20px;text-align:center;}
+.rel-window{width:min(940px,96vw);}
+.rel-toolbar{display:flex;gap:8px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:5px;}
+.rel-table{height:300px;background:#fff;border:1px solid #9aa3b2;border-radius:4px;overflow:auto;}
+.rel-row{display:grid;grid-template-columns:1fr 90px 1fr 90px;padding:8px 10px;border-bottom:1px solid var(--line-2);font-size:13px;}
+.rel-row.h{background:#eef1f6;font-weight:800;color:var(--ink-2);}
+.framebar{height:46px;flex:0 0 46px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;color:var(--ink-2);}
+.framebar .set-btn{height:28px;padding:0 10px;}
+.frame-id{font-family:var(--mono);font-weight:800;color:#173070;min-width:78px;}
+.frame-title{font-weight:800;color:var(--ink);min-width:170px;}
+.frame-desc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.frame-select{height:28px;border:1px solid #9aa3b2;border-radius:4px;background:#fff;font-family:var(--mono);font-size:12px;color:var(--ink);width:92px;}
+.frame-ref{position:fixed;right:16px;bottom:82px;width:min(520px,42vw);background:#fff;border:1px solid #9aa3b2;border-radius:6px;box-shadow:0 18px 50px rgba(15,23,42,.28);z-index:180;display:none;overflow:hidden;}
+.frame-ref.show{display:block;}
+.frame-ref-head{height:32px;background:#eef1f6;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 8px;font-size:12px;font-weight:800;color:var(--ink);}
+.frame-ref-head span{flex:1;}
+.frame-ref-head button{width:26px;height:24px;border:0;background:transparent;cursor:pointer;color:var(--ink-2);}
+.frame-ref img{display:block;width:100%;height:auto;max-height:56vh;object-fit:contain;background:#c9c9cf;}
+
+/* entity manager dialogs */
+.mgr{width:min(1080px,96vw);}
+.mgr-shell{display:grid;grid-template-columns:74px minmax(360px,1fr) 280px;gap:12px;min-height:520px;}
+.mgr-rail{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 6px;display:flex;flex-direction:column;gap:6px;}
+.mgr-rail-btn{height:58px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;}
+.mgr-rail-btn i{font-size:20px;}
+.mgr-rail-btn:hover{background:#f1f4f8;color:var(--ink);}
+.mgr-rail-btn.active{background:var(--sel-tint);border-color:#b9cdfd;color:var(--sel);}
+.mgr-main{min-width:0;display:flex;flex-direction:column;gap:10px;}
+.mgr-toolbar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px;}
+.mgr-search{height:30px;flex:1;min-width:0;border:1px solid #9aa3b2;border-radius:4px;padding:0 9px;font-family:inherit;font-size:13px;}
+.mgr-table{flex:1;min-height:0;background:#fff;border:1px solid #9aa3b2;border-radius:4px;overflow:hidden;display:flex;flex-direction:column;}
+.mgr-head,.mgr-row{display:grid;grid-template-columns:32px minmax(130px,1.4fr) 78px 76px minmax(92px,1fr);}
+.mgr-head{background:#eef1f6;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--ink-2);}
+.mgr-head div,.mgr-row div{padding:7px 9px;border-right:1px solid var(--line-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mgr-head div:last-child,.mgr-row div:last-child{border-right:none;}
+.mgr-body{overflow:auto;flex:1;}
+.mgr-row{font-size:13px;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line-2);}
+.mgr-row:hover{background:var(--sel-tint);}
+.mgr-row.sel div{background:var(--sel);color:#fff;}
+.mgr-row .sw{display:block;width:18px;height:18px;border-radius:3px;border:1px solid rgba(15,23,42,.18);}
+.mgr-row.sel .sw{border-color:rgba(255,255,255,.75);}
+.mgr-side{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:12px;min-width:0;}
+.mgr-side-title{font-family:var(--display);font-size:18px;font-weight:700;color:var(--ink);}
+.mgr-form{display:flex;flex-direction:column;gap:9px;}
+.mgr-field{display:flex;flex-direction:column;gap:4px;}
+.mgr-field label{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;}
+.mgr-field input,.mgr-field select{height:30px;border:1px solid #9aa3b2;border-radius:4px;padding:0 8px;font-family:inherit;font-size:13px;background:#fff;}
+.mgr-color{height:44px;border-radius:5px;border:1px solid rgba(15,23,42,.16);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;text-shadow:0 1px 1px rgba(0,0,0,.25);}
+.mgr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mgr-actions .set-btn{width:100%;padding:0 8px;}
+.mgr-mini{border:1px solid var(--line);border-radius:5px;overflow:hidden;}
+.mgr-mini-row{display:grid;grid-template-columns:repeat(7,1fr);}
+.mgr-mini-row span{height:22px;border-right:1px solid var(--line-2);border-bottom:1px solid var(--line-2);background:#f8fafc;}
+.mgr-mini-row span:last-child{border-right:none;}
+.mgr-mini-row:last-child span{border-bottom:none;}
+.mgr-mini-row span.on{background:#c8f7ce;}
+.mgr-note{font-size:12px;line-height:1.45;color:var(--ink-3);}
+
+/* tighten on short / narrow screens so nothing scrolls */
+@media (max-height:680px){
+  .rb .lbl{font-size:10px;}
+  .rb .ico{font-size:18px;width:26px;height:26px;}
+  .dock{height:50px;}
+  .day-cell{font-size:13px;}
+}
+@media (max-width:1080px){
+  .rb{min-width:46px;padding:6px 5px 4px;}
+  .rb .lbl{max-width:60px;font-size:10px;}
+  .menu-find .fbox{min-width:120px;}
+}
+</style>
+</head>
+<body>
+<div class="win">
+
+  <!-- ─── Menu bar ──────────────────────────────────────────────────── -->
+  <div class="menubar">
+    <div class="menu-item active" data-menu="main">Main</div>
+    <div class="menu-item" data-menu="file">File</div>
+    <div class="menu-item" data-menu="spec">Specification</div>
+    <div class="menu-item" data-menu="view">View</div>
+    <div class="menu-item" data-menu="timetable">Timetable</div>
+    <div class="menu-item" data-menu="options">Options</div>
+    <div class="menu-item" data-menu="help">Help</div>
+    <div class="menu-spacer"></div>
+    <div class="menu-find">
+      <label>Find:</label>
+      <div class="fbox"><i class="fas fa-magnifying-glass"></i><input placeholder="class, teacher, room…"/></div>
+    </div>
+    <div class="menu-customize">Customize <i class="fas fa-caret-down x"></i></div>
+  </div>
+
+  <!-- ─── Ribbon ────────────────────────────────────────────────────── -->
+  <div class="ribbon">
+
+    <!-- File -->
+    <div class="rg">
+      <button class="rb" data-action="wizard"><span class="ico c-green"><i class="fas fa-file-circle-plus"></i></span><span class="lbl">New</span></button>
+      <button class="rb"><span class="ico c-amber"><i class="fas fa-folder-open"></i></span><span class="lbl">Open</span></button>
+      <button class="rb"><span class="ico c-purple"><i class="fas fa-floppy-disk"></i></span><span class="lbl">Save</span></button>
+      <button class="rb"><span class="ico c-slate"><i class="fas fa-print"></i></span><span class="lbl">Print</span></button>
+    </div>
+
+    <!-- Print preview -->
+    <div class="rg">
+      <button class="rb tall" data-action="print"><span class="ico c-slate"><i class="fas fa-file-magnifying-glass"></i></span><span class="lbl">Print preview</span></button>
+    </div>
+
+    <!-- View selector (Whole) -->
+    <div class="rg">
+      <div class="view-sel" title="Choose what to display">
+        <i class="fas fa-table-cells-large vi"></i>
+        <span class="vt">Whole</span>
+        <i class="fas fa-caret-down vc"></i>
+      </div>
+    </div>
+
+    <!-- Entities -->
+    <div class="rg">
+      <button class="rb" data-entity="subjects"><span class="ico c-blue"><i class="fas fa-book"></i></span><span class="lbl">Subjects</span></button>
+      <button class="rb" data-entity="classes"><span class="ico c-amber"><i class="fas fa-users"></i></span><span class="lbl">Classes</span></button>
+      <button class="rb" data-entity="rooms"><span class="ico c-teal"><i class="fas fa-door-open"></i></span><span class="lbl">Classrooms</span></button>
+      <button class="rb" data-entity="teachers"><span class="ico c-purple"><i class="fas fa-user-graduate"></i></span><span class="lbl">Teachers</span></button>
+      <button class="rb" data-entity="relations"><span class="ico c-blue"><i class="fas fa-circle-nodes"></i></span><span class="lbl">Relations</span></button>
+    </div>
+
+    <!-- Actions -->
+    <div class="rg">
+      <button class="rb" data-action="test"><span class="ico c-green"><i class="fas fa-circle-check"></i></span><span class="lbl">Test</span></button>
+      <button class="rb" data-action="generate"><span class="ico c-red"><i class="fas fa-wand-magic-sparkles"></i></span><span class="lbl">Generate new</span></button>
+      <button class="rb" data-action="verify"><span class="ico c-gold"><i class="fas fa-gavel"></i></span><span class="lbl">Verification</span></button>
+    </div>
+
+    <!-- School -->
+    <div class="rg">
+      <button class="rb" data-action="school"><span class="ico c-slate"><i class="fas fa-building-columns"></i></span><span class="lbl">School</span></button>
+    </div>
+
+  </div>
+
+  <div class="printbar">
+    <div class="print-group">
+      <button class="print-btn"><i class="fas fa-arrow-left"></i><span>Previous<br/>page</span></button>
+      <button class="print-btn"><i class="fas fa-arrow-right c-green"></i><span>Next<br/>page</span></button>
+      <button class="print-btn"><i class="fas fa-print"></i><span>Print</span></button>
+    </div>
+    <div class="print-group">
+      <div class="report-select">
+        <label>Select your report</label>
+        <select><option>Timetable for each class</option><option>Teacher timetables</option><option>Classrooms</option><option>Whole timetable</option></select>
+        <span>Page: 1/8</span>
+      </div>
+    </div>
+    <div class="print-group">
+      <button class="print-btn"><i class="fas fa-filter c-purple"></i><span>Filter</span></button>
+      <button class="print-btn"><i class="fas fa-shield-halved c-blue"></i><span>Global<br/>settings</span></button>
+      <button class="print-btn"><i class="fas fa-sitemap c-green"></i><span>Modify<br/>structure</span></button>
+      <button class="print-btn"><i class="fas fa-table-cells c-blue"></i><span>Extra<br/>columns/rows</span></button>
+      <button class="print-btn"><i class="fas fa-power-off c-red"></i><span>Close<br/>preview</span></button>
+    </div>
+  </div>
+
+  <!-- ─── Timetable canvas ──────────────────────────────────────────── -->
+  <div class="canvas">
+    <div class="tt" id="tt">
+      <!-- rows injected by script: day header, period numbers, empty body -->
+    </div>
+  </div>
+
+  <div class="paper-wrap">
+    <div class="paper">
+      <h2>GRADE 1</h2>
+      <div class="paper-grid" id="paperGrid"></div>
+      <div class="paper-register">Please register</div>
+      <div class="paper-foot">Created by aSc TimeTables EVALUATION version. Using and distributing this printout is ILLEGAL. Please go to menu Help / Purchase and Register</div>
+    </div>
+  </div>
+
+  <div class="verify-panel" id="verifyPanel">
+    <div class="verify-icon"><i class="fas fa-gavel"></i></div>
+    <div class="verify-list" id="verifyRows"></div>
+  </div>
+
+  <!-- ─── Object dock ───────────────────────────────────────────────── -->
+  <div class="dock">
+    <div class="dock-pad"></div>
+    <div class="dock-objs">
+      <div class="card-tray" id="cardTray"></div>
+      <div class="dock-obj" data-action="school"><i class="fas fa-building-columns c-slate"></i><span>School</span></div>
+      <div class="dock-obj" data-entity="classes"><i class="fas fa-users c-amber"></i><span>Classes</span></div>
+      <div class="dock-obj" data-entity="teachers"><i class="fas fa-user-graduate c-purple"></i><span>Teachers</span></div>
+      <div class="dock-obj" data-entity="subjects"><i class="fas fa-book c-blue"></i><span>Subjects</span></div>
+      <div class="dock-obj" data-entity="rooms"><i class="fas fa-door-open c-teal"></i><span>Classrooms</span></div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span class="ready">Ready</span>
+    <span class="log" id="statusLog">Open /asc-timetable to review the standalone studio.</span>
+    <span class="caps">CAP</span>
+    <span id="actionCount">0 actions</span>
+  </div>
+
+  <div class="framebar" id="frameBar">
+    <button class="set-btn" id="framePrev"><i class="fas fa-arrow-left"></i></button>
+    <select class="frame-select" id="frameSelect"></select>
+    <button class="set-btn" id="frameNext"><i class="fas fa-arrow-right"></i></button>
+    <span class="frame-id" id="frameId">Frame 000</span>
+    <span class="frame-title" id="frameTitle">Wizard step 1</span>
+    <span class="frame-desc" id="frameDesc">Basic school setup</span>
+    <button class="set-btn" id="frameApply">Apply frame</button>
+    <button class="set-btn" id="frameRefToggle">Reference</button>
+  </div>
+
+  <div class="view-pop" id="viewPop">
+    <button data-mode="Whole" class="active"><i class="fas fa-table-cells-large c-green"></i>Whole timetable</button>
+    <button data-mode="Classes"><i class="fas fa-users c-amber"></i>Classes</button>
+    <button data-mode="Teachers"><i class="fas fa-user-graduate c-purple"></i>Teachers</button>
+    <button data-mode="Subjects"><i class="fas fa-book c-blue"></i>Subjects</button>
+    <button data-mode="Classrooms"><i class="fas fa-door-open c-teal"></i>Classrooms</button>
+    <button data-mode="Rooms"><i class="fas fa-building c-slate"></i>Room supervision</button>
+  </div>
+
+  <div class="frame-ref" id="frameRefBox">
+    <div class="frame-ref-head"><span id="frameRefTitle">Source frame 000</span><button id="frameRefClose"><i class="fas fa-xmark"></i></button></div>
+    <img id="frameRefImg" alt="ASC source frame"/>
+  </div>
+
+</div>
+
+<!-- New timetable wizard -->
+<div class="dlg-shroud" id="wizardDlg">
+  <div class="dlg wiz" role="dialog" aria-label="Wizard">
+    <div class="dlg-title"><span class="t" id="wizTitle">Wizard : Step 1 of 7</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="wiz-step">
+        <div class="wiz-art"><i id="wizIcon" class="fas fa-building-columns"></i><div class="stepno" id="wizNo">STEP 1 / 7</div></div>
+        <div class="wiz-content">
+          <div class="wiz-flow" id="wizFlow"></div>
+          <div class="wiz-card" id="wizPanel"></div>
+          <p class="wiz-help" id="wizHelp">The wizard creates the core school structure before detailed lessons, constraints and generation are configured.</p>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="set-btn" id="wizPrev">Previous</button>
+      <button class="set-btn ok" id="wizNext">Next</button>
+      <button class="set-btn" data-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Settings dialog (opens from the School button) ──────────────── -->
+<div class="dlg-shroud" id="schoolDlg">
+  <div class="dlg" role="dialog" aria-label="Settings">
+    <div class="dlg-title">
+      <span class="t">Settings</span>
+      <button class="dlg-x" data-close title="Close"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="dlg-tabs">
+      <div class="dlg-tab active" data-pane="basic">Basic data</div>
+      <div class="dlg-tab" data-pane="schedule">Schedule type</div>
+    </div>
+
+    <div class="dlg-body">
+      <!-- Basic data -->
+      <div class="dlg-pane show" data-pane="basic">
+
+        <div class="set-card">
+          <div class="set-ico"><i class="fas fa-building-columns"></i></div>
+          <div class="set-fields">
+            <div class="set-row"><label class="k">Name of the school :</label><input class="set-in grow" placeholder="Joyland Schools"/></div>
+            <div class="set-row"><label class="k">Academic year :</label><input class="set-in" style="flex:0 0 140px" value="2026/2027"/></div>
+            <div class="set-row"><label class="k">Registration name</label><input class="set-in grow" readonly/><button class="set-btn">Change</button></div>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <div class="set-ico"><i class="fas fa-table-cells"></i></div>
+          <div class="set-fields">
+            <div class="set-row">
+              <label class="k">Periods per day:</label>
+              <select class="set-sel"><option>7</option><option>8</option><option>9</option><option>10</option></select>
+              <button class="set-btn flex">Bell times / Rename periods</button>
+            </div>
+            <label class="set-check"><input type="checkbox"/> Work with zero periods</label>
+            <div class="set-row">
+              <label class="k">Number of days:</label>
+              <select class="set-sel"><option>5</option><option>6</option><option>7</option></select>
+              <button class="set-btn flex">Rename days</button>
+            </div>
+            <div class="set-row">
+              <label class="k">Weekend:</label>
+              <select class="set-sel wide"><option>Saturday - Sunday</option><option>Sunday only</option><option>None</option></select>
+            </div>
+            <label class="set-check"><input type="checkbox"/> Show day number instead of day name (e.g. Day 1 instead of Monday)</label>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <div class="set-ico"><i class="far fa-calendar"></i></div>
+          <div class="set-fields">
+            <label class="set-check"><input type="checkbox"/> I want to create a multi-term or multi-week timetable that will be different in each week or term</label>
+          </div>
+        </div>
+
+        <div class="set-tools">
+          <div class="set-tool" data-open="paramsDlg"><i class="fas fa-calculator"></i> Parameters</div>
+          <div class="set-tool" data-open="customDlg"><i class="fas fa-pen-to-square"></i> Custom fields</div>
+        </div>
+
+      </div>
+
+      <!-- Schedule type — questionnaire -->
+      <div class="dlg-pane" data-pane="schedule">
+        <p class="q-intro">Please tell us a bit more about your school. Do not worry if you are not sure, you can change this anytime later:</p>
+        <div class="q-list" id="qList"></div>
+      </div>
+    </div>
+
+    <div class="dlg-foot">
+      <button class="set-btn ok" data-close>OK</button>
+      <button class="set-btn" data-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Parameters dialog (from Basic data → Parameters) ────────────── -->
+<div class="dlg-shroud" id="paramsDlg">
+  <div class="dlg" style="width:min(820px,94vw)" role="dialog" aria-label="Parameters">
+    <div class="dlg-title"><span class="t">Parameters</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="prm-block">
+        <label class="set-check big"><input type="checkbox" checked/> <b>Generate different timetables</b></label>
+        <p class="prm-help">A different timetable is generated every time. We recommend enabling this option.</p>
+      </div>
+      <div class="prm-grid">
+        <div class="prm-block">
+          <label class="set-check big" id="exhaustChk"><input type="checkbox"/> Check exhaustion</label>
+          <p class="prm-help">Max. number of consecutive periods taught by teachers that are not limited explicitly in the teachers' 'constraints' dialog.</p>
+          <input class="set-in prm-val" value="6" disabled/>
+        </div>
+        <div class="prm-block">
+          <label class="set-check big" id="windowsChk"><input type="checkbox"/> Check windows of teachers</label>
+          <p class="prm-help">Max. number of windows for teachers, who are not limited teachers' 'Constraints' dialog.</p>
+          <input class="set-in prm-val" value="20" disabled/>
+        </div>
+      </div>
+      <div class="prm-block">
+        <label class="set-check big"><input type="checkbox"/> Allow the generator to place lessons on 0th period</label>
+        <p class="prm-help">Program can place cards on 0th lessons. Check if your school has 0th lessons. It can simplify the generation.</p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="set-btn ok" data-close>OK</button>
+      <button class="set-btn" data-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Custom fields dialog (from Basic data → Custom fields) ──────── -->
+<div class="dlg-shroud" id="customDlg">
+  <div class="dlg" style="width:min(900px,95vw)" role="dialog" aria-label="Custom fields">
+    <div class="dlg-title"><span class="t">Custom fields</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="cf-head"><i class="fas fa-pen-to-square"></i><span>Global</span></div>
+      <div class="cf-layout">
+        <div class="cf-table">
+          <div class="cf-row cf-th"><div>Name</div><div>Value</div></div>
+          <div class="cf-scroll" id="cfRows"></div>
+        </div>
+        <div class="cf-actions">
+          <button class="set-btn">Add</button>
+          <button class="set-btn">Rename</button>
+          <div class="cf-gap"></div>
+          <button class="set-btn">Remove</button>
+        </div>
+      </div>
+      <div class="cf-edit">
+        <label class="k" id="cfEditLabel">Academic year</label>
+        <input class="set-in grow" id="cfEditVal" value="2026/2027"/>
+        <button class="set-btn cf-nav" disabled>&laquo;</button>
+        <button class="set-btn cf-nav" disabled>&raquo;</button>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="set-btn ok" data-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Timetable testing dialog -->
+<div class="dlg-shroud" id="testDlg">
+  <div class="dlg test-dlg" role="dialog" aria-label="Timetable testing">
+    <div class="dlg-title"><span class="t">Timetable testing</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div><b>Timetable test :</b></div>
+      <div class="test-progress"><span></span></div>
+      <div class="test-tabs">
+        <div class="test-tab"><div class="bubble">?</div><span>General</span></div>
+        <div class="test-tab ok"><div class="bubble"><i class="fas fa-check"></i></div><span>Classes</span></div>
+        <div class="test-tab"><div class="bubble">?</div><span>Teachers</span></div>
+        <div class="test-tab"><div class="bubble">?</div><span>Subjects</span></div>
+        <div class="test-tab"><div class="bubble">?</div><span>Students</span></div>
+      </div>
+      <div class="test-log">
+        <div>Class GRADE 6 alone can be generated.</div>
+        <div>Class PREPRIMARY ONE alone can be generated.</div>
+        <div>Class DAYCARE alone can be generated.</div>
+        <div>Teacher QASSIM alone can be generated.</div>
+        <div>Teacher FELIX alone can be generated.</div>
+        <div>Teacher ANNET alone can be generated.</div>
+        <div>Teacher FATUMA alone can be generated.</div>
+        <div>Subject MATHEMATICS alone can be generated.</div>
+        <div>Subject ENGLISH alone can be generated.</div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button class="set-btn">Skip</button><button class="set-btn ok" data-close>OK</button></div>
+  </div>
+</div>
+
+<!-- Bell periods and period editor -->
+<div class="dlg-shroud" id="periodDlg">
+  <div class="dlg" style="width:min(900px,95vw)" role="dialog" aria-label="Bell periods">
+    <div class="dlg-title"><span class="t">Periods</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="data-grid" id="periodRows"></div>
+      <label class="set-check"><input type="checkbox"/> Periods have different start times on different days</label>
+      <label class="set-check"><input type="checkbox"/> Periods have different starts in some terms</label>
+    </div>
+    <div class="dlg-foot"><button class="set-btn" id="periodAdd">Add</button><button class="set-btn" id="periodEdit">Edit</button><button class="set-btn ok" data-close>OK</button></div>
+  </div>
+</div>
+
+<div class="dlg-shroud" id="periodEditDlg">
+  <div class="dlg" style="width:min(520px,92vw)" role="dialog" aria-label="Period">
+    <div class="dlg-title"><span class="t">Period</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="set-card">
+        <div class="set-fields">
+          <div class="set-row"><label class="k">Name of the period:</label><input class="set-in grow" id="periodName" value="1"/></div>
+          <div class="set-row"><label class="k">Short:</label><input class="set-in" id="periodShort" value="1"/></div>
+          <div class="set-row"><label class="k">Start / End:</label><input class="set-in" id="periodStart" value="08:00"/><input class="set-in" id="periodEnd" value="08:45"/></div>
+          <label class="set-check"><input type="checkbox" checked/> Print this period in timetable</label>
+          <label class="set-check"><input type="checkbox"/> Period is a break</label>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button class="set-btn ok" id="periodSave">OK</button><button class="set-btn" data-close>Cancel</button></div>
+  </div>
+</div>
+
+<!-- Bulk lessons and lesson selector -->
+<div class="dlg-shroud" id="lessonDlg">
+  <div class="dlg" style="width:min(980px,96vw)" role="dialog" aria-label="Add more lessons">
+    <div class="dlg-title"><span class="t">Add more lessons</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="data-grid bulk-grid" id="bulkRows"></div>
+    </div>
+    <div class="dlg-foot"><button class="set-btn" id="bulkFill">Auto fill</button><button class="set-btn ok" data-close>Add</button><button class="set-btn" data-close>Cancel</button></div>
+  </div>
+</div>
+
+<div class="dlg-shroud" id="selectorDlg">
+  <div class="dlg" style="width:min(900px,95vw)" role="dialog" aria-label="Lesson selector">
+    <div class="dlg-title"><span class="t">Lessons</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="two-pane">
+        <div class="pane-list" id="selectorLeft"></div>
+        <div class="pane-list" id="selectorRight"></div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button class="set-btn" id="selectorAdd">Add selected</button><button class="set-btn ok" data-close>OK</button></div>
+  </div>
+</div>
+
+<!-- Constraints and time off -->
+<div class="dlg-shroud" id="constraintsDlg">
+  <div class="dlg" style="width:min(820px,95vw)" role="dialog" aria-label="Constraints">
+    <div class="dlg-title"><span class="t">Constraints</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="constraint-form">
+        <div class="constraint-card"><label>Maximum consecutive periods</label><input type="range" min="1" max="8" value="4"/><input class="set-in" value="4"/></div>
+        <div class="constraint-card"><label>Maximum windows / gaps</label><input type="range" min="0" max="20" value="3"/><input class="set-in" value="3"/></div>
+        <div class="constraint-card"><label>Distribution per week</label><label class="set-check"><input type="checkbox" checked/> Avoid double lessons unless needed</label><label class="set-check"><input type="checkbox"/> Balance mornings and afternoons</label></div>
+        <div class="constraint-card"><label>Importance</label><select class="set-sel wide"><option>Strict</option><option>Relax based on importance</option><option>Draft</option></select></div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button class="set-btn ok" data-close>OK</button></div>
+  </div>
+</div>
+
+<div class="dlg-shroud" id="timeOffDlg">
+  <div class="dlg" style="width:min(620px,95vw)" role="dialog" aria-label="Time off">
+    <div class="dlg-title"><span class="t">Time off</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body"><div class="matrix" id="timeMatrix"></div><p class="mgr-note">Click cells to cycle allowed, conditional and blocked availability.</p></div>
+    <div class="dlg-foot"><button class="set-btn ok" data-close>OK</button></div>
+  </div>
+</div>
+
+<!-- Card relationships -->
+<div class="dlg-shroud" id="relationsDlg">
+  <div class="dlg rel-window" role="dialog" aria-label="Card relationships">
+    <div class="dlg-title"><span class="t">Card relationships</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="rel-toolbar"><button class="set-btn" id="relAdd"><i class="fas fa-plus"></i> Add</button><button class="set-btn"><i class="fas fa-pen"></i> Edit</button><button class="set-btn"><i class="fas fa-trash"></i> Remove</button></div>
+      <div class="rel-table" id="relRows"></div>
+    </div>
+    <div class="dlg-foot"><button class="set-btn ok" data-close>OK</button></div>
+  </div>
+</div>
+
+<!-- Generation completed dialog -->
+<div class="dlg-shroud" id="successDlg">
+  <div class="dlg" style="width:min(720px,92vw)" role="dialog" aria-label="Generation completed">
+    <div class="dlg-title"><span class="t">Success - Generation completed</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="success-body">
+        <div>
+          <div class="success-stats">
+            <b>Time:</b><span>00:00:01</span>
+            <b>Schedules checked:</b><span>135975</span>
+            <b>Hardest teacher:</b><span></span>
+            <b>Hardest class:</b><span></span>
+            <b>Conditions broken:</b><span>2</span>
+            <b>Cards left:</b><span>0</span>
+          </div>
+          <div class="success-check"><i class="fas fa-check"></i></div>
+        </div>
+        <div class="success-face">☺</div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button class="set-btn ok" data-close>OK</button></div>
+  </div>
+</div>
+
+<!-- Entity manager dialogs: Subjects, Classes, Classrooms, Teachers, Relations -->
+<div class="dlg-shroud" id="entityDlg">
+  <div class="dlg mgr" role="dialog" aria-label="Entity manager">
+    <div class="dlg-title"><span class="t" id="mgrTitle">Subjects</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+      <div class="mgr-shell">
+        <div class="mgr-rail" id="mgrRail"></div>
+
+        <div class="mgr-main">
+          <div class="mgr-toolbar">
+            <input class="mgr-search" id="mgrSearch" placeholder="Search"/>
+            <button class="set-btn"><i class="fas fa-plus"></i> Add</button>
+            <button class="set-btn"><i class="fas fa-copy"></i> Duplicate</button>
+            <button class="set-btn"><i class="fas fa-trash"></i> Remove</button>
+          </div>
+          <div class="mgr-table">
+            <div class="mgr-head"><div></div><div>Name</div><div>Code</div><div>Lessons</div><div>Notes</div></div>
+            <div class="mgr-body" id="mgrRows"></div>
+          </div>
+        </div>
+
+        <div class="mgr-side">
+          <div class="mgr-side-title" id="mgrSideTitle">Mathematics</div>
+          <div class="mgr-form">
+            <div class="mgr-field"><label>Name</label><input id="mgrName"/></div>
+            <div class="mgr-field"><label>Short code</label><input id="mgrCode"/></div>
+            <div class="mgr-field"><label>Workload</label><input id="mgrLoad"/></div>
+            <div class="mgr-field"><label>Constraint preset</label><select id="mgrPreset"><option>Standard</option><option>Locked times</option><option>Prefer mornings</option><option>Specialist room required</option></select></div>
+          </div>
+          <div class="mgr-color" id="mgrColor">Lesson color</div>
+          <div class="mgr-actions">
+            <button class="set-btn">Time off</button>
+            <button class="set-btn">Constraints</button>
+            <button class="set-btn">Lessons</button>
+            <button class="set-btn">Details</button>
+          </div>
+          <div class="mgr-mini" id="mgrMini"></div>
+          <p class="mgr-note" id="mgrNote">Green cells represent allowed placement windows. This mirrors the aSc object dialogs without changing live timetable data.</p>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="set-btn ok" data-close>OK</button>
+      <button class="set-btn" data-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Timetable generation dialog (from Generate new) ─────────────── -->
+<div class="dlg-shroud" id="genDlg">
+  <div class="dlg" style="width:min(900px,95vw)" role="dialog" aria-label="Timetable generation">
+    <div class="dlg-title"><span class="t">Timetable generation</span><button class="dlg-x" data-close><i class="fas fa-xmark"></i></button></div>
+    <div class="dlg-body">
+
+      <div class="gen-top">
+        <p class="gen-warn"><b>You have to test the timetable before generation!</b><br/>There is no sense in generating a timetable that has not passed the test.</p>
+        <button class="set-btn gen-test">Test the timetable</button>
+      </div>
+
+      <button class="gen-start">Start timetable generation</button>
+
+      <div class="gen-cols">
+        <!-- Complexity -->
+        <fieldset class="gen-box">
+          <legend>Complexity of generation <i class="fas fa-circle-question gen-help"></i></legend>
+          <div class="cx-opts" id="cxOpts">
+            <div class="cx-opt sel" data-cx="0"><i class="fas fa-robot"></i><span>Normal</span></div>
+            <div class="cx-opt" data-cx="1"><i class="fas fa-robot"></i><span>Large</span></div>
+            <div class="cx-opt" data-cx="2"><i class="fas fa-industry"></i><span>Huge</span></div>
+          </div>
+          <input type="range" min="0" max="2" value="0" class="cx-slider" id="cxSlider"/>
+          <label class="gen-choose">Please choose what do you want to generate:</label>
+          <select class="set-sel gen-what">
+            <option>Whole timetable</option>
+            <option>Whole timetable - without students - check basic conflicts</option>
+            <option>Whole timetable - without students - no checking</option>
+            <option>Whole timetable - lock students</option>
+            <option>Whole timetable - without classrooms</option>
+            <option>Just students</option>
+            <option>Just students - Remove cards</option>
+            <option>Just classrooms</option>
+          </select>
+        </fieldset>
+
+        <!-- Constraints -->
+        <fieldset class="gen-box">
+          <legend>Constraints <i class="fas fa-circle-question gen-help"></i></legend>
+          <div class="cn-opts" id="cnOpts">
+            <div class="cn-opt" data-cn="draft"><span class="cn-ico c-green"><i class="fas fa-bullseye"></i></span>Draft</div>
+            <div class="cn-opt sel" data-cn="relax-imp"><span class="cn-ico c-blue"><i class="fas fa-gear"></i></span>Relax based on importance</div>
+            <div class="cn-opt" data-cn="relax"><span class="cn-ico c-slate"><i class="fas fa-gear"></i></span>Allow relaxation</div>
+            <div class="cn-opt" data-cn="strict"><span class="cn-ico c-red"><i class="fas fa-hand"></i></span>Strict</div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="gen-flags">
+        <label class="set-check"><input type="checkbox" checked/> Enable multiprocessor generator</label>
+        <label class="set-check"><input type="checkbox"/> Optimized usage. Slower speed, but you can use pc for other tasks.</label>
+      </div>
+
+    </div>
+    <div class="dlg-foot gen-foot">
+      <button class="set-btn">Set default</button>
+      <span class="spacer"></span>
+      <button class="set-btn" data-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Build the grid: 5 days × 7 periods, empty body (fresh document) ── */
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const PERIODS = 7;
+const COLS = DAYS.length * PERIODS;            // 35
+const tpl = `90px repeat(${COLS}, 1fr)`;
+
+const tt = document.getElementById('tt');
+let actionCount = 0;
+function commandName(el){
+  if(!el) return 'Command';
+  return (el.dataset.action || el.dataset.entity || el.dataset.open || el.textContent || el.title || 'Command').replace(/\s+/g, ' ').trim();
+}
+function recordAction(label, target){
+  actionCount += 1;
+  document.getElementById('statusLog').textContent = label;
+  document.getElementById('actionCount').textContent = actionCount + (actionCount === 1 ? ' action' : ' actions');
+  if(target){
+    target.classList.remove('cmd-flash');
+    void target.offsetWidth;
+    target.classList.add('cmd-flash');
+  }
+}
+
+/* Row 1 — day headers (each spans 7 period columns) */
+const dayRow = document.createElement('div');
+dayRow.className = 'tt-row';
+dayRow.style.gridTemplateColumns = tpl;
+dayRow.innerHTML = '<div class="corner"></div>' +
+  DAYS.map(d => `<div class="day-cell" style="grid-column:span ${PERIODS}">${d}</div>`).join('');
+tt.appendChild(dayRow);
+
+/* Row 2 — period numbers 1..7 under every day */
+const perRow = document.createElement('div');
+perRow.className = 'tt-row';
+perRow.style.gridTemplateColumns = tpl;
+let perHTML = '<div class="corner"></div>';
+for(let d=0; d<DAYS.length; d++){
+  for(let p=1; p<=PERIODS; p++){
+    const edge = p === PERIODS ? ' day-edge' : '';
+    perHTML += `<div class="per-cell${edge}">${p}</div>`;
+  }
+}
+perRow.innerHTML = perHTML;
+tt.appendChild(perRow);
+
+/* Row 3 — empty body that fills remaining height */
+const body = document.createElement('div');
+body.className = 'tt-row tt-body';
+const ROWS = 8;                                 // visual fill, no data yet
+body.style.gridTemplateColumns = tpl;
+body.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
+let bodyHTML = '';
+for(let r=0; r<ROWS; r++){
+  bodyHTML += '<div class="gcell" style="background:var(--grid-h);border-right:1px solid #c7cdd7"></div>'; // label gutter
+  for(let d=0; d<DAYS.length; d++){
+    for(let p=1; p<=PERIODS; p++){
+      const edge = p === PERIODS ? ' day-edge' : '';
+      bodyHTML += `<div class="gcell${edge}"></div>`;
+    }
+  }
+}
+body.innerHTML = bodyHTML;
+
+/* Empty-state overlay (this is a brand-new, unscheduled document) */
+const overlay = document.createElement('div');
+overlay.className = 'tt-empty';
+overlay.innerHTML = `
+  <div class="ill"><i class="fas fa-table-cells"></i></div>
+  <div class="et">No timetable generated yet</div>
+  <div class="ed">Set up your subjects, classes and teachers, then press <b>Generate new</b> to auto-place every lesson onto this grid.</div>`;
+body.appendChild(overlay);
+tt.appendChild(body);
+
+/* ── Menu tabs swap active state (no panels wired yet) ── */
+document.querySelectorAll('.menu-item').forEach(m => m.addEventListener('click', () => {
+  document.querySelectorAll('.menu-item').forEach(x => x.classList.remove('active'));
+  m.classList.add('active');
+  recordAction('Menu changed to ' + m.textContent.trim(), m);
+}));
+
+/* ── Settings dialog open/close (visual only) ── */
+const dlg = document.getElementById('schoolDlg');
+const openDlg  = () => { dlg.classList.add('show'); recordAction('School settings opened'); };
+const closeDlg = () => dlg.classList.remove('show');
+document.querySelectorAll('[data-action="school"]').forEach(b => b.addEventListener('click', openDlg));
+dlg.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeDlg));
+dlg.addEventListener('click', e => { if(e.target === dlg) closeDlg(); });        // click backdrop
+document.addEventListener('keydown', e => {                                       // Esc closes topmost dialog
+  if(e.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('.dlg-shroud.show')];
+  if(open.length) open[open.length - 1].classList.remove('show');
+});
+
+/* dialog tabs */
+dlg.querySelectorAll('.dlg-tab').forEach(t => t.addEventListener('click', () => {
+  const p = t.dataset.pane;
+  dlg.querySelectorAll('.dlg-tab').forEach(x => x.classList.toggle('active', x === t));
+  dlg.querySelectorAll('.dlg-pane').forEach(x => x.classList.toggle('show', x.dataset.pane === p));
+}));
+
+/* ── Generic nested dialog open/close ── */
+function bindDialog(id){
+  const d = document.getElementById(id);
+  d.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => d.classList.remove('show')));
+  d.addEventListener('click', e => { if(e.target === d) d.classList.remove('show'); });
+  return d;
+}
+const paramsDlg = bindDialog('paramsDlg');
+const customDlg = bindDialog('customDlg');
+const entityDlg = bindDialog('entityDlg');
+const wizardDlg = bindDialog('wizardDlg');
+const testDlg = bindDialog('testDlg');
+const successDlg = bindDialog('successDlg');
+const periodDlg = bindDialog('periodDlg');
+const periodEditDlg = bindDialog('periodEditDlg');
+const lessonDlg = bindDialog('lessonDlg');
+const selectorDlg = bindDialog('selectorDlg');
+const constraintsDlg = bindDialog('constraintsDlg');
+const timeOffDlg = bindDialog('timeOffDlg');
+const relationsDlg = bindDialog('relationsDlg');
+const genDlg = bindDialog('genDlg');
+document.querySelectorAll('[data-open]').forEach(b =>
+  b.addEventListener('click', () => document.getElementById(b.dataset.open).classList.add('show')));
+document.querySelectorAll('[data-action="generate"]').forEach(b =>
+  b.addEventListener('click', () => { genDlg.classList.add('show'); recordAction('Generation settings opened', b); }));
+document.querySelectorAll('[data-action="test"],[data-action="verify"],.gen-test').forEach(b =>
+  b.addEventListener('click', () => {
+    testDlg.classList.add('show');
+    if(b.dataset.action === 'verify') showVerification();
+    recordAction(b.dataset.action === 'verify' ? 'Verification panel opened' : 'Timetable test opened', b);
+  }));
+document.querySelectorAll('[data-action="print"]').forEach(b =>
+  b.addEventListener('click', () => { document.body.classList.add('preview-mode'); recordAction('Print preview opened', b); }));
+document.querySelectorAll('.printbar .fa-power-off').forEach(i =>
+  i.closest('button').addEventListener('click', () => { document.body.classList.remove('preview-mode'); recordAction('Print preview closed', i.closest('button')); }));
+
+/* Wizard: seven setup frames distilled from the aSc onboarding sequence */
+const WIZ_STEPS = [
+  { icon:'fas fa-building-columns', title:'Basic school data', help:'This first frame captures school identity, academic year, periods, days and multi-week setup.',
+    html:`<div class="wiz-row"><label>Name of the school :</label><input class="set-in grow" value="Joyland Schools"/></div>
+      <div class="wiz-row"><label>Academic year :</label><input class="set-in" value="2026/2027"/></div>
+      <div class="wiz-row"><label>Periods per day:</label><select class="set-sel"><option>7</option><option>8</option></select><button class="set-btn flex">Bell times / Rename periods</button></div>
+      <div class="wiz-row"><label>Number of days:</label><select class="set-sel"><option>5</option><option>6</option></select><button class="set-btn flex">Rename days</button></div>` },
+  { icon:'fas fa-book', title:'Subjects', help:'Subject frames build the card catalog: short names, colors, weekly counts and room requirements.',
+    html:`<div class="wiz-list"><div><span></span><span>Subject</span><span>Lessons</span></div><div class="sel"><span>M</span><span>Mathematics</span><span>7</span></div><div><span>E</span><span>English</span><span>6</span></div><div><span>K</span><span>Kiswahili</span><span>5</span></div><div><span>S</span><span>Science</span><span>5</span></div></div>` },
+  { icon:'fas fa-users', title:'Classes', help:'Classes become timetable rows and can hold divisions, groups and home classrooms.',
+    html:`<div class="wiz-list"><div><span></span><span>Class</span><span>Students</span></div><div class="sel"><span>1</span><span>GRADE 1</span><span>32</span></div><div><span>2</span><span>GRADE 2</span><span>30</span></div><div><span>3</span><span>GRADE 3</span><span>35</span></div><div><span>4</span><span>GRADE 4</span><span>28</span></div></div>` },
+  { icon:'fas fa-user-graduate', title:'Teachers', help:'Teacher frames capture load, subjects, availability and gap/exhaustion rules.',
+    html:`<div class="wiz-list"><div><span></span><span>Teacher</span><span>Load</span></div><div class="sel"><span>A</span><span>A. Wanjiku</span><span>28</span></div><div><span>B</span><span>B. Otieno</span><span>26</span></div><div><span>C</span><span>C. Njeri</span><span>24</span></div><div><span>D</span><span>D. Mwangi</span><span>30</span></div></div>` },
+  { icon:'fas fa-door-open', title:'Classrooms', help:'Room frames establish capacity, home rooms, specialist rooms and sharing behavior.',
+    html:`<div class="wiz-list"><div><span></span><span>Room</span><span>Capacity</span></div><div class="sel"><span>R</span><span>Room 1</span><span>40</span></div><div><span>R</span><span>Room 2</span><span>40</span></div><div><span>L</span><span>Science Lab</span><span>24</span></div><div><span>H</span><span>Hall</span><span>80</span></div></div>` },
+  { icon:'fas fa-circle-nodes', title:'Relations and lessons', help:'Relations are where subjects, teachers, classes, groups and rooms become placeable lesson cards.',
+    html:`<div class="wiz-list"><div><span></span><span>Lesson relation</span><span>Per week</span></div><div class="sel"><span>M</span><span>GRADE 1 - Mathematics - A. Wanjiku</span><span>7</span></div><div><span>E</span><span>GRADE 2 - English - B. Otieno</span><span>6</span></div><div><span>S</span><span>GRADE 4 - Science - Lab</span><span>5</span></div></div>` },
+  { icon:'fas fa-wand-magic-sparkles', title:'Test and generate', help:'The final frame checks the structure, then launches generation and reports broken conditions or leftover cards.',
+    html:`<div class="wiz-card"><label class="set-check big"><input type="checkbox" checked/> <b>Test before generation</b></label><label class="set-check big"><input type="checkbox" checked/> <b>Relax based on importance</b></label><button class="gen-start" type="button">Start timetable generation</button></div>` }
+];
+let wizStep = 0;
+function renderWizard(){
+  const s = WIZ_STEPS[wizStep];
+  document.getElementById('wizTitle').textContent = 'Wizard : Step ' + (wizStep + 1) + ' of 7';
+  document.getElementById('wizNo').textContent = 'STEP ' + (wizStep + 1) + ' / 7';
+  document.getElementById('wizIcon').className = s.icon;
+  document.getElementById('wizPanel').innerHTML = s.html;
+  document.getElementById('wizHelp').textContent = s.help;
+  document.getElementById('wizFlow').innerHTML = WIZ_STEPS.map((_,i) => '<span class="wiz-pill' + (i <= wizStep ? ' on' : '') + '"></span>').join('');
+  document.getElementById('wizPrev').disabled = wizStep === 0;
+  document.getElementById('wizNext').textContent = wizStep === WIZ_STEPS.length - 1 ? 'Finish' : 'Next';
+}
+document.querySelectorAll('[data-action="wizard"]').forEach(b => b.addEventListener('click', () => { wizStep = 0; renderWizard(); wizardDlg.classList.add('show'); recordAction('New timetable wizard opened', b); }));
+document.getElementById('wizPrev').addEventListener('click', () => { if(wizStep > 0){ wizStep--; renderWizard(); recordAction('Wizard moved to step ' + (wizStep + 1)); } });
+document.getElementById('wizNext').addEventListener('click', () => {
+  if(wizStep < WIZ_STEPS.length - 1){ wizStep++; renderWizard(); recordAction('Wizard moved to step ' + (wizStep + 1)); return; }
+  wizardDlg.classList.remove('show');
+  genDlg.classList.add('show');
+  recordAction('Wizard completed; generation settings opened');
+});
+
+const PERIOD_DATA = [
+  ['1','1','08:00','08:45','45','Lesson'],
+  ['2','2','09:00','09:45','45','Lesson'],
+  ['LONG BREAK','LB','09:45','10:00','15','Break'],
+  ['3','3','10:00','10:45','45','Lesson'],
+  ['LUNCH BREAK','LU','10:45','11:00','15','Break'],
+  ['4','4','11:00','11:45','45','Lesson'],
+  ['5','5','12:00','12:45','45','Lesson'],
+  ['6','6','13:00','13:45','45','Lesson'],
+  ['7','7','14:00','14:45','45','Lesson']
+];
+function renderPeriods(){
+  document.getElementById('periodRows').innerHTML =
+    '<div class="hdr"><div>#</div><div>Name</div><div>Short</div><div>Start</div><div>End</div><div>Length</div><div>Print</div></div>' +
+    PERIOD_DATA.map((p,i) => '<div class="row' + (i===0?' sel':'') + '" data-i="' + i + '"><div>' + (i+1) + '</div><div>' + p[0] + '</div><div>' + p[1] + '</div><div>' + p[2] + '</div><div>' + p[3] + '</div><div>' + p[4] + '</div><div>' + p[5] + '</div></div>').join('');
+  document.querySelectorAll('#periodRows .row').forEach(r => r.addEventListener('click', () => {
+    document.querySelectorAll('#periodRows .row').forEach(x => x.classList.remove('sel'));
+    r.classList.add('sel');
+    recordAction('Selected period ' + r.children[1].textContent, r);
+  }));
+}
+function editSelectedPeriod(){
+  const row = document.querySelector('#periodRows .row.sel');
+  const p = PERIOD_DATA[row ? +row.dataset.i : 0];
+  document.getElementById('periodName').value = p[0];
+  document.getElementById('periodShort').value = p[1];
+  document.getElementById('periodStart').value = p[2];
+  document.getElementById('periodEnd').value = p[3];
+  periodEditDlg.classList.add('show');
+  recordAction('Period editor opened');
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,.set-btn');
+  if(!t) return;
+  if(/Bell times|Rename periods/i.test(t.textContent)){ renderPeriods(); periodDlg.classList.add('show'); recordAction('Bell periods table opened', t); }
+});
+document.getElementById('periodEdit').addEventListener('click', editSelectedPeriod);
+document.getElementById('periodAdd').addEventListener('click', () => {
+  PERIOD_DATA.push(['New period','N' + PERIOD_DATA.length,'15:00','15:45','45','Lesson']);
+  renderPeriods();
+  recordAction('Period added');
+});
+document.getElementById('periodSave').addEventListener('click', () => {
+  const row = document.querySelector('#periodRows .row.sel');
+  const p = PERIOD_DATA[row ? +row.dataset.i : 0];
+  p[0] = document.getElementById('periodName').value;
+  p[1] = document.getElementById('periodShort').value;
+  p[2] = document.getElementById('periodStart').value;
+  p[3] = document.getElementById('periodEnd').value;
+  periodEditDlg.classList.remove('show');
+  renderPeriods();
+  recordAction('Period saved: ' + p[0]);
+});
+
+const BULK_LESSONS = [
+  ['1','GRADE 1','MATH','Mathematics','7','AW','Room 1'],
+  ['2','GRADE 2','ENG','English','6','BO','Room 2'],
+  ['3','GRADE 3','KIS','Kiswahili','5','CN','Room 3'],
+  ['4','GRADE 4','SCI','Science','5','AW','Lab'],
+  ['5','GRADE 5','SST','Social Studies','4','DM','Room 5']
+];
+function renderBulk(){
+  document.getElementById('bulkRows').innerHTML =
+    '<div class="hdr"><div>No.</div><div>Class</div><div>Subject</div><div>Teacher</div><div>Count</div><div>Group</div><div>Room</div></div>' +
+    BULK_LESSONS.map((r,i) => '<div class="row' + (i===0?' sel':'') + '"><div>' + r[0] + '</div><div>' + r[1] + '</div><div>' + r[2] + '</div><div>' + r[3] + '</div><div>' + r[4] + '</div><div>' + r[5] + '</div><div>' + r[6] + '</div></div>').join('');
+}
+function renderSelector(){
+  document.getElementById('selectorLeft').innerHTML = ['Mathematics','English','Kiswahili','Science','CRE','Islamic Religious'].map((x,i) => '<div class="item' + (i===0?' sel':'') + '"><span>' + (i+1) + '</span><span>' + x + '</span><span>' + (i+3) + '</span></div>').join('');
+  document.getElementById('selectorRight').innerHTML = ['GRADE 1 - Mathematics','GRADE 2 - English'].map((x,i) => '<div class="item sel"><span>✓</span><span>' + x + '</span><span>' + (i+5) + '</span></div>').join('');
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,.set-btn');
+  if(!t) return;
+  if(/Lessons|Add more/i.test(t.textContent) && !t.closest('#lessonDlg')){
+    renderBulk(); lessonDlg.classList.add('show'); recordAction('Bulk lesson grid opened', t);
+  }
+  if(/Details|Time off|Constraints/i.test(t.textContent)){
+    if(/Time off/i.test(t.textContent)){ renderMatrix(); timeOffDlg.classList.add('show'); recordAction('Time off matrix opened', t); }
+    else if(/Constraints/i.test(t.textContent)){ constraintsDlg.classList.add('show'); recordAction('Constraints dialog opened', t); }
+  }
+});
+document.getElementById('bulkFill').addEventListener('click', () => { renderSelector(); selectorDlg.classList.add('show'); recordAction('Lesson selector opened'); });
+document.getElementById('selectorAdd').addEventListener('click', () => recordAction('Selected lessons added'));
+
+function renderMatrix(){
+  const days = ['','Mo','Tu','We','Th','Fr'];
+  let html = days.map(x => '<span class="head">' + x + '</span>').join('');
+  for(let p=1;p<=7;p++){
+    html += '<span class="head">' + p + '</span>';
+    for(let d=1;d<=5;d++){
+      const cls = (p+d)%7===0 ? 'no' : (p+d)%5===0 ? 'maybe' : 'ok';
+      const mark = p===4 && d===4 ? ' mark' : '';
+      html += '<span class="' + cls + mark + '">' + (cls==='no'?'×':cls==='maybe'?'?':'✓') + '</span>';
+    }
+  }
+  document.getElementById('timeMatrix').innerHTML = html;
+  document.querySelectorAll('#timeMatrix span:not(.head)').forEach(cell => cell.addEventListener('click', () => {
+    const states = [['ok','✓'],['maybe','?'],['no','×']];
+    const idx = cell.classList.contains('ok') ? 1 : cell.classList.contains('maybe') ? 2 : 0;
+    cell.className = states[idx][0];
+    cell.textContent = states[idx][1];
+    recordAction('Availability cell changed');
+  }));
+}
+
+function showVerification(){
+  document.body.classList.add('show-verify');
+  document.getElementById('verifyRows').innerHTML = [
+    ['Class','GRADE 4 has compacted afternoon lessons.'],
+    ['Teacher','QASSIM has one soft window.'],
+    ['Room','Science Lab is used close to capacity.'],
+    ['Cards','All cards are placed; two soft conditions relaxed.']
+  ].map(r => '<div class="verify-row"><b>' + r[0] + '</b><span>' + r[1] + '</span></div>').join('');
+}
+
+function renderRelations(){
+  document.getElementById('relRows').innerHTML =
+    '<div class="rel-row h"><div>Subject</div><div>Apply to</div><div>Description</div><div>Positions</div></div>' +
+    ['Mathematics cards cannot be consecutive after lunch','CRE and IRE may share protected option periods','Science prefers Lab before long break'].map((x,i) => '<div class="rel-row"><div>' + ['Mathematics','CRE / IRE','Science'][i] + '</div><div>' + ['Classes','Groups','Rooms'][i] + '</div><div>' + x + '</div><div>' + (i+1) + '</div></div>').join('');
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-entity=\"relations\"],button');
+  if(!t) return;
+  if(t.dataset.entity === 'relations' || /Relations|Card relationships/i.test(t.textContent)){
+    renderRelations();
+    relationsDlg.classList.add('show');
+    recordAction('Card relationships opened', t);
+  }
+});
+document.getElementById('relAdd').addEventListener('click', () => {
+  const el = document.createElement('div');
+  el.className = 'rel-row';
+  el.innerHTML = '<div>New relation</div><div>Classes</div><div>Keep selected cards near each other</div><div>0</div>';
+  document.getElementById('relRows').appendChild(el);
+  recordAction('Card relationship added');
+});
+
+const SAMPLE_LESSONS = [
+  { r:3,d:0,p:1,t:'E',c:'bad' }, { r:3,d:0,p:2,t:'E',c:'bad' }, { r:3,d:0,p:3,t:'M',c:'bad' }, { r:3,d:0,p:4,t:'S',c:'bad' },
+  { r:5,d:0,p:1,t:'M',c:'good' }, { r:5,d:0,p:2,t:'E',c:'good' }, { r:5,d:0,p:3,t:'M',c:'good' }, { r:5,d:0,p:4,t:'IRE',c:'split' },
+  { r:4,d:0,p:6,t:'S',c:'good' }, { r:4,d:0,p:7,t:'S',c:'bad' },
+  { r:2,d:1,p:2,t:'K',c:'good' }, { r:3,d:1,p:1,t:'M',c:'bad' }, { r:3,d:1,p:2,t:'E',c:'bad' }, { r:5,d:1,p:1,t:'E',c:'good' },
+  { r:3,d:3,p:3,t:'E',c:'bad' }, { r:3,d:3,p:4,t:'S',c:'bad' }, { r:3,d:3,p:5,t:'S',c:'bad' }, { r:4,d:3,p:4,t:'S',c:'good' },
+  { r:5,d:3,p:1,t:'E',c:'good' }, { r:5,d:3,p:6,t:'M',c:'good' },
+  { r:3,d:4,p:1,t:'S',c:'bad' }, { r:3,d:4,p:2,t:'IRE',c:'bad' }, { r:3,d:4,p:3,t:'S',c:'bad' }, { r:3,d:4,p:4,t:'IRE',c:'bad' },
+  { r:4,d:4,p:5,t:'S',c:'bad' }, { r:4,d:4,p:7,t:'S',c:'bad' }, { r:5,d:4,p:4,t:'IRE',c:'split' }, { r:5,d:4,p:5,t:'CRE',c:'good' }
+];
+function showGeneratedTimetable(){
+  overlay.style.display = 'none';
+  body.querySelectorAll('.lesson').forEach(x => x.remove());
+  SAMPLE_LESSONS.forEach(l => {
+    const el = document.createElement('div');
+    el.className = 'lesson ' + l.c;
+    el.textContent = l.t;
+    el.style.gridColumn = (2 + (l.d * PERIODS) + (l.p - 1)) + ' / span 1';
+    el.style.gridRow = (l.r + 1) + ' / span 1';
+    body.appendChild(el);
+  });
+  const tray = document.getElementById('cardTray');
+  tray.innerHTML = [
+    ['M','bad'],['M','good'],['E','bad'],['E','bad'],['E','good'],['K','good'],
+    ['S','bad'],['S','bad'],['S','good'],['S','bad'],['CRE','good'],['IRE','bad'],['IRE','split']
+  ].map(c => '<div class="tray-card ' + c[1] + '">' + c[0] + '</div>').join('');
+  document.querySelector('.dock').classList.add('has-cards');
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('.gen-start')) return;
+  genDlg.classList.remove('show');
+  wizardDlg.classList.remove('show');
+  showGeneratedTimetable();
+  successDlg.classList.add('show');
+});
+
+const paperGrid = document.getElementById('paperGrid');
+paperGrid.innerHTML = '<div></div>' + ['1','2','LONG BREAK','3','LUNCH BREAK','4','5','6','7'].map(x => '<div>' + x + '<br/><small>8:00-8:45</small></div>').join('') +
+  ['Mo','Tu','We','Th','Fr'].map(d => '<div class="day">' + d + '</div>' + '<div></div>'.repeat(9)).join('');
+
+let printPage = 1;
+function updatePrintPage(delta){
+  printPage = Math.max(1, Math.min(8, printPage + delta));
+  document.querySelector('.report-select span').textContent = 'Page: ' + printPage + '/8';
+  document.querySelector('.paper h2').textContent = ['GRADE 1','GRADE 2','GRADE 3','GRADE 4','GRADE 5','GRADE 6','PREPRIMARY ONE','DAYCARE'][printPage - 1];
+  recordAction('Print preview page ' + printPage);
+}
+document.querySelectorAll('.printbar .print-btn').forEach(btn => btn.addEventListener('click', () => {
+  const text = btn.textContent.toLowerCase();
+  if(text.includes('previous')) updatePrintPage(-1);
+  else if(text.includes('next')) updatePrintPage(1);
+  else if(text.includes('print')) recordAction('Print command queued', btn);
+  else if(!text.includes('close')) recordAction(btn.textContent.trim().replace(/\s+/g, ' ') + ' opened', btn);
+}));
+document.querySelector('.report-select select').addEventListener('change', e => recordAction('Report changed to ' + e.target.value, e.target));
+document.querySelector('.view-sel').addEventListener('click', e => {
+  document.getElementById('viewPop').classList.toggle('show');
+  recordAction('View selector opened', e.currentTarget);
+});
+document.querySelectorAll('#viewPop button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#viewPop button').forEach(x => x.classList.toggle('active', x === btn));
+  document.querySelector('.view-sel .vt').textContent = btn.dataset.mode;
+  document.getElementById('viewPop').classList.remove('show');
+  showGeneratedTimetable();
+  recordAction('View changed to ' + btn.dataset.mode, btn);
+}));
+
+const FRAME_RANGES = [
+  [0,0,'wizard-basic','Wizard step 1','Basic school setup'],
+  [1,4,'wizard-questionnaire','Wizard schedule type','Questionnaire with answer columns and warning modal'],
+  [5,5,'wizard-basic','Wizard step 1','Return to basic setup'],
+  [6,7,'period-table','Bell periods table','Period list with start/end/length/print labels'],
+  [8,13,'period-edit','Period editor','Period modal, options, validation warning'],
+  [14,15,'period-table','Bell periods table','Period row selection and modal reopen'],
+  [16,21,'period-edit','Period editor','Period edits, dropdown presets and info modal'],
+  [22,28,'period-table','Bell periods table','Saved period labels reflected in table'],
+  [29,31,'wizard-basic','Wizard setup','Basic setup and schedule type'],
+  [32,34,'wizard-questionnaire','Wizard questionnaire','Large questionnaire screen with answer choices'],
+  [35,36,'entity-subjects','Subject manager','Empty subject list and object rail'],
+  [37,52,'entity-subjects-edit','Subject editor','Subject form and color/background edits'],
+  [53,53,'grid-empty','Main grid','Empty timetable grid after setup'],
+  [54,57,'school-settings','School settings','Basic settings with parameters/custom fields'],
+  [58,63,'entity-subjects-edit','Subject editor','More subject rows and color edits'],
+  [64,83,'entity-classes-edit','Class manager/editor','Class list, class form, teacher, color, groups'],
+  [84,99,'entity-rooms-edit','Classroom manager/editor','Room list, capacity, color and sharing'],
+  [100,103,'entity-teachers','Teacher manager','Teacher list and QASSIM creation'],
+  [104,106,'teacher-detail','Teacher details','Teacher lesson metadata form'],
+  [107,111,'bulk-lessons','Add lessons grid','Bulk lesson rows and validation warning'],
+  [112,117,'teacher-lessons','Teacher lessons','Lesson rows, delete confirmation, options popover'],
+  [118,121,'lesson-selector','Lesson selector','Two-pane selector for subject/class lessons'],
+  [122,127,'entity-teachers-edit','Teacher editor','FELIX setup and bulk lessons'],
+  [128,134,'lesson-selector','Lesson selector','Subject/class selection dialog and lesson rows'],
+  [135,143,'entity-teachers-edit','Teacher editor','More teacher lessons and warning modals'],
+  [144,150,'teacher-lessons','Religion teacher lessons','Religion teacher lesson list and editor'],
+  [151,167,'entity-teachers-edit','Teacher/class iterations','ANNET/FATUMA setup, warnings, manager updates'],
+  [168,179,'bulk-lessons','Bulk lesson entry','More teacher-subject-class-room assignments'],
+  [180,187,'constraints','Constraint settings','Consecutive lessons, gaps/windows and distribution settings'],
+  [188,193,'time-off','Time-off matrix','Availability matrix with checks/questions/blocked cells'],
+  [194,197,'lesson-selector','Lesson selector','Two-pane selector and return to manager'],
+  [198,205,'constraints','Class constraints','Class details and advanced constraints'],
+  [206,216,'divisions','Divisions/groups','Class divisions, group blocks, add group modals'],
+  [217,227,'teacher-lessons','Class lesson manager','Class lesson table and confirmation modal'],
+  [228,239,'time-off','Time off and cleanup','Availability and remove lesson confirmation'],
+  [240,241,'advanced-generation','Advanced generation constraints','Generator constraints options'],
+  [242,243,'grid-generated','Main timetable','Generated grid with card tray and tooltip'],
+  [244,248,'generation','Generation dialog/results','Generation settings, warnings, progress and success'],
+  [249,252,'verification','Verification panel','Bottom verification/results panel'],
+  [253,255,'testing','Timetable testing','Testing progress and success/info modal'],
+  [256,261,'generation','Generation dialog/results','Re-run generation and success/failure modal'],
+  [262,267,'verification','Grid verification','Generated grid and verification panel'],
+  [268,272,'relationships','Card relationships','Card relationships window and setup options'],
+  [273,287,'view-menu','View selector/context menu','View menu and empty/filled row modes'],
+  [288,293,'view-switching','View switching','Grid switches between row modes'],
+  [294,299,'print-preview','Print preview reports','Print toolbar and report dropdown variants'],
+  [300,307,'print-variants','Print layout variants','Break columns and report page variants'],
+  [308,319,'print-menu','Print report menu','Report dropdown selections'],
+  [320,331,'floating-preview','Floating previews','Floating report previews over grid']
+];
+const ASC_FRAMES = [];
+FRAME_RANGES.forEach(([start,end,kind,title,desc]) => {
+  for(let i=start;i<=end;i++) ASC_FRAMES.push({ id:i, kind, title, desc });
+});
+function frameLabel(id){ return String(id).padStart(3,'0'); }
+function verifyFrameMap(){
+  const ids = ASC_FRAMES.map(f => f.id);
+  const missing = [];
+  for(let i=0;i<332;i++) if(!ids.includes(i)) missing.push(i);
+  const dupes = ids.filter((id,i) => ids.indexOf(id) !== i);
+  window.ASC_FRAME_MAP_OK = ASC_FRAMES.length === 332 && missing.length === 0 && dupes.length === 0;
+  return { ok:window.ASC_FRAME_MAP_OK, count:ASC_FRAMES.length, missing, dupes };
+}
+let currentFrame = 0;
+function resetFrameState(){
+  document.querySelectorAll('.dlg-shroud.show').forEach(x => x.classList.remove('show'));
+  document.body.classList.remove('preview-mode','show-verify');
+  document.getElementById('viewPop').classList.remove('show');
+}
+function setViewMode(mode){
+  document.querySelector('.view-sel .vt').textContent = mode;
+  document.querySelectorAll('#viewPop button').forEach(x => x.classList.toggle('active', x.dataset.mode === mode));
+}
+function openEntityFrame(kind, edit){
+  const map = { 'entity-subjects':'subjects','entity-subjects-edit':'subjects','entity-classes-edit':'classes','entity-rooms-edit':'rooms','entity-teachers':'teachers','entity-teachers-edit':'teachers','teacher-detail':'teachers','teacher-lessons':'teachers' };
+  renderEntity(map[kind] || 'subjects');
+  entityDlg.classList.add('show');
+  if(edit) recordAction('Frame opened editor state for ' + ENTITY_META[map[kind] || 'subjects'].title);
+}
+function applyFrame(frame){
+  resetFrameState();
+  switch(frame.kind){
+    case 'wizard-basic': wizStep = 0; renderWizard(); wizardDlg.classList.add('show'); break;
+    case 'wizard-questionnaire': dlg.classList.add('show'); dlg.querySelector('[data-pane="schedule"]').click(); break;
+    case 'period-table': renderPeriods(); periodDlg.classList.add('show'); break;
+    case 'period-edit': renderPeriods(); periodDlg.classList.add('show'); editSelectedPeriod(); break;
+    case 'entity-subjects':
+    case 'entity-subjects-edit':
+    case 'entity-classes-edit':
+    case 'entity-rooms-edit':
+    case 'entity-teachers':
+    case 'entity-teachers-edit':
+    case 'teacher-detail':
+    case 'teacher-lessons': openEntityFrame(frame.kind, frame.kind.includes('edit') || frame.kind.includes('detail') || frame.kind.includes('lessons')); break;
+    case 'bulk-lessons': renderBulk(); lessonDlg.classList.add('show'); break;
+    case 'lesson-selector': renderSelector(); selectorDlg.classList.add('show'); break;
+    case 'constraints':
+    case 'advanced-generation': constraintsDlg.classList.add('show'); break;
+    case 'time-off': renderMatrix(); timeOffDlg.classList.add('show'); break;
+    case 'divisions': renderSelector(); selectorDlg.classList.add('show'); document.getElementById('selectorRight').innerHTML += '<div class="item sel"><span>G</span><span>Group A / Group B division</span><span>2</span></div>'; break;
+    case 'grid-empty': overlay.style.display = ''; document.querySelectorAll('.lesson').forEach(x => x.remove()); document.querySelector('.dock').classList.remove('has-cards'); break;
+    case 'grid-generated': showGeneratedTimetable(); break;
+    case 'generation': genDlg.classList.add('show'); break;
+    case 'verification': showGeneratedTimetable(); showVerification(); break;
+    case 'testing': showGeneratedTimetable(); testDlg.classList.add('show'); break;
+    case 'relationships': showGeneratedTimetable(); renderRelations(); relationsDlg.classList.add('show'); break;
+    case 'view-menu': showGeneratedTimetable(); document.getElementById('viewPop').classList.add('show'); break;
+    case 'view-switching': showGeneratedTimetable(); setViewMode(['Teachers','Subjects','Classrooms'][frame.id % 3]); break;
+    case 'print-preview':
+    case 'print-variants':
+    case 'print-menu':
+    case 'floating-preview': showGeneratedTimetable(); document.body.classList.add('preview-mode'); printPage = Math.min(8, Math.max(1, frame.id - 293)); updatePrintPage(0); break;
+    case 'school-settings': dlg.classList.add('show'); break;
+    default: showGeneratedTimetable();
+  }
+  recordAction('Applied frame ' + frameLabel(frame.id) + ': ' + frame.title);
+}
+function renderFrameBar(){
+  const f = ASC_FRAMES[currentFrame];
+  document.getElementById('frameId').textContent = 'Frame ' + frameLabel(f.id);
+  document.getElementById('frameTitle').textContent = f.title;
+  document.getElementById('frameDesc').textContent = f.desc;
+  document.getElementById('frameSelect').value = String(f.id);
+  document.getElementById('frameRefTitle').textContent = 'Source frame ' + frameLabel(f.id);
+  const refSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" fill="#f4f7fb"/><rect x="72" y="72" width="816" height="396" rx="22" fill="#fff" stroke="#d7dde8" stroke-width="2"/><text x="480" y="242" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="38" font-weight="700" fill="#243142">ASC ' + frameLabel(f.id) + '</text><text x="480" y="296" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="22" fill="#667085">' + f.title.replace(/[&<>"]/g, '') + '</text></svg>';
+  document.getElementById('frameRefImg').src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(refSvg);
+}
+document.getElementById('frameSelect').innerHTML = ASC_FRAMES.map(f => '<option value="' + f.id + '">' + frameLabel(f.id) + '</option>').join('');
+document.getElementById('framePrev').addEventListener('click', () => { currentFrame = Math.max(0, currentFrame - 1); renderFrameBar(); applyFrame(ASC_FRAMES[currentFrame]); });
+document.getElementById('frameNext').addEventListener('click', () => { currentFrame = Math.min(ASC_FRAMES.length - 1, currentFrame + 1); renderFrameBar(); applyFrame(ASC_FRAMES[currentFrame]); });
+document.getElementById('frameSelect').addEventListener('change', e => { currentFrame = ASC_FRAMES.findIndex(f => f.id === +e.target.value); renderFrameBar(); applyFrame(ASC_FRAMES[currentFrame]); });
+document.getElementById('frameApply').addEventListener('click', () => applyFrame(ASC_FRAMES[currentFrame]));
+document.getElementById('frameRefToggle').addEventListener('click', () => {
+  document.getElementById('frameRefBox').classList.toggle('show');
+  recordAction('Source reference toggled for frame ' + frameLabel(ASC_FRAMES[currentFrame].id));
+});
+document.getElementById('frameRefClose').addEventListener('click', () => document.getElementById('frameRefBox').classList.remove('show'));
+window.ASC_FRAMES = ASC_FRAMES;
+window.ASC_FRAME_VERIFY = verifyFrameMap;
+renderFrameBar();
+verifyFrameMap();
+document.addEventListener('click', e => {
+  const ctl = e.target.closest('button,.set-tool,.dock-obj,.view-sel,.q-opt,.cx-opt,.cn-opt,.cf-row');
+  if(!ctl) return;
+  if(ctl.dataset.action || ctl.dataset.entity || ctl.dataset.open) return;
+  if(ctl.closest('.mgr-toolbar') || ctl.closest('.printbar') || ctl.id === 'wizPrev' || ctl.id === 'wizNext') return;
+  recordAction('Command: ' + commandName(ctl), ctl);
+});
+
+/* Entity manager: one aSc-style structure for Subjects, Classes, Classrooms, Teachers and Relations */
+const ENTITY_META = {
+  subjects:{ title:'Subjects', icon:'fas fa-book', color:'c-blue', note:'Subject setup controls colors, weekly load, classroom needs and placement constraints.',
+    rows:[
+      ['Mathematics','MATH','7','Core subject','#22c55e'],
+      ['English','ENG','6','Language block','#f97316'],
+      ['Kiswahili','KIS','5','Language block','#0ea5e9'],
+      ['Science','SCI','5','Lab preferred','#16a34a'],
+      ['Social Studies','SST','4','Core subject','#6366f1'],
+      ['CRE','CRE','3','Humanities','#e11d48']
+    ]},
+  classes:{ title:'Classes', icon:'fas fa-users', color:'c-amber', note:'Classes group learners that share the same timetable and can be split for subject groups.',
+    rows:[
+      ['Grade 1','G1','32','Lower primary','#f59e0b'],
+      ['Grade 2','G2','30','Lower primary','#84cc16'],
+      ['Grade 3','G3','35','Lower primary','#06b6d4'],
+      ['Grade 4','G4','28','Upper primary','#8b5cf6'],
+      ['Grade 5','G5','31','Upper primary','#ef4444']
+    ]},
+  rooms:{ title:'Classrooms', icon:'fas fa-door-open', color:'c-teal', note:'Rooms define capacity, home classes and specialist spaces required by certain lessons.',
+    rows:[
+      ['Room 1','R1','40','Home room','#14b8a6'],
+      ['Room 2','R2','40','Home room','#22c55e'],
+      ['Science Lab','LAB','24','Science only','#0ea5e9'],
+      ['Library','LIB','30','Shared space','#a855f7'],
+      ['Hall','HALL','80','Assembly','#64748b']
+    ]},
+  teachers:{ title:'Teachers', icon:'fas fa-user-graduate', color:'c-purple', note:'Teacher setup captures contract load, subject assignments, time off and exhaustion windows.',
+    rows:[
+      ['A. Wanjiku','AW','28','Math, Science','#22c55e'],
+      ['B. Otieno','BO','26','English','#2563eb'],
+      ['C. Njeri','CN','24','Kiswahili, CRE','#f43f5e'],
+      ['D. Mwangi','DM','30','Social Studies','#f59e0b'],
+      ['E. Achieng','EA','22','Lower primary','#8b5cf6']
+    ]},
+  relations:{ title:'Relations', icon:'fas fa-circle-nodes', color:'c-blue', note:'Relations connect subjects, classes, teachers, groups and rooms into lessons the generator can place.',
+    rows:[
+      ['Grade 1 Mathematics','G1-MA','7','A. Wanjiku','#22c55e'],
+      ['Grade 2 English','G2-EN','6','B. Otieno','#2563eb'],
+      ['Grade 3 Kiswahili','G3-KI','5','C. Njeri','#f43f5e'],
+      ['Grade 4 Science','G4-SC','5','Science Lab','#0ea5e9'],
+      ['Grade 5 Social Studies','G5-SS','4','D. Mwangi','#f59e0b']
+    ]}
+};
+const mgrTitle = document.getElementById('mgrTitle');
+const mgrRail = document.getElementById('mgrRail');
+const mgrRows = document.getElementById('mgrRows');
+const mgrSearch = document.getElementById('mgrSearch');
+const mgrSideTitle = document.getElementById('mgrSideTitle');
+const mgrName = document.getElementById('mgrName');
+const mgrCode = document.getElementById('mgrCode');
+const mgrLoad = document.getElementById('mgrLoad');
+const mgrColor = document.getElementById('mgrColor');
+const mgrNote = document.getElementById('mgrNote');
+const mgrMini = document.getElementById('mgrMini');
+let activeEntity = 'subjects';
+function miniGrid(seed){
+  let html = '';
+  for(let r=0;r<5;r++){
+    html += '<div class="mgr-mini-row">';
+    for(let c=0;c<7;c++) html += '<span class="' + (((r * 7 + c + seed) % 5) ? 'on' : '') + '"></span>';
+    html += '</div>';
+  }
+  return html;
+}
+function selectMgrRow(i){
+  const meta = ENTITY_META[activeEntity];
+  const row = meta.rows[i] || meta.rows[0];
+  mgrRows.querySelectorAll('.mgr-row').forEach(x => x.classList.toggle('sel', +x.dataset.i === i));
+  mgrSideTitle.textContent = row[0];
+  mgrName.value = row[0];
+  mgrCode.value = row[1];
+  mgrLoad.value = row[2];
+  mgrColor.style.background = row[4];
+  mgrColor.textContent = row[0];
+  mgrMini.innerHTML = miniGrid(i);
+}
+function renderEntity(kind){
+  activeEntity = kind;
+  const meta = ENTITY_META[kind];
+  mgrTitle.textContent = meta.title;
+  mgrNote.textContent = meta.note;
+  mgrRail.innerHTML = Object.entries(ENTITY_META).map(([key,m]) =>
+    `<button class="mgr-rail-btn${key===kind?' active':''}" data-kind="${key}"><i class="${m.icon} ${m.color}"></i><span>${m.title}</span></button>`).join('');
+  const q = (mgrSearch.value || '').trim().toLowerCase();
+  const rows = meta.rows.map((r,i) => ({ r, i })).filter(x => !q || x.r.join(' ').toLowerCase().includes(q));
+  mgrRows.innerHTML = rows.map((x,pos) => {
+    const r = x.r;
+    return `<div class="mgr-row${pos===0?' sel':''}" data-i="${x.i}"><div><span class="sw" style="background:${r[4]}"></span></div><div>${r[0]}</div><div>${r[1]}</div><div>${r[2]}</div><div>${r[3]}</div></div>`;
+  }).join('');
+  mgrRail.querySelectorAll('.mgr-rail-btn').forEach(b => b.addEventListener('click', () => renderEntity(b.dataset.kind)));
+  mgrRows.querySelectorAll('.mgr-row').forEach(r => r.addEventListener('click', () => selectMgrRow(+r.dataset.i)));
+  selectMgrRow(rows.length ? rows[0].i : 0);
+  recordAction(meta.title + ' manager rendered');
+}
+document.querySelectorAll('[data-entity]').forEach(b => b.addEventListener('click', () => {
+  mgrSearch.value = '';
+  renderEntity(b.dataset.entity);
+  entityDlg.classList.add('show');
+  recordAction(ENTITY_META[b.dataset.entity].title + ' manager opened', b);
+}));
+mgrSearch.addEventListener('input', () => renderEntity(activeEntity));
+
+function selectedMgrIndex(){
+  const row = mgrRows.querySelector('.mgr-row.sel');
+  return row ? +row.dataset.i : 0;
+}
+document.querySelectorAll('.mgr-toolbar .set-btn').forEach(btn => btn.addEventListener('click', () => {
+  const meta = ENTITY_META[activeEntity];
+  const label = btn.textContent.trim().toLowerCase();
+  if(label.includes('add')){
+    const next = meta.rows.length + 1;
+    meta.rows.push(['New ' + meta.title.slice(0,-1) + ' ' + next, 'N' + next, '0', 'Draft', '#64748b']);
+    renderEntity(activeEntity);
+    selectMgrRow(meta.rows.length - 1);
+    recordAction('Added new ' + meta.title.toLowerCase());
+  } else if(label.includes('duplicate')){
+    const row = meta.rows[selectedMgrIndex()] || meta.rows[0];
+    meta.rows.push([row[0] + ' Copy', row[1] + '2', row[2], row[3], row[4]]);
+    renderEntity(activeEntity);
+    selectMgrRow(meta.rows.length - 1);
+    recordAction('Duplicated ' + row[0]);
+  } else if(label.includes('remove') && meta.rows.length > 1){
+    const removed = meta.rows.splice(selectedMgrIndex(), 1)[0];
+    renderEntity(activeEntity);
+    recordAction('Removed ' + removed[0]);
+  }
+}));
+
+/* Generation: complexity cards <-> slider stay in sync */
+const cxOpts = genDlg.querySelectorAll('.cx-opt');
+const cxSlider = document.getElementById('cxSlider');
+function setComplexity(i){
+  cxOpts.forEach(o => o.classList.toggle('sel', +o.dataset.cx === i));
+  cxSlider.value = i;
+}
+cxOpts.forEach(o => o.addEventListener('click', () => setComplexity(+o.dataset.cx)));
+cxSlider.addEventListener('input', e => setComplexity(+e.target.value));
+
+/* Generation: constraint mode (single choice) */
+genDlg.querySelectorAll('.cn-opt').forEach(o => o.addEventListener('click', () => {
+  genDlg.querySelectorAll('.cn-opt').forEach(x => x.classList.remove('sel'));
+  o.classList.add('sel');
+}));
+
+/* Parameters: a value field is editable only when its checkbox is on */
+paramsDlg.querySelectorAll('.prm-block .set-check.big input').forEach(cb => {
+  const val = cb.closest('.prm-block').querySelector('.prm-val');
+  if(val) cb.addEventListener('change', () => { val.disabled = !cb.checked; });
+});
+
+/* ── Custom fields: build the Name/Value table ── */
+const CF_FIELDS = [
+  ['Academic year','2026/2027'],
+  ['Name of the school','Joyland Schools'],
+  ['Address: street',''],
+  ['Address: city',''],
+  ['Registration name',''],
+  ['School code',''],
+  ['District',''],
+  ['Headmaster',''],
+  ['Valid from',''],
+  ['Valid to',''],
+  ['School logo','C:\\TimeTables\\designs\\general\\SchoolLogo_template.png']
+];
+const cfRows = document.getElementById('cfRows');
+const cfEditLabel = document.getElementById('cfEditLabel');
+const cfEditVal = document.getElementById('cfEditVal');
+cfRows.innerHTML = CF_FIELDS.map(([n,v],i) =>
+  `<div class="cf-row${i===0?' sel':''}" data-name="${n}" data-val="${v.replace(/"/g,'&quot;')}"><div>${n}</div><div>${v}</div></div>`).join('');
+cfRows.querySelectorAll('.cf-row').forEach(r => r.addEventListener('click', () => {
+  cfRows.querySelectorAll('.cf-row').forEach(x => x.classList.remove('sel'));
+  r.classList.add('sel');
+  cfEditLabel.textContent = r.dataset.name;
+  cfEditVal.value = r.dataset.val;
+}));
+
+/* ── Schedule type questionnaire ── */
+const ICON = {
+  book:'fas fa-book c-blue', board:'fas fa-chalkboard c-green', group:'fas fa-users c-blue',
+  list:'fas fa-list c-slate', bldg:'fas fa-building c-slate', cal:'far fa-calendar c-red',
+  grid:'fas fa-table-cells c-slate', gridP:'fas fa-table-cells c-purple',
+  gridG:'fas fa-table-cells c-green', gridO:'fas fa-table-cells c-amber'
+};
+const QUESTIONS = [
+  { ic:'book',  t:"Which word do you use in your school 'Course' or 'Subject'?", o:['Subject','Course','Not sure'], sel:0 },
+  { ic:'board', t:"Students are organized into classes (groups) that have the same (nearly the same) schedule. Like 6A, 603, 6.3, 6HT etc. Sometimes they are divided into groups.", o:['Yes','No','Not sure'], sel:0 },
+  { ic:'group', t:"Some or all students have individual schedule based on their course requests.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'list',  t:"We use Options: student can select one subject from 5 possible as Option A. But these 5 subjects are placed on the same period in the timetable.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'bldg',  t:"We have multiple buildings and teachers need to travel between them. Some breaks might not be long enough for the teacher to go to different building.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'cal',   t:"We have different schedules in different weeks.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'grid',  t:"We teach on more than 5 days (Saturdays or for example 8 day cycles).", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'gridP', t:"We have lessons that can be only in certain TERM, the software can even choose in which term the lesson can be placed.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'gridO', t:"Our teachers cannot teach more than a certain number of lessons consecutively.", o:['Yes','No','Not sure'], sel:0 },
+  { ic:'gridG', t:"We try to avoid gaps in teacher's schedules.", o:['Yes','No','Not sure'], sel:0 },
+  { ic:'gridG', t:"Student has to have same subject on the same period on each day.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'gridO', t:"Our students can have gaps in the schedule. They can go to library, study hall etc.", o:['Yes','No','Some/Not sure'], sel:1 },
+  { ic:'gridG', t:"Some older kids may come later to the school. For example they may come to 2nd period.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'gridG', t:"Some kids can start with 0th period - one hour before the regular school starts.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'gridP', t:"We have two shifts - some kids come in the morning, some in the afternoon.", o:['Yes','No','Not sure'], sel:1 },
+  { ic:'gridP', t:"If a student has 3 lessons per week - it is ok that he has 2 on one day and 1 on another. These 3 lessons do not need to be on three different days.", o:['Yes','No','Not sure'], sel:0 }
+];
+document.getElementById('qList').innerHTML = QUESTIONS.map((q,qi) => `
+  <div class="q-row">
+    <div class="q-ico"><i class="${ICON[q.ic]}"></i></div>
+    <div class="q-text">${q.t}</div>
+    <div class="q-opts" data-q="${qi}">
+      ${q.o.map((opt,oi) => `<span class="q-opt${oi===q.sel?' sel':''}">${opt}</span>`).join('')}
+    </div>
+  </div>`).join('');
+document.querySelectorAll('.q-opts').forEach(grp => grp.addEventListener('click', e => {
+  const opt = e.target.closest('.q-opt'); if(!opt) return;
+  grp.querySelectorAll('.q-opt').forEach(x => x.classList.remove('sel'));
+  opt.classList.add('sel');
+}));
+</script>
+</body>
+</html>

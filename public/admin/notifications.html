@@ -66,7 +66,7 @@
       <div>
         <div class="eyebrow">School-to-home communication</div>
         <h1 class="h1">Comms <em>· broadcasts</em></h1>
-        <div class="h-sub">Every announcement sent to parents, teachers and learners — track delivery and read receipts.</div>
+        <div class="h-sub">Every in-app announcement sent to parents, teachers and learners — track delivery and read receipts.</div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn" id="openInboxBtn"><i class="fas fa-inbox"></i>Inbox</button>
@@ -136,9 +136,9 @@
     <div class="field">
       <label class="field-label">Channels</label>
       <div class="chan-row" id="chanRow">
-        <div class="chan-card on" data-ch="in-app"><i class="fas fa-mobile-screen"></i><div class="chan-info"><div class="chan-name">In-app</div><div class="chan-meta">Push to portal &amp; mobile</div></div><div class="chan-check"></div></div>
-        <div class="chan-card" data-ch="sms"><i class="fas fa-comment-sms"></i><div class="chan-info"><div class="chan-name">SMS</div><div class="chan-meta">For phone-verified contacts</div></div><div class="chan-check"></div></div>
-        <div class="chan-card" data-ch="email"><i class="fas fa-envelope"></i><div class="chan-info"><div class="chan-name">Email</div><div class="chan-meta">For contacts with email</div></div><div class="chan-check"></div></div>
+        <div class="chan-card on" data-ch="in-app"><i class="fas fa-mobile-screen"></i><div class="chan-info"><div class="chan-name">In-app</div><div class="chan-meta">Delivered inside Daraja only</div></div><div class="chan-check"></div></div>
+        <div class="chan-card disabled" title="Provider not configured"><i class="fas fa-comment-sms"></i><div class="chan-info"><div class="chan-name">SMS</div><div class="chan-meta">Provider not configured</div></div><div class="chan-check"></div></div>
+        <div class="chan-card disabled" title="Provider not configured"><i class="fas fa-envelope"></i><div class="chan-info"><div class="chan-name">Email</div><div class="chan-meta">Provider not configured</div></div><div class="chan-check"></div></div>
         <div class="chan-card disabled" title="Coming soon"><i class="fab fa-whatsapp"></i><div class="chan-info"><div class="chan-name">WhatsApp</div><div class="chan-meta">Coming soon</div></div><div class="chan-check"></div></div>
       </div>
     </div>
@@ -165,7 +165,8 @@ async function api(path, opts={}){
   return j.data !== undefined ? j.data : j;
 }
 
-const state = { tab:'sent', sent:[], inbox:[], stats:null, classes:[], audience:'all-parents', channels:['in-app'], classId:null };
+const initialParams = new URLSearchParams(location.search);
+const state = { tab:'sent', sent:[], inbox:[], stats:null, classes:[], audience:'all-parents', channels:['in-app'], classId:null, recipients:null };
 
 function timeAgo(iso){
   if(!iso) return 'just now';
@@ -189,6 +190,12 @@ function typeIcon(t){
 
 function audienceLabel(raw){
   const v = String(raw || '').toLowerCase();
+  if(v.includes(',') && v.split(',').every(x => /^[a-z]+:\d+$/i.test(x.trim()))) return v.split(',').length + ' selected recipients';
+  if(/^[a-z]+:\d+$/i.test(v)){
+    const [role, id] = v.split(':');
+    return role.charAt(0).toUpperCase() + role.slice(1) + ' #' + id;
+  }
+  if(v === 'absent-today') return 'Parents of absent/late learners today';
   if(v === 'all-parents' || v === 'parents')   return 'All parents';
   if(v === 'all-teachers' || v === 'teachers') return 'All teachers';
   if(v === 'all-learners' || v === 'learners') return 'All learners';
@@ -275,9 +282,9 @@ function renderStats(){
     '</div>' +
     '<div style="padding-top:14px;border-top:1px solid var(--line);">' +
       '<div style="font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">By channel</div>' +
-      ['in-app','sms','email'].map(ch => {
+      ['in-app'].map(ch => {
         const v = Number(s.byChannel?.[ch] || 0);
-        const colour = ch === 'in-app' ? 'linear-gradient(90deg,#3b82f6,#2563eb)' : ch === 'sms' ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#f59e0b,#d97706)';
+        const colour = 'linear-gradient(90deg,#3b82f6,#2563eb)';
         return '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>' + (ch === 'in-app' ? 'In-app' : ch.toUpperCase()) + '</span><b style="font-family:var(--mono);">' + v + '%</b></div><div style="height:5px;background:var(--surface-2);border-radius:3px;"><div style="height:100%;width:' + v + '%;background:' + colour + ';border-radius:3px;"></div></div></div>';
       }).join('') +
     '</div>';
@@ -359,18 +366,39 @@ document.getElementById('openInboxBtn').addEventListener('click', () => {
 document.getElementById('newBroadcastBtn').addEventListener('click', openCompose);
 document.getElementById('composeFab').addEventListener('click', openCompose);
 
-function openCompose(){
+function setAudience(raw){
+  const value = String(raw || 'all-parents');
+  state.recipients = null;
+  state.classId = null;
+  let chipValue = value;
+  if(value.includes(',') || /^[a-z]+:\d+$/i.test(value)){
+    state.recipients = value;
+    state.audience = value;
+    chipValue = '';
+  } else if(value.startsWith('class:')){
+    const parts = value.split(':');
+    state.audience = 'class';
+    state.classId = parts[1] ? Number(parts[1]) : null;
+    chipValue = 'class';
+  } else {
+    state.audience = value;
+  }
+  document.querySelectorAll('#audRow .aud-chip').forEach(c => c.classList.toggle('on', chipValue && c.dataset.aud === chipValue));
+  const classSel = document.getElementById('audClass');
+  classSel.style.display = state.audience === 'class' ? '' : 'none';
+  classSel.value = state.classId || '';
+}
+function openCompose(opts={}){
   /* Reset compose state */
   state.audience = 'all-parents';
   state.classId  = null;
+  state.recipients = null;
   state.channels = ['in-app'];
-  document.querySelectorAll('#audRow .aud-chip').forEach(c => c.classList.toggle('on', c.dataset.aud === 'all-parents'));
-  document.getElementById('audClass').style.display = 'none';
-  document.getElementById('audClass').value = '';
+  setAudience(opts.recipients || opts.audience || 'all-parents');
   document.querySelectorAll('#chanRow .chan-card').forEach(c => c.classList.toggle('on', c.dataset.ch === 'in-app'));
-  document.getElementById('bcSubject').value = '';
-  document.getElementById('bcBody').value = '';
-  document.getElementById('bcCharCount').textContent = '0';
+  document.getElementById('bcSubject').value = opts.subject || '';
+  document.getElementById('bcBody').value = opts.body || '';
+  document.getElementById('bcCharCount').textContent = String((opts.body || '').length);
   refreshAudienceMeta();
   Joy.openSlide('composeSlide');
   setTimeout(() => document.getElementById('bcSubject').focus(), 100);
@@ -382,6 +410,7 @@ document.getElementById('audRow').addEventListener('click', e => {
   document.querySelectorAll('#audRow .aud-chip').forEach(c => c.classList.remove('on'));
   chip.classList.add('on');
   state.audience = chip.dataset.aud;
+  state.recipients = null;
   const classSel = document.getElementById('audClass');
   classSel.style.display = state.audience === 'class' ? '' : 'none';
   refreshAudienceMeta();
@@ -394,8 +423,8 @@ document.getElementById('audClass').addEventListener('change', e => {
 
 document.getElementById('chanRow').addEventListener('click', e => {
   const card = e.target.closest('.chan-card'); if(!card || card.classList.contains('disabled')) return;
-  card.classList.toggle('on');
-  state.channels = [...document.querySelectorAll('#chanRow .chan-card.on')].map(c => c.dataset.ch).filter(Boolean);
+  document.querySelectorAll('#chanRow .chan-card').forEach(c => c.classList.toggle('on', c.dataset.ch === 'in-app'));
+  state.channels = ['in-app'];
 });
 
 document.getElementById('bcBody').addEventListener('input', e => {
@@ -408,7 +437,7 @@ function refreshAudienceMeta(){
     host.innerHTML = '<b style="color:var(--warn);">Pick a class above.</b>';
     return;
   }
-  const label = audienceLabel(state.audience === 'class' ? 'class:' + state.classId : state.audience);
+  const label = audienceLabel(state.recipients || (state.audience === 'class' ? 'class:' + state.classId : state.audience));
   host.innerHTML = 'Sending to: <b>' + esc(label) + '</b>';
 }
 
@@ -420,7 +449,7 @@ document.getElementById('bcSendBtn').addEventListener('click', async () => {
   if(!state.channels.length){ Joy.toast('Choose at least one channel', { type:'warn' }); return; }
   if(state.audience === 'class' && !state.classId){ Joy.toast('Pick a class first', { type:'warn' }); return; }
 
-  const audiencePayload = state.audience === 'class' ? ('class:' + state.classId) : state.audience;
+  const audiencePayload = state.recipients || (state.audience === 'class' ? ('class:' + state.classId) : state.audience);
   const btn = document.getElementById('bcSendBtn');
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
   try {
@@ -442,6 +471,15 @@ document.getElementById('bcSendBtn').addEventListener('click', async () => {
     btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>Send now';
   }
 });
+async function applyInitialContext(){
+  if(!initialParams.has('compose')) return;
+  openCompose({
+    recipients: initialParams.get('recipients') || '',
+    audience: initialParams.get('audience') || '',
+    subject: initialParams.get('subject') || '',
+    body: initialParams.get('body') || ''
+  });
+}
 
 /* ─── Sent: delete; Inbox: mark-as-read on tap ───────────────── */
 document.getElementById('bcList').addEventListener('click', async e => {
@@ -450,7 +488,13 @@ document.getElementById('bcList').addEventListener('click', async e => {
 
   /* Delete on Sent */
   if(e.target.matches('.danger-link[data-act="delete"]')){
-    if(!confirm('Delete this broadcast?\n\nRecipients keep the message in their inbox, but it disappears from your Sent log.')) return;
+    const ok = await Joy.confirm({
+      title:'Delete sent broadcast?',
+      message:'Recipients keep the message in their inbox, but it disappears from your Sent log.',
+      actionLabel:'Delete broadcast',
+      tone:'danger'
+    });
+    if(!ok) return;
     try {
       await api(API + '/admin/' + id, { method:'DELETE' });
       Joy.toast('Broadcast deleted');
@@ -488,6 +532,7 @@ document.getElementById('bcList').addEventListener('click', async e => {
   await loadClasses();
   await Promise.all([loadSent(), loadInbox(), loadStats()]);
   renderTab();
+  await applyInitialContext();
 })();
 </script>
 </body>

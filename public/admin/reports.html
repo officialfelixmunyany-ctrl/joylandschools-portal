@@ -104,7 +104,14 @@
         <h1 class="h1">Reports</h1>
         <div class="h-sub">School-wide readiness for term reports. <b id="rSub">Computing…</b></div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+        <select class="input" id="pageTerm" style="min-width:230px;width:auto;" title="Report term">
+          <option value="">Loading terms...</option>
+        </select>
+        <select class="input" id="pageAssessment" style="width:auto;" title="Assessment">
+          <option value="midterm">Midterm</option>
+          <option value="endterm">Endterm</option>
+        </select>
         <a class="btn" href="/template-editor"><i class="fas fa-pen-ruler"></i>Edit templates</a>
         <button class="btn btn-primary" id="generateAllBtn"><i class="fas fa-bolt"></i>Generate report cards</button>
       </div>
@@ -205,7 +212,7 @@ async function api(path, opts={}){
   return j.data !== undefined ? j.data : j;
 }
 
-const state = { period:null, analysis:null, classes:[], templates:[], sessions:[], terms:[], commentStats:null, lastResult:null };
+const state = { period:null, analysis:null, classes:[], templates:[], sessions:[], terms:[], selectedTermId:null, selectedAssessment:'midterm', commentStats:null, lastResult:null };
 const slide = { type:null, downloadFilename:null, downloadLines:null };
 
 /* ─── Readiness rows ─────────────────────────────────────────── */
@@ -253,6 +260,7 @@ function renderReadinessRows(){
 
 function renderSummary(){
   const classes = state.analysis?.classes || [];
+  const term = selectedTerm();
   const totalClasses = classes.length;
   const ready = classes.filter(c => {
     const total = (c.subject_averages || []).length;
@@ -262,7 +270,7 @@ function renderSummary(){
   const subjectsNoMarks = classes.reduce((s, c) =>
     s + (c.subject_averages || []).filter(s => Number(s.entries || 0) === 0).length, 0);
   document.getElementById('sClasses').textContent = totalClasses;
-  document.getElementById('sClassesSub').textContent = state.period?.term?.name ? 'In ' + state.period.term.name : 'Active classes';
+  document.getElementById('sClassesSub').textContent = term?.name || term?.term_name ? 'In ' + (term.name || term.term_name) : 'Active classes';
   document.getElementById('sReady').innerHTML = ready + '<span class="unit">/ ' + totalClasses + '</span>';
   document.getElementById('sReadySub').textContent = ready === totalClasses && totalClasses ? 'All ready — proceed to generate' : (totalClasses - ready) + ' still need marks';
   document.getElementById('sPending').textContent = subjectsNoMarks;
@@ -271,6 +279,10 @@ function renderSummary(){
   const sessionName = state.period?.term?.session_name || '';
   const termName    = state.period?.term?.name || 'Current term';
   document.getElementById('rEyebrow').textContent = 'Joyland Schools · ' + (sessionName ? sessionName + ' · ' : '') + termName;
+  const pickedTerm = selectedTerm();
+  const pickedSession = pickedTerm?.session_name || '';
+  const pickedTermName = pickedTerm?.name || pickedTerm?.term_name || termName;
+  document.getElementById('rEyebrow').textContent = 'Joyland Schools · ' + (pickedSession ? pickedSession + ' · ' : '') + pickedTermName + ' · ' + (state.selectedAssessment === 'endterm' ? 'Endterm' : 'Midterm');
   document.getElementById('rSub').textContent = ready + ' of ' + totalClasses + ' classes ready · ' + subjectsNoMarks + ' subjects awaiting marks';
 }
 
@@ -292,6 +304,33 @@ function renderTemplates(){
 }
 
 /* ─── Report tiles ───────────────────────────────────────────── */
+function selectedTerm(){
+  return state.terms.find(t => String(t.id) === String(state.selectedTermId)) || state.period?.term || null;
+}
+
+function renderPageFilters(){
+  const termSel = document.getElementById('pageTerm');
+  const assSel = document.getElementById('pageAssessment');
+  if(termSel){
+    termSel.innerHTML = state.terms.length
+      ? state.terms.map(t => '<option value="' + t.id + '"' + (String(t.id) === String(state.selectedTermId) ? ' selected' : '') + '>' + esc((t.session_name ? t.session_name + ' · ' : '') + (t.term_name || t.name || ('Term ' + t.id))) + '</option>').join('')
+      : '<option value="">No terms found</option>';
+  }
+  if(assSel) assSel.value = state.selectedAssessment || 'midterm';
+}
+
+async function refreshAnalysis(){
+  if(!state.selectedTermId) return;
+  const params = new URLSearchParams();
+  params.set('term_id', state.selectedTermId);
+  params.set('stage', state.selectedAssessment || 'midterm');
+  state.analysis = await api(API + '/marks/analysis?' + params.toString()).catch(() => ({ classes:[] }));
+  renderPageFilters();
+  renderSummary();
+  renderReadinessRows();
+  renderTiles();
+}
+
 function renderTiles(){
   const classes = state.analysis?.classes || [];
   const ready = classes.filter(c => {
@@ -327,16 +366,17 @@ function pickerClassSelect(id='rsClass'){
   '</select>';
 }
 function pickerTermSelect(id='rsTerm'){
-  const cur = state.period?.term?.id;
+  const cur = state.selectedTermId || state.period?.term?.id;
   return '<select class="input" id="' + id + '">' +
     state.terms.map(t => '<option value="' + t.id + '"' + (String(t.id) === String(cur) ? ' selected' : '') + '>' + esc(t.session_name + ' · ' + t.term_name) + '</option>').join('') +
   '</select>';
 }
 
 function pickerAssessmentSelect(id='rsAssessment'){
+  const cur = state.selectedAssessment || 'midterm';
   return '<select class="input" id="' + id + '">' +
-    '<option value="midterm">Midterm</option>' +
-    '<option value="endterm">Endterm</option>' +
+    '<option value="midterm"' + (cur === 'midterm' ? ' selected' : '') + '>Midterm</option>' +
+    '<option value="endterm"' + (cur === 'endterm' ? ' selected' : '') + '>Endterm</option>' +
   '</select>';
 }
 function openReport(type, presetClassId=''){
@@ -636,15 +676,14 @@ document.getElementById('generateAllBtn').addEventListener('click', () => {
 /* ─── Boot ───────────────────────────────────────────────────── */
 async function load(){
   try {
-    const [period, analysis, templates, classes, sessions] = await Promise.all([
+    const [period, templates, classes, sessions] = await Promise.all([
       api(API + '/current-period').catch(() => ({})),
-      api(API + '/marks/analysis').catch(() => ({ classes:[] })),
       api(API + '/templates').catch(() => ([])),
       api(API + '/classes').catch(() => ([])),
       api(API + '/sessions').catch(() => ([]))
     ]);
     state.period    = period;
-    state.analysis  = analysis;
+    state.analysis  = { classes:[] };
     state.templates = Array.isArray(templates) ? templates : (templates?.templates || []);
     state.classes   = Array.isArray(classes) ? classes : [];
     state.sessions  = Array.isArray(sessions) ? sessions : [];
@@ -653,26 +692,36 @@ async function load(){
       .slice()
       .sort((a,b) => Number(b.year||0) - Number(a.year||0))
       .flatMap(s => (s.terms || []).map(t => ({ ...t, session_name: s.name || s.year, session_year: s.year })));
-    renderSummary();
-    renderReadinessRows();
-    renderTiles();
-    renderTemplates();
-    /* If we were deeplinked with ?term=X, prefer that term in pickers */
     const u = new URL(location.href);
     const presetTerm = u.searchParams.get('term');
-    if(presetTerm){
-      /* Will be honoured the next time openReport runs since pickerTermSelect reads state.period.term.id;
-         override that here so picker selects the deeplinked term */
-      const match = state.terms.find(t => String(t.id) === String(presetTerm));
-      if(match) state.period = { ...state.period, term: { ...match } };
-    }
+    const presetAssessment = (u.searchParams.get('assessment') || u.searchParams.get('stage') || period?.assessment || 'midterm').toLowerCase();
+    state.selectedTermId = presetTerm || period?.term?.id || state.terms[0]?.id || null;
+    state.selectedAssessment = presetAssessment === 'endterm' ? 'endterm' : 'midterm';
+    renderTemplates();
+    renderPageFilters();
+    await refreshAnalysis();
   } catch(e){
     Joy.toast("Couldn't load reports data", { type:'danger' });
     console.error(e);
   }
 }
 load();
+
+document.getElementById('pageTerm').addEventListener('change', async e => {
+  state.selectedTermId = e.target.value;
+  const url = new URL(location.href);
+  if(state.selectedTermId) url.searchParams.set('term', state.selectedTermId);
+  history.replaceState(null, '', url);
+  await refreshAnalysis();
+});
+
+document.getElementById('pageAssessment').addEventListener('change', async e => {
+  state.selectedAssessment = e.target.value === 'endterm' ? 'endterm' : 'midterm';
+  const url = new URL(location.href);
+  url.searchParams.set('assessment', state.selectedAssessment);
+  history.replaceState(null, '', url);
+  await refreshAnalysis();
+});
 </script>
 </body>
 </html>
-

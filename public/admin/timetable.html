@@ -2796,6 +2796,21 @@ async function renderSubstitutions(){
     /* Backend not yet enabled - keep whatever is in memory */
     state.subAbsences = state.subAbsences.filter(a => dateInRange(dStr, a.date_from, a.date_to));
   }
+  try {
+    const persistedSubs = await api(TT_API + '/substitutions?date=' + dStr);
+    state.subAssignments = {};
+    state.slots.forEach(s => { delete s.substitute_teacher_id; delete s.notified_at; delete s.parent_notified_at; });
+    (persistedSubs || []).forEach(sub => {
+      state.subAssignments[sub.slot_id] = sub.substitute_teacher_id || '';
+      const slot = state.slots.find(s => String(s.id) === String(sub.slot_id));
+      if(slot){
+        slot.substitute_teacher_id = sub.substitute_teacher_id;
+        slot.substitute_teacher_name = sub.substitute_teacher_name;
+        slot.notified_at = sub.notified_at;
+        slot.parent_notified_at = sub.parent_notified_at;
+      }
+    });
+  } catch(e){ /* substitutions remain in-memory only if server cannot provide them */ }
   document.getElementById('subAbsCount').textContent = state.subAbsences.length;
   document.getElementById('subTabCount').textContent = state.subAbsences.length;
 

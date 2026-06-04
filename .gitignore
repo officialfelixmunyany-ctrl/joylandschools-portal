@@ -1,4 +1,6 @@
 node_modules/
+__pycache__/
+*.py[cod]
 .env
 .env.*
 !.env.example
@@ -34,6 +36,7 @@ portal-print-check.pdf
 portal-print-check.png
 
 # Design mocks and QA screenshots
+tmp/
 public/mock-*.html
 public/app-qa-*.png
 

@@ -319,6 +319,10 @@ let classes = [];
 let filteredPeople = [];
 let counts = { all:0, learners:0, teachers:0, parents:0, admins:0, invites:0 };
 let currentPeriod = null;
+let contextApplied = false;
+let contextFilter = '';
+let contextRiskIds = new Set();
+const initialParams = new URLSearchParams(location.search);
 function roleChip(r){
   const map = { learner:['Learner','role-learner'], teacher:['Teacher','role-teacher'], parent:['Parent','role-parent'], admin:['Admin','role-admin'] };
   const v = map[r] || ['-',''];
@@ -373,15 +377,52 @@ function render(){
   const status = document.getElementById('statusFilter')?.value || '';
   filteredPeople = sortedRows(people.filter(p => {
     const tabOk = active === 'all' || (active === 'invites' ? p.status === 'pending' : p.role + 's' === active);
+    const contextOk = contextFilter !== 'at-risk' || (p.role === 'learner' && contextRiskIds.has(String(p.id)));
     const classOk = !className || p.className === className || p.ctx === className;
     const statusOk = !status || p.status === status;
     const qOk = !q || [p.name,p.sub,p.role,p.roleX,p.ctx,p.status,p.source?.email,p.source?.phone].join(' ').toLowerCase().includes(q);
-    return tabOk && classOk && statusOk && qOk;
+    return tabOk && contextOk && classOk && statusOk && qOk;
   }));
   tbody.innerHTML = filteredPeople.map(row).join('') || '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">No live database records match these filters.</td></tr>';
   const info = document.getElementById('pageInfo');
   if(info) info.innerHTML = filteredPeople.length + ' of ' + people.length + ' live records · <span id="selInfo" class="muted">' + (sel.size ? sel.size + ' selected' : 'none selected') + '</span>';
   document.getElementById('pageButtons').innerHTML = '';
+}
+function activateTab(tab){
+  const allowed = new Set(['all','learners','teachers','parents','admins','invites']);
+  if(!allowed.has(tab)) return false;
+  document.querySelectorAll('.tab-chip').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
+  return true;
+}
+async function loadAtRiskContext(){
+  contextFilter = 'at-risk';
+  contextRiskIds = new Set();
+  try{
+    const data = await api(API + '/marks/analysis');
+    (data.classes || []).forEach(c => (c.needing_support || []).forEach(l => {
+      if(l.id != null) contextRiskIds.add(String(l.id));
+    }));
+  }catch(err){
+    Joy.toast("Couldn't load at-risk learners", { type:'warn' });
+  }
+}
+async function applyInitialContext(){
+  if(contextApplied) return;
+  contextApplied = true;
+  const tab = initialParams.get('tab');
+  if(tab) activateTab(tab);
+  if(initialParams.get('filter') === 'at-risk'){
+    await loadAtRiskContext();
+    activateTab('learners');
+  }
+  render(); clearSel();
+  const learnerId = initialParams.get('learner');
+  if(learnerId){
+    const p = people.find(x => x.role === 'learner' && String(x.id) === String(learnerId));
+    if(p) await openProfile(p);
+    else Joy.toast('Learner not found in live records', { type:'warn' });
+  }
+  if(initialParams.has('add')) openAddSlide();
 }
 async function loadPeople(){
   tbody.innerHTML = '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">Loading people...</td></tr>';
@@ -406,6 +447,7 @@ async function loadPeople(){
     };
     people = learners.map(mapLearner).concat(teachers.map(mapTeacher), parents.map(mapParent), admins.map(mapAdmin));
     updateCounts(); render(); clearSel();
+    await applyInitialContext();
   }catch(err){ Joy.toast("Couldn't load people", {type:'danger'}); console.error(err); }
 }
 function toggleRow(key, el){ if(sel.has(key)){ sel.delete(key); el.classList.remove('on'); el.closest('tr').classList.remove('selected'); } else { sel.add(key); el.classList.add('on'); el.closest('tr').classList.add('selected'); } updateSel(); }

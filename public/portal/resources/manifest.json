@@ -1,0 +1,11 @@
+{
+  "name": "Civicom Learning Portal",
+  "short_name": "Civicom Learn",
+  "description": "Browse Kenyan notes, past papers, schemes, revision and curriculum resources for learners and teachers.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fb",
+  "theme_color": "#174ea6",
+  "icons": []
+}

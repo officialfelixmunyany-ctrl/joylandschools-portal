@@ -218,7 +218,13 @@ body.addEventListener('click', async e => {
   if(!tr) return;
   if(btn?.dataset.act === 'delete'){
     e.stopPropagation();
-    if(!confirm('Delete this component permanently?\n\nNote: any marks scored under this component are also removed.')) return;
+    const ok = await Joy.confirm({
+      title:'Delete assessment component?',
+      message:'This permanently removes the component and any marks scored under it.',
+      actionLabel:'Delete component',
+      tone:'danger'
+    });
+    if(!ok) return;
     try {
       await api(API + '/assessment-components/' + tr.dataset.id, { method:'DELETE' });
       Joy.toast('Component deleted');

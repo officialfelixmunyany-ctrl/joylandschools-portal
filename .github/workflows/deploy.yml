@@ -23,9 +23,8 @@ jobs:
             cd ~/portal
             git fetch origin main
             git reset --hard origin/main
-            npm install
-            node --check server.js
-            node --check database.js
-            for f in routes/*.js; do node --check "$f"; done
-            pm2 restart joyland-portal || pm2 start server.js --name joyland-portal
+            python3 -m pip install -r requirements.txt
+            PYTHONDONTWRITEBYTECODE=1 python3 scripts/check_python.py
+            pm2 delete joyland-portal || true
+            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" APP_ENV=production pm2 start py_backend.py --name joyland-portal --interpreter python3
             pm2 save

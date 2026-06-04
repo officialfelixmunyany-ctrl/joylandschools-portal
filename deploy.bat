@@ -7,10 +7,11 @@ set "VM_HOST=136.112.61.134"
 set "VM_USER=official_felixmunyany"
 set "VM_KEY=%USERPROFILE%\.ssh\joyland_github_actions"
 set "VM_DIR=~/portal"
+set "LIVE_URL=https://daraja.civicom.org"
 
 echo.
 echo ============================================================
-echo  JOYLAND PORTAL DEPLOY
+echo  DARAJA PYTHON PORTAL DEPLOY
 echo ============================================================
 echo.
 
@@ -43,7 +44,7 @@ if defined HAS_CHANGES (
   git status --short
   echo.
   set /p COMMIT_MSG=Commit message: 
-  if "!COMMIT_MSG!"=="" set "COMMIT_MSG=Update portal"
+  if "!COMMIT_MSG!"=="" set "COMMIT_MSG=Move backend to Python"
 
   echo.
   echo [1/4] Committing local changes...
@@ -69,7 +70,7 @@ if errorlevel 1 (
 
 echo.
 echo [3/4] Updating the Google Cloud VM...
-ssh -i "%VM_KEY%" -o IdentitiesOnly=yes %VM_USER%@%VM_HOST% "cd %VM_DIR% && git pull && npm install && node --check server.js && node --check database.js && for f in routes/*.js; do node --check $f; done && pm2 restart joyland-portal"
+ssh -i "%VM_KEY%" -o IdentitiesOnly=yes %VM_USER%@%VM_HOST% "cd %VM_DIR% && git pull && python3 -m pip install -r requirements.txt && python3 scripts/check_python.py && pm2 restart joyland-portal --interpreter python3 -- py_backend.py"
 if errorlevel 1 (
   echo [ERROR] VM deploy failed.
   pause
@@ -80,8 +81,7 @@ echo.
 echo [4/4] Done.
 echo.
 echo Live portal:
-echo   http://136.112.61.134
-echo   http://136.112.61.134/admin
-echo   http://136.112.61.134/app/
+echo   %LIVE_URL%
+echo   %LIVE_URL%/app/
 echo.
 pause

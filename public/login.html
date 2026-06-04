@@ -121,7 +121,7 @@ body{min-height:100vh;display:flex;align-items:center;justify-content:center;fon
         <label>LOGIN ID</label>
         <div class="input-wrap">
           <i class="fas fa-user"></i>
-          <input type="text" id="p-identifier" placeholder="Enter your login ID" autocomplete="username"/>
+          <input type="text" id="p-identifier" placeholder="Example: JS-0245 or JS-STF-0001" autocomplete="username"/>
         </div>
       </div>
       <div class="form-group">
@@ -141,7 +141,7 @@ body{min-height:100vh;display:flex;align-items:center;justify-content:center;fon
         <label>LOGIN ID</label>
         <div class="input-wrap">
           <i class="fas fa-user"></i>
-          <input type="text" id="t-identifier" placeholder="Enter your login ID"/>
+          <input type="text" id="t-identifier" placeholder="Example: JS-0245 or JS-STF-0001"/>
         </div>
       </div>
       <div class="form-group">
@@ -193,7 +193,7 @@ async function doLogin() {
   if (!identifier || !password) return showError('Please fill in all fields');
   setLoading('btn-login', true);
   try {
-    const r = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier,password})});
+    const r = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier,password,school_slug:tenantSlug()})});
     const d = await r.json();
     if (d.success) { window.location.href = d.redirect; }
     else { showError(d.message || 'Login failed'); setLoading('btn-login',false); }
@@ -207,7 +207,7 @@ async function doTempLogin() {
   if (!identifier || !temp_code) return showError('Please fill in all fields');
   setLoading('btn-temp', true);
   try {
-    const r = await fetch('/api/auth/temp-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier,temp_code})});
+    const r = await fetch('/api/auth/temp-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier,temp_code,school_slug:tenantSlug()})});
     const d = await r.json();
     if (d.success) { window.location.href = d.redirect; }
     else { showError(d.message || 'Invalid code'); setLoading('btn-temp',false); }
@@ -215,6 +215,26 @@ async function doTempLogin() {
 }
 
 document.addEventListener('keydown', e => { if (e.key==='Enter') { const s = document.getElementById('section-password').classList.contains('active'); s ? doLogin() : doTempLogin(); }});
+
+function tenantSlug(){
+  const first = location.pathname.split('/').filter(Boolean)[0] || '';
+  return first && !['login','admin','app','school'].includes(first) ? first : '';
+}
+
+async function loadSchoolBrand(){
+  try{
+    const r = await fetch('/api/school-info', { credentials:'include' });
+    const j = await r.json();
+    const s = j.data || {};
+    const name = s.school_name || 'School Portal';
+    document.title = name + ' - Login';
+    const parts = name.split(/\s+/);
+    document.querySelector('.school-name').innerHTML = parts.length > 1 ? parts.slice(0,-1).join(' ') + '<br><span>' + parts.slice(-1) + '</span>' : name;
+    document.querySelector('.motto').textContent = s.school_motto || 'School Portal';
+    document.querySelector('.card p:last-child').innerHTML = '<i class="fas fa-shield-alt" style="color:var(--gold);margin-right:4px;"></i>Secured · ' + name + ' © 2026';
+  }catch(e){}
+}
+loadSchoolBrand();
 
 // Particles
 (function(){

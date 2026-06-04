@@ -251,6 +251,8 @@ const state = {
   trend14: [],
   daygate: null         // { is_school_day, reason, message, holiday, term, weekday }
 };
+const initialParams = new URLSearchParams(location.search);
+const initialClassId = initialParams.get('classId') || initialParams.get('class_id') || '';
 
 /* ─── School-day gate ───────────────────────────────────────── */
 async function loadDayGate(date){
@@ -734,6 +736,12 @@ async function boot(){
     sel.innerHTML =
       '<option value="">All classes (overview)</option>' +
       state.classes.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+    if(initialClassId && state.classes.some(c => String(c.id) === String(initialClassId))){
+      state.classId = initialClassId;
+      sel.value = state.classId;
+      document.querySelector('.tab[data-tab="mark"]')?.click();
+      await loadMarkData();
+    }
 
     updateDateLabel();
     await loadDayGate(state.date);

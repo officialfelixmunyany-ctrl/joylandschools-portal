@@ -481,7 +481,12 @@ document.getElementById('sessList').addEventListener('click', async e => {
   const tid = termRow?.dataset.tid;
 
   if(act === 'activate'){
-    if(!confirm('Activate this session?\n\nThe current active session will be deactivated. Marks and attendance will be scoped to the new active session.')) return;
+    const ok = await Joy.confirm({
+      title:'Activate school year?',
+      message:'The current active school year will be deactivated. Assessment results and attendance will use the new active school year.',
+      actionLabel:'Activate school year'
+    });
+    if(!ok) return;
     try {
       await api(API + '/sessions/' + sid + '/activate', { method:'PATCH' });
       Joy.toast('Session activated');
@@ -490,7 +495,13 @@ document.getElementById('sessList').addEventListener('click', async e => {
   }
   else if(act === 'rename'){
     const session = state.sessions.find(x => String(x.id) === String(sid)); if(!session) return;
-    const newName = prompt('Rename session', session.name || '');
+    const newName = await Joy.input({
+      title:'Rename school year',
+      message:'Use a clear name that staff and external reviewers can understand.',
+      value:session.name || '',
+      placeholder:'School year name',
+      actionLabel:'Rename'
+    });
     if(newName == null) return;
     try {
       await api(API + '/sessions/' + sid, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ year: session.year, name: newName.trim() }) });
@@ -500,7 +511,13 @@ document.getElementById('sessList').addEventListener('click', async e => {
   }
   else if(act === 'delete-session'){
     const session = state.sessions.find(x => String(x.id) === String(sid)); if(!session) return;
-    if(!confirm('Delete "' + (session.name || session.year) + '" PERMANENTLY?\n\nThis removes the session and all its terms. Any marks or attendance tied to those terms will be orphaned. This is not reversible.')) return;
+    const ok = await Joy.confirm({
+      title:'Delete school year?',
+      message:'This removes "' + (session.name || session.year) + '" and all its terms. Assessment results or attendance tied to those terms may lose their school-year context. This cannot be undone.',
+      actionLabel:'Delete school year',
+      tone:'danger'
+    });
+    if(!ok) return;
     try {
       await api(API + '/sessions/' + sid, { method:'DELETE' });
       Joy.toast('Session deleted');
@@ -510,7 +527,13 @@ document.getElementById('sessList').addEventListener('click', async e => {
   else if(act === 'add-term'){
     const session = state.sessions.find(x => String(x.id) === String(sid)); if(!session) return;
     const nextNo = ((session.terms || []).reduce((m, t) => Math.max(m, Number(t.term_number) || 0), 0)) + 1;
-    const termName = prompt('Term name', 'Term ' + nextNo); if(termName == null) return;
+    const termName = await Joy.input({
+      title:'Add term',
+      message:'Name the term before setting its dates.',
+      value:'Term ' + nextNo,
+      placeholder:'Term name',
+      actionLabel:'Add term'
+    }); if(termName == null) return;
     /* Defaults: start date = today, end = +13 weeks */
     const today = new Date();
     const start = today.toISOString().slice(0,10);
@@ -555,7 +578,13 @@ document.getElementById('sessList').addEventListener('click', async e => {
   }
   else if(act === 'delete-term'){
     const term = state.sessions.flatMap(s => s.terms || []).find(t => String(t.id) === String(tid)); if(!term) return;
-    if(!confirm('Delete ' + (term.term_name || 'this term') + '?\n\nMarks and attendance tied to this term will be orphaned. This is not reversible.')) return;
+    const ok = await Joy.confirm({
+      title:'Delete term?',
+      message:'This removes ' + (term.term_name || 'this term') + '. Assessment results and attendance tied to it may lose their term context. This cannot be undone.',
+      actionLabel:'Delete term',
+      tone:'danger'
+    });
+    if(!ok) return;
     try {
       await api(API + '/terms/' + tid, { method:'DELETE' });
       Joy.toast('Term deleted');
@@ -627,7 +656,13 @@ document.getElementById('sessList').addEventListener('click', async e => {
     const termId = row.dataset.tid;
     const term = state.sessions.flatMap(s => s.terms || []).find(t => String(t.id) === String(termId));
     const hol = (term?.holidays || []).find(h => String(h.id) === String(hid));
-    if(!confirm('Delete "' + (hol?.name || 'this holiday') + '"?\n\nSchool-day counts and attendance gating for this term will update immediately.')) return;
+    const ok = await Joy.confirm({
+      title:'Delete holiday?',
+      message:'School-day counts and attendance rules for this term update immediately after deleting "' + (hol?.name || 'this holiday') + '".',
+      actionLabel:'Delete holiday',
+      tone:'danger'
+    });
+    if(!ok) return;
     try {
       await api(API + '/holidays/' + hid, { method:'DELETE' });
       Joy.toast('Holiday deleted');
@@ -700,7 +735,13 @@ document.getElementById('sessList').addEventListener('click', async e => {
     const eid = row.dataset.eid;
     const ownerSession = state.sessions.find(s => (s.between_holidays || []).some(ev => String(ev.id) === String(eid)));
     const ev = (ownerSession?.between_holidays || []).find(x => String(x.id) === String(eid));
-    if(!confirm('Delete "' + (ev?.title || 'this holiday') + '"?\n\nAttendance gating and timetable blocks for these dates will update immediately.')) return;
+    const ok = await Joy.confirm({
+      title:'Delete between-term holiday?',
+      message:'Attendance rules and timetable blocks for these dates update immediately after deleting "' + (ev?.title || 'this holiday') + '".',
+      actionLabel:'Delete holiday',
+      tone:'danger'
+    });
+    if(!ok) return;
     try {
       await api(API + '/calendar/events/' + eid, { method:'DELETE' });
       Joy.toast('Holiday deleted');
