@@ -26,5 +26,5 @@ jobs:
             python3 -m pip install -r requirements.txt
             PYTHONDONTWRITEBYTECODE=1 python3 scripts/check_python.py
             pm2 delete joyland-portal || true
-            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" APP_ENV=production pm2 start py_backend.py --name joyland-portal --interpreter python3
+            SESSION_SECRET="${{ secrets.SESSION_SECRET }}" RESOURCE_ADMIN_PASSWORD="${{ secrets.RESOURCE_ADMIN_PASSWORD }}" APP_ENV=production pm2 start py_backend.py --name joyland-portal --interpreter python3
             pm2 save

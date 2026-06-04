@@ -42,4 +42,4 @@ Do not delete or commit live database, upload, or secret files.
 
 ## Deployment Notes
 
-Set `APP_ENV=production` and provide a strong `SESSION_SECRET` or `DARAJA_SESSION_SECRET`. Production startup fails without a session secret so misconfigured deployments do not silently invalidate sessions on restart.
+Set `APP_ENV=production` and provide strong `SESSION_SECRET` and `RESOURCE_ADMIN_PASSWORD` values. Production startup fails without these secrets so misconfigured deployments do not silently start with weak credentials.
