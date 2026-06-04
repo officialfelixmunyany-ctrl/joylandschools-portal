@@ -8,9 +8,9 @@ function directFileUrl(resource) {
 }
 
 export function ResourceCard(resource, { saved = false, read = false } = {}) {
-  const audience = (Array.isArray(resource.audience) ? resource.audience : ['everyone'])
-    .map(audienceLabel)
-    .join(' + ');
+  const audienceData = resource.audience;
+  const audienceValues = Array.isArray(audienceData) ? audienceData : (audienceData ? [audienceData] : ['everyone']);
+  const audience = audienceValues.map(audienceLabel).join(' + ');
   const accessLabel = resource.accessLabel || (resource.protected ? 'Login required' : 'Free');
   const downloads = Number(resource.downloads_count ?? resource.downloads ?? 0);
   const rating = Number(resource.rating || 0);
@@ -25,13 +25,13 @@ export function ResourceCard(resource, { saved = false, read = false } = {}) {
         </button>
       </div>
 
-      <h3>${escapeHtml(resource.title)}</h3>
-      <p>${escapeHtml(resource.summary)}</p>
+      <h3>${escapeHtml(resource.title || 'Untitled Resource')}</h3>
+      <p>${escapeHtml(resource.summary || '')}</p>
 
       <dl class="resource-meta">
         <div><dt>Audience</dt><dd>${escapeHtml(audience)}</dd></div>
-        <div><dt>Level</dt><dd>${escapeHtml(resource.grade)}</dd></div>
-        <div><dt>Subject</dt><dd>${escapeHtml(resource.subject)}</dd></div>
+        <div><dt>Level</dt><dd>${escapeHtml(resource.grade || 'N/A')}</dd></div>
+        <div><dt>Subject</dt><dd>${escapeHtml(resource.subject || 'General')}</dd></div>
         <div><dt>Type</dt><dd>${escapeHtml(typeLabel(resource.type))}</dd></div>
         <div><dt>Downloads</dt><dd>${downloads.toLocaleString()}</dd></div>
         <div><dt>Rating</dt><dd>${rating ? `${rating.toFixed(1)}/5` : 'Not rated'}</dd></div>
@@ -39,7 +39,7 @@ export function ResourceCard(resource, { saved = false, read = false } = {}) {
       </dl>
 
       <div class="resource-card-bottom">
-        <span>${escapeHtml(resource.format)}${resource.file_size ? ` - ${fileSize(resource.file_size)}` : ''}${read ? ' - opened' : ''}</span>
+        <span>${escapeHtml(resource.format || '')}${resource.file_size ? ` - ${fileSize(resource.file_size)}` : ''}${read ? ' - opened' : ''}</span>
         ${directFileUrl(resource)
           ? `<a class="open-resource" href="${escapeHtml(directFileUrl(resource))}" target="_blank" rel="noopener" data-action="track" data-id="${resource.id}">${read ? 'Open again' : 'Open file'}</a>`
           : `<button class="open-resource" type="button" data-action="open" data-id="${resource.id}">${resource.protected ? 'View access' : 'Open Resource'}</button>`}
@@ -66,8 +66,9 @@ export function ResourceListItem(resource) {
 }
 
 export function typeLabel(type) {
+  if (!type) return 'Resource';
   return String(type)
-    .replaceAll('_', '-')
+    .replace(/_/g, '-')
     .split('-')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');

@@ -14,17 +14,17 @@
   --surface-3: #e9eef5;
 
   /* Ink */
-  --ink: #15202e;
+  --ink: #0f172a;
   --ink-soft: #334155;
-  --muted: #64748b;
+  --muted: #475569;
 
   /* Lines */
   --line: #e2e8f0;
   --line-strong: #cbd5e1;
 
   /* Brand (single accent) */
-  --brand: #1f5f9f;
-  --brand-strong: #174b82;
+  --brand: #134e8c;
+  --brand-strong: #0d3663;
   --brand-soft: #eaf1f8;
   --brand-tint: #f3f8fc;
 
@@ -41,14 +41,14 @@
   --file-generic: #475569;
 
   /* Elevation — soft, sparing */
-  --shadow-sm: 0 1px 2px rgba(15, 32, 56, 0.05);
-  --shadow-card: 0 1px 2px rgba(15, 32, 56, 0.06), 0 1px 3px rgba(15, 32, 56, 0.04);
-  --shadow-pop: 0 8px 24px rgba(15, 32, 56, 0.12);
+  --shadow-sm: 0 1px 2px rgba(15, 32, 56, 0.08);
+  --shadow-card: 0 1px 3px rgba(15, 32, 56, 0.12), 0 1px 2px rgba(15, 32, 56, 0.06);
+  --shadow-pop: 0 4px 12px rgba(15, 32, 56, 0.15);
   --shadow-modal: 0 24px 64px rgba(15, 32, 56, 0.22);
 
-  --radius-lg: 12px;
-  --radius-md: 9px;
-  --radius-sm: 6px;
+  --radius-lg: 6px;
+  --radius-md: 4px;
+  --radius-sm: 2px;
 
   --page-gutter: clamp(14px, 2.5vw, 28px);
 
@@ -652,7 +652,7 @@ h1, h2, h3, p { margin-top: 0; }
   margin: 16px 0;
 }
 .resource-meta div { border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface-2); padding: 9px; }
-.resource-meta dt { color: var(--muted); font-size: 0.68rem; text-transform: uppercase; font-weight: 700; margin: 0; }
+.resource-meta dt { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 700; margin: 0; }
 .resource-meta dd { margin: 3px 0 0; font-size: 0.85rem; font-weight: 600; }
 .resource-card-bottom { margin-top: auto; }
 .resource-card-bottom span { color: var(--muted); font-size: 0.82rem; }
