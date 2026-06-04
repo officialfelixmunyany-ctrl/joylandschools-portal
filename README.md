@@ -8,6 +8,17 @@ Daraja is a school portal served by a small Python HTTP backend against the loca
 - `pip install -r requirements.txt`
 - Node.js/npm only for Capacitor Android tooling
 
+## Get the Code
+
+Clone the repository:
+
+```powershell
+git clone https://github.com/felixmunyany/joyland-portal.git
+cd joyland-portal
+```
+
+GitHub also provides a ZIP download from the green **Code** button on the repository page. The ZIP contains the tracked source files from the selected branch.
+
 ## Local Development
 
 ```powershell
@@ -28,6 +39,10 @@ Open:
 python scripts/check_python.py
 npm test
 ```
+
+## Contributing
+
+Contributions are welcome through branches and pull requests. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and project rules.
 
 ## Runtime Data
 
