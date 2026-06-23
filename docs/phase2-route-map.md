@@ -139,7 +139,7 @@
 | `public/admin/people.html` | `POST` | `API + '/learners/import` | JSON body | static/navigation | **working** |
 | `public/admin/people.html` | `POST` | `API + '/learners/temp-codes` | JSON body | static/navigation | **working** |
 | `public/admin/people.html` | `POST` | `API + '/teachers/' + t.id + '/temp-code` | - | static/navigation | **working** |
-| `public/admin/report-card.html` | `GET` | `/app/report-template-renderer.js` | - | static/navigation | **broken** |
+| `public/admin/report-card.html` | `GET` | `/app/report-template-renderer.js` | - | static/navigation | **working** |
 | `public/admin/report-card.html` | `GET` | `/vendor/fontawesome/css/all.min.css` | - | static/navigation | **working** |
 | `public/admin/report-card.html` | `GET` | `https://fonts.googleapis.com` | - | static/navigation | **working** |
 | `public/admin/report-card.html` | `GET` | `https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap` | - | static/navigation | **working** |
@@ -210,10 +210,80 @@
 | `public/admin/timetable.html` | `GET` | `https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;700&display=swap` | - | static/navigation | **working** |
 | `public/admin/timetable.html` | `GET` | `https://fonts.gstatic.com` | - | static/navigation | **working** |
 | `public/admin/timetable.html` | `GET` | `path` | - | static/navigation | **working** |
-| `public/app/index.html` | `GET` | `assets/styles.css` | - | static/navigation | **working** |
-| `public/app/index.html` | `GET` | `manifest.json` | - | static/navigation | **working** |
-| `public/app/index.html` | `GET` | `src/main.js` | - | static/navigation | **working** |
+| `public/app/broadsheet-renderer.js` | `GET` | `${esc(school.school_logo)}` | - | static/navigation | **working** |
+| `public/app/daraja.js` | `DELETE` | `DELETE', '/api/teacher/bookings/' + id` | - | static/navigation | **working** |
+| `public/app/daraja.js` | `GET` | `${esc(c.portrait_path)}` | - | static/navigation | **working** |
+| `public/app/daraja.js` | `GET` | `${esc(p.portrait_path)}` | - | static/navigation | **working** |
+| `public/app/daraja.js` | `GET` | `${esc(s.school_logo)}` | - | static/navigation | **working** |
+| `public/app/daraja.js` | `GET` | `${esc(school.school_logo)}` | - | static/navigation | **working** |
+| `public/app/daraja.js` | `GET` | `/api/auth/me` | - | {authenticated, user} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/learner/comments` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/learner/marks` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/learner/summary` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/learner/timetable` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/notifications/inbox` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/notifications/unread-count` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/parent/children` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/parent/children/${c.id}/comments?assessment_type=${ParentApp.ctx.assessment}` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/parent/children/${c.id}/marks?assessment_type=${ParentApp.ctx.assessment}` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/parent/timetable` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/school-info` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/assessment-components` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/attendance` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/attendance/overview` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/bookings` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/broadsheet` | - | {success,data:{class,term,school,subjects,learners}} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/classes/` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/comments/suggestions` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/comments?class_id=${classId}&assessment_type=${a}` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/home` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/marks` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/marks?class_id=${classId}&subject_id=${subjectId}&assessment_type=${TeacherApp._ctx.assessment}` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/me` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/report-readiness` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/skills/config?class_id=${classId}&assessment_type=${a}` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/skills?class_id=${classId}&assessment_type=${a}` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/teaching` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/teaching-analytics` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/timetable` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `/api/teacher/timetable/free-slots` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `GET` | `path` | - | static/navigation | **working** |
+| `public/app/daraja.js` | `POST` | `/api/auth/login` | - | {success, role, name, redirect} | **working** |
+| `public/app/daraja.js` | `POST` | `/api/auth/logout` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `POST` | `/api/notifications/read/` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `POST` | `/api/teacher/attendance` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `POST` | `/api/teacher/bookings` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `POST` | `/api/teacher/comments` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `POST` | `/api/teacher/marks` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `POST` | `/api/teacher/skills` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `PUT` | `/api/learner/change-password` | - | {success,data|message} | **working** |
+| `public/app/daraja.js` | `PUT` | `/api/teacher/change-password` | - | {success,data|message} | **working** |
+| `public/app/index.html` | `GET` | `/app/daraja.css` | - | static/navigation | **working** |
+| `public/app/index.html` | `GET` | `/app/daraja.js` | - | static/navigation | **working** |
+| `public/app/index.html` | `GET` | `/app/manifest.json` | - | static/navigation | **working** |
+| `public/app/index.html` | `GET` | `/uploads/school/logo.jpg` | - | static/navigation | **working** |
+| `public/app/index.html` | `GET` | `/vendor/lucide/lucide.min.js` | - | static/navigation | **working** |
+| `public/app/offline.html` | `GET` | `/uploads/school/logo.jpg` | - | static/navigation | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `${escapeHtml(c.sig)}` | - | static/navigation | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `${escapeHtml(s.bg_image)}` | - | static/navigation | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `${escapeHtml(s.stamp_image)}` | - | static/navigation | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `${escapeHtml(school.logo)}` | - | static/navigation | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `${escapeHtml(src)}` | - | static/navigation | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `/api/admin/assessment-components?class_id=${encodeURIComponent(classId` | - | {success,data|message} | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `/api/admin/attendance/summary?${params.toString(` | - | {success,data|message} | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `/api/admin/marks?${params.toString(` | - | {success,data|message} | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `/api/admin/school-settings` | - | {success,data|message} | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `/api/admin/skills?${params.toString(` | - | {success,data|message} | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `/api/admin/templates/${encodeURIComponent(name` | - | {success,data|message} | **working** |
+| `public/app/report-template-renderer.js` | `GET` | `/template-editor.html` | - | static/navigation | **working** |
+| `public/app/school.html` | `GET` | `/app/daraja.css` | - | static/navigation | **working** |
+| `public/app/school.html` | `GET` | `/app/daraja.js` | - | static/navigation | **working** |
+| `public/app/school.html` | `GET` | `/app/manifest.json` | - | static/navigation | **working** |
+| `public/app/school.html` | `GET` | `/uploads/school/logo.jpg` | - | static/navigation | **working** |
+| `public/app/school.html` | `GET` | `/vendor/lucide/lucide.min.js` | - | static/navigation | **working** |
+| `public/app/sw.js` | `GET` | `event.request.url` | - | CSS asset | **working** |
 | `public/app/sw.js` | `PUT` | `event.request` | - | static/navigation | **working** |
+| `public/login.html` | `GET` | `/api/school-info` | - | {success,data|message} | **working** |
 | `public/login.html` | `GET` | `/vendor/fontawesome/css/all.min.css` | - | static/navigation | **working** |
 | `public/login.html` | `GET` | `https://fonts.googleapis.com` | - | static/navigation | **working** |
 | `public/login.html` | `GET` | `https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap` | - | static/navigation | **working** |

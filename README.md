@@ -1,5 +1,8 @@
 # Daraja / Joyland Portal
 
+> **New here? Read [PROJECT_GUIDE.md](PROJECT_GUIDE.md)** — it covers what's built,
+> how it fits together, what's left, and how to make changes safely.
+
 Daraja is a school portal served by a small Python HTTP backend against the local SQLite database in `data/joyland.db`. The frontend is static HTML/CSS/JS in `public/`, with the mobile app shell under `public/app/` and admin screens under `public/admin/`.
 
 ## Requirements

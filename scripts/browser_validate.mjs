@@ -184,12 +184,32 @@ async function main() {
 
     const base = `http://127.0.0.1:${appPort}`;
     await cdp.navigate(`${base}/`);
-    const loginOk = await cdp.eval(`Boolean(document.querySelector('#p-identifier') && document.querySelector('#p-password'))`);
-    if (!loginOk) {
+    const hubOk = await cdp.eval(`(() => {
+      const text = document.body?.innerText || '';
+      const links = [...document.querySelectorAll('a')].map(a => a.getAttribute('href'));
+      return document.title.includes('Joyland')
+        && text.includes('Joyland Schools')
+        && text.toLowerCase().includes('joyland prime academy')
+        && links.includes('/admin')
+        && links.includes('/app/index.html?signin=1')
+        && !/library|resources|find school|create portal|multi-school/i.test(text);
+    })()`);
+    if (!hubOk) {
       const pageState = await cdp.eval(`JSON.stringify({ url: location.href, title: document.title, text: document.body?.innerText?.slice(0, 240) || '' })`);
-      throw new Error(`login form did not render: ${pageState}`);
+      throw new Error(`Joyland access hub did not render: ${pageState}`);
     }
-    await cdp.eval(`document.querySelector('#p-identifier').value='ADM001'; document.querySelector('#p-password').value='admin123'; doLogin();`);
+    console.log('Joyland access hub: ok');
+
+    await cdp.navigate(`${base}/app/`);
+    const appLoginOk = await waitFor(() => cdp.eval(`Boolean(document.querySelector('#li-id') && document.querySelector('#li-secret') && !/library|resources|guest|find school|create portal|multi-school/i.test(document.body?.innerText || ''))`), 'role app login');
+    if (!appLoginOk) throw new Error('role app login did not render cleanly');
+    await assertNoProblems(cdp, 'role app login');
+    console.log('role app login: ok');
+
+    await cdp.navigate(`${base}/login`);
+    const loginOk = await waitFor(() => cdp.eval(`Boolean(document.querySelector('#p-identifier') && document.querySelector('#p-password'))`), 'admin login form');
+    if (!loginOk) throw new Error('admin login form did not render');
+    await cdp.eval(`document.querySelector('#p-identifier').value='JS-ADM-0001'; document.querySelector('#p-password').value='admin123'; doLogin();`);
     await waitFor(() => cdp.eval(`location.pathname.includes('/admin/')`), 'admin redirect');
     await assertNoProblems(cdp, 'login');
 

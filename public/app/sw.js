@@ -1,4 +1,4 @@
-const CACHE = 'daraja-shell-v10';
+const CACHE = 'daraja-shell-v12';
 const SHELL_ASSETS = [
   '/app/',
   '/app/index.html',
@@ -54,8 +54,8 @@ self.addEventListener('push', event => {
 
   event.waitUntil(self.registration.showNotification(data.title || 'Daraja', {
     body: data.body || '',
-    icon: '/uploads/school/logo.jpg',
-    badge: '/uploads/school/logo.jpg',
+    icon: '/uploads/joyland/school/logo.jpg',
+    badge: '/uploads/joyland/school/logo.jpg',
     tag: data.tag || 'daraja',
     renotify: true
   }));

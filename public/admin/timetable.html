@@ -1908,7 +1908,7 @@ document.getElementById('teachersSaveBtn')?.addEventListener('click', async () =
       ok++;
     } catch(e){ fail++; console.error(e); }
   }
-  if(ok && !fail) Joy.toast('Saved constraints for ' + cleared + ' teacher' + (ok===1?'':'s'));
+  if(ok && !fail) Joy.toast('Saved constraints for ' + ok + ' teacher' + (ok===1?'':'s'));
   else if(ok && fail) Joy.toast(ok + ' saved - ' + fail + ' failed', { type:'warn' });
   else Joy.toast("Couldn't save (backend not enabled?)", { type:'danger' });
   btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i>Save teacher constraints';

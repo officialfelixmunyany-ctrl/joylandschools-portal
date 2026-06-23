@@ -2,8 +2,7 @@
 """Daraja Python backend.
 
 This keeps the existing phone frontend in public/app and serves the same
-mobile-facing API contracts from Python against data/joyland.db. The public
-learning resource portal uses its own data/resource_database.db.
+mobile-facing API contracts from Python against data/joyland.db.
 """
 
 from __future__ import annotations
@@ -16,12 +15,10 @@ import mimetypes
 import os
 import re
 import secrets
-import smtplib
 import sqlite3
 import sys
 import time
 from datetime import datetime, timezone, timedelta
-from email.message import EmailMessage
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -31,24 +28,9 @@ from urllib.parse import parse_qs, unquote, urlparse
 ROOT = Path(__file__).resolve().parent
 PUBLIC_DIR = ROOT / "public"
 APP_DIR = PUBLIC_DIR / "app"
-# Learning resource library (portal surface) lives in its own portal folder,
-# kept separate from the lightweight app in APP_DIR.
-PORTAL_RES_DIR = PUBLIC_DIR / "portal" / "resources"
 DB_PATH = ROOT / "data" / "joyland.db"
-RESOURCE_DB_PATH = ROOT / "data" / "resource_database.db"
-RESOURCE_PORTAL_TABLES = (
-    "resources",
-    "resource_categories",
-    "resource_tags",
-    "resource_tag_links",
-    "resource_downloads",
-    "resource_reviews",
-    "resource_submissions",
-)
 SESSION_COOKIE = "joyland.sid"
 TENANT_COOKIE = "civicom.school"
-PLATFORM_COOKIE = "civicom.platform"
-RESOURCE_ADMIN_COOKIE = "civicom.resource_admin"
 SESSION_TTL = 8 * 60 * 60
 APP_ENV = (os.environ.get("APP_ENV") or os.environ.get("NODE_ENV") or "").lower()
 IS_PRODUCTION = APP_ENV in ("production", "prod")
@@ -58,16 +40,9 @@ if IS_PRODUCTION and not SECRET_SOURCE:
 SECRET = SECRET_SOURCE or secrets.token_urlsafe(48)
 SESSIONS: dict[str, dict] = {}
 LOGIN_ATTEMPTS: dict[str, list[float]] = {}
-REGISTRATION_ATTEMPTS: dict[str, list[float]] = {}
 LOGIN_WINDOW = 15 * 60
 LOGIN_LIMIT = 8
-REGISTRATION_LIMIT = 5
 CONN_SCHOOL: dict[int, int] = {}
-SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "schools@civicom.org")
-RESOURCE_ADMIN_USERNAME = os.environ.get("RESOURCE_ADMIN_USERNAME", "admin")
-RESOURCE_ADMIN_PASSWORD = os.environ.get("RESOURCE_ADMIN_PASSWORD", "")
-if IS_PRODUCTION and not RESOURCE_ADMIN_PASSWORD:
-    raise RuntimeError("RESOURCE_ADMIN_PASSWORD is required when APP_ENV/NODE_ENV is production.")
 
 try:
     import bcrypt  # type: ignore
@@ -86,18 +61,6 @@ def db(school_id: int | None = None) -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys=ON")
     ensure_phase2_tables(conn)
     CONN_SCHOOL[id(conn)] = int(school_id or 1)
-    return conn
-
-
-def resource_db() -> sqlite3.Connection:
-    RESOURCE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(RESOURCE_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA busy_timeout=5000")
-    conn.execute("PRAGMA foreign_keys=ON")
-    ensure_resource_portal_tables(conn, seed=False)
-    migrate_resource_tables_from_legacy_db(conn)
-    ensure_resource_portal_tables(conn)
     return conn
 
 
@@ -193,12 +156,6 @@ def public_asset_name(asset_type: str, mime: str) -> str:
     return f"{safe_type}.{ext}"
 
 
-def safe_upload_filename(value: str, fallback: str = "resource") -> str:
-    name = Path(clean(value)).name
-    name = re.sub(r"[^A-Za-z0-9_.-]+", "-", name).strip(".-")
-    return name[:120] or fallback
-
-
 def data_url_bytes(value: str) -> tuple[str, bytes]:
     image_data = clean(value)
     if "," not in image_data:
@@ -210,33 +167,9 @@ def data_url_bytes(value: str) -> tuple[str, bytes]:
     return match.group(1).lower(), base64.b64decode(encoded, validate=True)
 
 
-ALLOWED_RESOURCE_MIME_TYPES = {
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
-    "text/csv",
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-}
-
 
 def tenant_upload_dir(slug: str, *parts: str) -> Path:
     base = (PUBLIC_DIR / "uploads" / slugify_school(slug)).resolve()
-    path = base.joinpath(*[re.sub(r"[^A-Za-z0-9_.-]+", "_", clean(p)) for p in parts if clean(p)]).resolve()
-    if not str(path).startswith(str(base)):
-        raise ValueError("Invalid upload path")
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def global_upload_dir(*parts: str) -> Path:
-    base = (PUBLIC_DIR / "uploads" / "resources").resolve()
     path = base.joinpath(*[re.sub(r"[^A-Za-z0-9_.-]+", "_", clean(p)) for p in parts if clean(p)]).resolve()
     if not str(path).startswith(str(base)):
         raise ValueError("Invalid upload path")
@@ -272,7 +205,7 @@ TENANT_TABLES = {
     "bell_schedules", "timetable_settings", "timetable_rooms", "timetable_generations",
     "timetable_slots", "teacher_absences", "timetable_substitutions",
     "substitution_assignments", "lesson_bookings", "teacher_constraints",
-    "school_settings", "role_permissions", "resources", "device_tokens", "game_scores",
+    "school_settings", "role_permissions", "device_tokens", "game_scores",
     "report_comments", "sessions",
 }
 
@@ -281,152 +214,6 @@ def slugify_school(value: str) -> str:
     text = re.sub(r"[^a-z0-9-]+", "-", clean(value).lower())
     text = re.sub(r"-+", "-", text).strip("-")
     return text[:60] or "school"
-
-
-def slugify_resource(value: str) -> str:
-    text = re.sub(r"[^a-z0-9-]+", "-", clean(value).lower())
-    text = re.sub(r"-+", "-", text).strip("-")
-    return text[:90] or secrets.token_hex(4)
-
-
-def send_email(to_email: str, subject: str, body: str) -> bool:
-    host = clean(os.environ.get("SMTP_HOST"))
-    if not host or not clean(to_email):
-        return False
-    port = as_int(os.environ.get("SMTP_PORT"), 587) or 587
-    username = clean(os.environ.get("SMTP_USER"))
-    password = os.environ.get("SMTP_PASSWORD") or ""
-    from_email = clean(os.environ.get("SMTP_FROM")) or username or SUPPORT_EMAIL
-    use_tls = clean(os.environ.get("SMTP_STARTTLS") or "1").lower() not in ("0", "false", "no")
-
-    msg = EmailMessage()
-    msg["From"] = from_email
-    msg["To"] = to_email
-    msg["Subject"] = subject
-    msg.set_content(body)
-
-    try:
-        with smtplib.SMTP(host, port, timeout=10) as smtp:
-            if use_tls:
-                smtp.starttls()
-            if username and password:
-                smtp.login(username, password)
-            smtp.send_message(msg)
-        return True
-    except Exception as err:
-        print(f"[mail] Could not send email to {to_email}: {err}", file=sys.stderr)
-        return False
-
-
-def send_school_registration_email(to_email: str, *, school_name: str, school_code: str, owner_code: str, login_path: str, status: str) -> bool:
-    status_line = "approved and ready to open" if status == "approved" else "received and waiting for review"
-    body = f"""Hello,
-
-Your Civicom school portal request for {school_name} has been {status_line}.
-
-School code: {school_code}
-Owner code: {owner_code}
-Login page: {login_path}
-
-Keep this email for your school setup records. If you did not request this portal, contact {SUPPORT_EMAIL}.
-
-Civicom Schools
-{SUPPORT_EMAIL}
-"""
-    return send_email(to_email, f"Civicom school portal - {school_name}", body)
-
-
-def normalize_resource_type(value: str) -> str:
-    text = clean(value).lower().replace("-", "_").replace(" ", "_")
-    aliases = {
-        "pastpaper": "past_paper",
-        "past_papers": "past_paper",
-        "knec_past_papers": "past_paper",
-        "marking_schemes": "marking_scheme",
-        "markingscheme": "marking_scheme",
-        "marking_key": "marking_scheme",
-        "answer_key": "marking_scheme",
-        "county_mock": "mock",
-        "county_mocks": "mock",
-        "mocks": "mock",
-        "joint_exam": "mock",
-        "joint_exams": "mock",
-        "joint_mock": "mock",
-        "predictions": "prediction",
-        "prediction_paper": "prediction",
-        "prediction_papers": "prediction",
-        "termly_exam": "exam",
-        "termly_exams": "exam",
-        "end_term_exam": "exam",
-        "exams": "exam",
-        "topical": "topic_test",
-        "topical_question": "topic_test",
-        "topical_questions": "topic_test",
-        "topic_tests": "topic_test",
-        "revision_booklet": "revision",
-        "revision_booklets": "revision",
-        "booklet": "revision",
-        "setbook_guides": "setbook_guide",
-        "setbook": "setbook_guide",
-        "holiday_assignment": "assignment",
-        "holiday_assignments": "assignment",
-        "assignments": "assignment",
-        "lessonplan": "lesson_plan",
-        "lesson_plans": "lesson_plan",
-        "records_of_work": "record_of_work",
-        "record_of_work_covered": "record_of_work",
-        "curriculumdesign": "curriculum_design",
-        "syllabus": "curriculum_design",
-        "teacherguide": "teacher_guide",
-        "teacher_guides": "teacher_guide",
-        "tpad_tools": "tpad",
-        "appraisal": "tpad",
-        "learning_activities": "activity",
-        "activities": "activity",
-        "worksheets": "worksheet",
-    }
-    return aliases.get(text, text or "")
-
-
-def normalize_resource_level(value: str) -> str:
-    text = clean(value).lower().replace("-", "_").replace(" ", "_")
-    aliases = {
-        "cbc_primary": "primary",
-        "primary_school": "primary",
-        "junior_secondary": "junior_secondary",
-        "jss": "junior_secondary",
-        "secondary_844": "844",
-        "8_4_4": "844",
-        "form": "844",
-        "senior_secondary": "secondary",
-    }
-    return aliases.get(text, text)
-
-
-def infer_resource_level(grade: str, typ: str = "") -> str:
-    value = clean(grade).lower()
-    typ = normalize_resource_type(typ)
-    if typ in ("lesson_plan", "scheme", "teacher_guide", "curriculum_design"):
-        return "teacher"
-    if "grade" in value:
-        nums = [int(x) for x in re.findall(r"\d+", value)]
-        if nums and max(nums) <= 6:
-            return "primary"
-        if nums and 7 <= max(nums) <= 9:
-            return "junior_secondary"
-        if nums and max(nums) >= 10:
-            return "secondary"
-        return "cbc"
-    if "form" in value:
-        return "844"
-    return "everyone"
-
-
-def infer_resource_audience(typ: str) -> str:
-    typ = normalize_resource_type(typ)
-    if typ in ("lesson_plan", "scheme", "teacher_guide", "curriculum_design"):
-        return "teacher"
-    return "everyone"
 
 
 def table_columns(conn: sqlite3.Connection, name: str) -> set[str]:
@@ -443,61 +230,6 @@ def table_exists(conn: sqlite3.Connection, name: str) -> bool:
 def current_school_id_from_conn(conn: sqlite3.Connection) -> int:
     sid = CONN_SCHOOL.get(id(conn))
     return int(sid or 1)
-
-
-_RESOURCE_LEGACY_MIGRATED = False
-
-
-def quote_ident(name: str) -> str:
-    return '"' + str(name).replace('"', '""') + '"'
-
-
-def migrate_resource_tables_from_legacy_db(conn: sqlite3.Connection):
-    """Move the portal library out of joyland.db into data/resource_database.db once."""
-    global _RESOURCE_LEGACY_MIGRATED
-    if _RESOURCE_LEGACY_MIGRATED:
-        return
-    if not DB_PATH.exists() or DB_PATH.resolve() == RESOURCE_DB_PATH.resolve():
-        _RESOURCE_LEGACY_MIGRATED = True
-        return
-    if any(table_exists(conn, table) and scalar(conn, f"SELECT COUNT(*) FROM {quote_ident(table)}", (), 0) for table in RESOURCE_PORTAL_TABLES):
-        _RESOURCE_LEGACY_MIGRATED = True
-        return
-
-    legacy = sqlite3.connect(DB_PATH)
-    legacy.row_factory = sqlite3.Row
-    legacy.execute("PRAGMA busy_timeout=5000")
-    try:
-        if not table_exists(legacy, "resources") or not scalar(legacy, "SELECT COUNT(*) FROM resources", (), 0):
-            _RESOURCE_LEGACY_MIGRATED = True
-            return
-        conn.commit()
-        conn.execute("BEGIN IMMEDIATE")
-        for table in RESOURCE_PORTAL_TABLES:
-            if not table_exists(legacy, table) or not table_exists(conn, table):
-                continue
-            source_cols = [r["name"] for r in rows(legacy.execute(f"PRAGMA table_info({quote_ident(table)})"))]
-            dest_cols = [r["name"] for r in rows(conn.execute(f"PRAGMA table_info({quote_ident(table)})"))]
-            common_cols = [col for col in dest_cols if col in source_cols]
-            if not common_cols:
-                continue
-            qcols = ",".join(quote_ident(col) for col in common_cols)
-            placeholders = ",".join("?" for _ in common_cols)
-            source_rows = rows(legacy.execute(f"SELECT {qcols} FROM {quote_ident(table)}"))
-            if not source_rows:
-                continue
-            conn.executemany(
-                f"INSERT OR IGNORE INTO {quote_ident(table)} ({qcols}) VALUES ({placeholders})",
-                ([row[col] for col in common_cols] for row in source_rows),
-            )
-        conn.commit()
-        _RESOURCE_LEGACY_MIGRATED = True
-    except sqlite3.Error:
-        conn.rollback()
-        _RESOURCE_LEGACY_MIGRATED = False
-        raise
-    finally:
-        legacy.close()
 
 
 def tenant_clause(conn: sqlite3.Connection, table: str = "", alias: str = "") -> tuple[str, tuple]:
@@ -529,7 +261,7 @@ def joyland_school(conn: sqlite3.Connection) -> dict:
         return row
     conn.execute(
         """INSERT INTO schools(name, slug, school_code, email, phone, address, county, country, logo_url, status, created_at)
-           VALUES('JOYLAND SCHOOLS','joyland','JS','info@joylandschools.ac.ke','0700 000 000','P.O. Box 123','','Kenya','/uploads/school/logo.jpg','active',datetime('now'))"""
+           VALUES('JOYLAND SCHOOLS','joyland','JS','info@joylandschools.ac.ke','0700 000 000','P.O. Box 123','','Kenya','/uploads/joyland/school/logo.jpg','active',datetime('now'))"""
     )
     return one(conn.execute("SELECT * FROM schools WHERE slug='joyland'"))
 
@@ -565,24 +297,6 @@ def ensure_phase2_tables(conn: sqlite3.Connection):
         if col not in table_columns(conn, "schools"):
             conn.execute(f"ALTER TABLE schools ADD COLUMN {col} {spec}")
     conn.execute("UPDATE schools SET registration_status=COALESCE(registration_status, CASE WHEN status IN ('active','approved') THEN 'approved' ELSE status END), status=COALESCE(status,'active')")
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS platform_owners (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           email TEXT NOT NULL UNIQUE,
-           name TEXT,
-           password TEXT NOT NULL,
-           status TEXT DEFAULT 'active',
-           created_at TEXT DEFAULT (datetime('now')),
-           updated_at TEXT
-        )"""
-    )
-    platform_email = clean(os.environ.get("PLATFORM_OWNER_EMAIL")).lower()
-    platform_password = clean(os.environ.get("PLATFORM_OWNER_PASSWORD"))
-    if platform_email and platform_password and not one(conn.execute("SELECT id FROM platform_owners WHERE email=?", (platform_email,))):
-        conn.execute(
-            "INSERT INTO platform_owners(email,name,password,status,created_at) VALUES(?,?,?,?,datetime('now'))",
-            (platform_email, "Platform Owner", hash_password(platform_password), "active"),
-        )
     conn.execute(
         """CREATE TABLE IF NOT EXISTS tenant_audit_log (
            id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -768,450 +482,6 @@ def ensure_phase2_tables(conn: sqlite3.Connection):
                 conn.execute("INSERT OR IGNORE INTO school_role_permissions(school_id, role, permission) VALUES (?,?,?)", (joyland_id, role, perm))
 
 
-_RESOURCE_CHECK_RELAXED = False
-
-
-def relax_resources_type_check(conn: sqlite3.Connection):
-    """The original `resources` table pins `type` to 7 values via a CHECK constraint,
-    which rejects the expanded CBC/KCSE taxonomy (marking schemes, mocks, prediction,
-    records of work, TPAD, etc.) for both seeding and admin uploads. SQLite cannot ALTER
-    a CHECK, so rebuild the table once without it. Atomic and idempotent."""
-    global _RESOURCE_CHECK_RELAXED
-    if _RESOURCE_CHECK_RELAXED:
-        return
-    row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='resources'").fetchone()
-    if not row or not row[0]:
-        return
-    ddl = row[0]
-    has_type_check = re.search(r"\btype\b[^,\n]*\bCHECK\s*\(\s*type\s+IN\s*\(", ddl, re.IGNORECASE)
-    if not has_type_check:
-        _RESOURCE_CHECK_RELAXED = True
-        return
-    new_ddl = re.sub(r"\s+CHECK\s*\(\s*type\s+IN\s*\([^)]*\)\s*\)", "", ddl, count=1, flags=re.IGNORECASE)
-    new_ddl = re.sub(
-        r"(?is)^(\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?)\"?resources\"?",
-        r'\1"resources_new"',
-        new_ddl,
-        count=1,
-    )
-    cols = [r["name"] for r in rows(conn.execute("PRAGMA table_info(resources)"))]
-    collist = ",".join(f'"{c}"' for c in cols)
-    recreate_sql = [
-        r["sql"]
-        for r in rows(conn.execute(
-            """SELECT sql FROM sqlite_master
-               WHERE tbl_name='resources' AND type IN ('index','trigger') AND sql IS NOT NULL
-               ORDER BY type, name"""
-        ))
-    ]
-    foreign_keys_enabled = scalar(conn, "PRAGMA foreign_keys", default=1)
-    try:
-        conn.commit()  # close any implicit transaction so BEGIN is valid and FK pragma can change
-        conn.execute("PRAGMA foreign_keys=OFF")
-        conn.execute("BEGIN IMMEDIATE")
-        conn.execute("DROP TABLE IF EXISTS resources_new")
-        conn.execute(new_ddl)
-        conn.execute(f"INSERT INTO resources_new ({collist}) SELECT {collist} FROM resources")
-        conn.execute("DROP TABLE resources")
-        conn.execute("ALTER TABLE resources_new RENAME TO resources")
-        for sql in recreate_sql:
-            conn.execute(sql)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_resources_type ON resources(type, grade, subject)")
-        conn.commit()
-        _RESOURCE_CHECK_RELAXED = True
-    except sqlite3.Error as exc:
-        try:
-            conn.rollback()
-        except sqlite3.Error:
-            pass
-        _RESOURCE_CHECK_RELAXED = False
-        raise RuntimeError("Could not relax resources.type CHECK constraint") from exc
-    finally:
-        if foreign_keys_enabled:
-            conn.execute("PRAGMA foreign_keys=ON")
-
-
-def ensure_resource_portal_tables(conn: sqlite3.Connection, seed: bool = True):
-    """Resource portal schema. Kept out of core startup so the school app is detachable."""
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS resources (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           school_id INTEGER,
-           type TEXT,
-           title TEXT NOT NULL,
-           grade TEXT,
-           subject TEXT,
-           year INTEGER,
-           body_html TEXT,
-           file_path TEXT,
-           published INTEGER DEFAULT 1,
-           views INTEGER DEFAULT 0,
-           created_at TEXT DEFAULT (datetime('now')),
-           updated_at TEXT DEFAULT (datetime('now'))
-        )"""
-    )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS resource_categories (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           name TEXT NOT NULL UNIQUE,
-           slug TEXT NOT NULL UNIQUE,
-           description TEXT,
-           created_at TEXT DEFAULT (datetime('now'))
-        )"""
-    )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS resource_tags (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           name TEXT NOT NULL UNIQUE,
-           slug TEXT NOT NULL UNIQUE,
-           created_at TEXT DEFAULT (datetime('now'))
-        )"""
-    )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS resource_tag_links (
-           resource_id INTEGER NOT NULL,
-           tag_id INTEGER NOT NULL,
-           PRIMARY KEY(resource_id, tag_id)
-        )"""
-    )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS resource_downloads (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           resource_id INTEGER NOT NULL,
-           user_role TEXT,
-           user_id INTEGER,
-           ip TEXT,
-           created_at TEXT DEFAULT (datetime('now'))
-        )"""
-    )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS resource_reviews (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           resource_id INTEGER NOT NULL,
-           user_role TEXT,
-           user_id INTEGER,
-           rating INTEGER,
-           review_text TEXT,
-           status TEXT DEFAULT 'published',
-           created_at TEXT DEFAULT (datetime('now')),
-           updated_at TEXT
-        )"""
-    )
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS resource_submissions (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           title TEXT NOT NULL,
-           type TEXT,
-           grade TEXT,
-           subject TEXT,
-           level TEXT,
-           audience TEXT,
-           filename TEXT NOT NULL,
-           file_path TEXT NOT NULL,
-           file_size INTEGER,
-           mime_type TEXT,
-           contact TEXT,
-           note TEXT,
-           status TEXT DEFAULT 'pending',
-           reviewer_note TEXT,
-           reviewed_by INTEGER,
-           reviewed_at TEXT,
-           resource_id INTEGER,
-           ip TEXT,
-           created_at TEXT DEFAULT (datetime('now')),
-           updated_at TEXT DEFAULT (datetime('now'))
-        )"""
-    )
-    cols = table_columns(conn, "resources")
-    for col, spec in {
-        "category_id": "INTEGER",
-        "level": "TEXT",
-        "audience": "TEXT",
-        "premium": "INTEGER DEFAULT 0",
-        "is_featured": "INTEGER DEFAULT 0",
-        "is_verified": "INTEGER DEFAULT 0",
-        "downloads_count": "INTEGER DEFAULT 0",
-        "rating": "REAL DEFAULT 0",
-        "status": "TEXT DEFAULT 'published'",
-        "slug": "TEXT",
-        "thumbnail": "TEXT",
-        "mime_type": "TEXT",
-        "file_size": "INTEGER",
-        "visibility": "TEXT DEFAULT 'public'",
-        "created_by_school_id": "INTEGER",
-        "created_by_user_id": "INTEGER",
-    }.items():
-        if col not in cols:
-            conn.execute(f"ALTER TABLE resources ADD COLUMN {col} {spec}")
-    submission_cols = table_columns(conn, "resource_submissions")
-    if "resource_id" not in submission_cols:
-        conn.execute("ALTER TABLE resource_submissions ADD COLUMN resource_id INTEGER")
-    relax_resources_type_check(conn)
-    for r in rows(conn.execute("SELECT id,title,type,grade,file_path,published,level,audience,status,slug,visibility,created_by_school_id,file_size FROM resources")):
-        updates = {}
-        if not clean(r.get("level")):
-            updates["level"] = infer_resource_level(r.get("grade"), r.get("type"))
-        if not clean(r.get("audience")):
-            updates["audience"] = infer_resource_audience(r.get("type"))
-        if not clean(r.get("status")):
-            updates["status"] = "published" if int(r.get("published") or 0) else "draft"
-        if not clean(r.get("visibility")):
-            updates["visibility"] = "public"
-        if not clean(r.get("slug")):
-            updates["slug"] = f"{slugify_resource(r.get('title'))}-{r['id']}"
-        if not r.get("created_by_school_id"):
-            updates["created_by_school_id"] = r.get("school_id")
-        path_text = clean(r.get("file_path"))
-        if path_text.startswith("/uploads/joyland/resources/"):
-            updates["file_path"] = path_text.replace("/uploads/joyland/resources/", "/uploads/resources/", 1)
-        if path_text and not r.get("file_size"):
-            rel = path_text.lstrip("/")
-            fpath = (PUBLIC_DIR / rel).resolve()
-            if fpath.exists() and str(fpath).startswith(str(PUBLIC_DIR.resolve())):
-                updates["file_size"] = fpath.stat().st_size
-                updates["mime_type"] = mimetypes.guess_type(str(fpath))[0] or "application/octet-stream"
-        if updates:
-            assignments = ", ".join(f"{k}=?" for k in updates)
-            conn.execute(f"UPDATE resources SET {assignments} WHERE id=?", (*updates.values(), r["id"]))
-    if seed:
-        seed_resource_library(conn)
-        seed_resource_activity(conn)
-
-
-_RESOURCE_SEED_DONE = False
-_RESOURCE_ACTIVITY_SEEDED = False
-
-
-def _seed_mime(typ: str) -> str:
-    docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    if typ in ("scheme", "lesson_plan", "record_of_work", "curriculum_design", "teacher_guide", "tpad"):
-        return docx
-    if typ in ("notes", "quiz"):
-        return ""  # read-online
-    if typ == "video":
-        return "video/mp4"
-    return "application/pdf"
-
-
-def _seed_body(typ: str, title: str) -> str:
-    blurb = {
-        "past_paper": "KNEC-style past paper for focused practice. Open the marking scheme alongside to self-mark.",
-        "marking_scheme": "Marking scheme with expected answers and mark allocation. Use it to score practice papers.",
-        "mock": "County / joint examination paper used for KCSE preparation. Sit it under timed conditions.",
-        "prediction": "Prediction paper for the coming exam season, built from recent trends and topical weighting.",
-        "exam": "Termly examination paper. Use as an opener, mid-term or end-term assessment.",
-        "topic_test": "Topical questions grouped by topic for targeted revision and remedial work.",
-        "revision": "Revision booklet with summaries and practice questions for quick review.",
-        "setbook_guide": "Set book guide: summary, themes, characters and sample essay questions.",
-        "assignment": "Holiday assignment to keep learners engaged between terms.",
-        "notes": "Learning notes with key ideas, worked examples and self-check questions.",
-        "scheme": "Scheme of work aligned to the term, with weeks, lessons and references.",
-        "lesson_plan": "Ready-to-use lesson plan with objectives, activities and assessment.",
-        "record_of_work": "Record of work covered template for tracking syllabus coverage.",
-        "curriculum_design": "KICD curriculum design with strands, sub-strands and learning outcomes.",
-        "teacher_guide": "Teacher guide with subject content, methodology and assessment tips.",
-        "assessment": "CBC assessment rubric / CBA tool with performance levels.",
-        "tpad": "TPAD appraisal and lesson-observation tool for TSC teachers.",
-        "worksheet": "Printable worksheet for classwork and practice.",
-        "activity": "Practical learning activity for hands-on, competency-based learning.",
-        "quiz": "Short self-check quiz for quick revision and learner feedback.",
-        "video": "Lesson video resource for guided review before or after class.",
-    }.get(typ, "Open this resource to read more.")
-    return f"<h2>{escape_html_text(title)}</h2><p>{blurb}</p>"
-
-
-def escape_html_text(value: str) -> str:
-    return (clean(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
-
-
-def build_seed_records() -> list[dict]:
-    """A realistic CBC + KCSE demo library covering the full portal taxonomy."""
-    recs: list[dict] = []
-
-    def add(typ, title, subject, grade, level, *, year=None, audience="everyone", featured=0, verified=1, downloads=0, rating=0):
-        # Titles are unique across the set, so a title-based slug is collision-free.
-        key = f"lib-{slugify_resource(title)}"
-        recs.append({
-            "type": typ, "title": title, "subject": subject or "General", "grade": grade or "General",
-            "level": level, "year": year, "audience": audience, "slug": key,
-            "mime": _seed_mime(typ), "body": _seed_body(typ, title),
-            "downloads": downloads, "rating": rating, "verified": verified, "featured": featured,
-        })
-
-    kcse_core = ["Mathematics", "English", "Kiswahili", "Biology", "Chemistry", "Physics"]
-    kcse_all = kcse_core + ["Geography", "History", "Business Studies", "CRE", "Agriculture", "Computer Studies"]
-
-    # KCSE (Form 1-4) notes
-    for s in kcse_all:
-        add("notes", f"KCSE {s} Form 4 Notes", s, "Form 4", "844", downloads=420, rating=4.6, featured=1 if s in ("Biology", "Mathematics") else 0)
-    for s in kcse_core:
-        add("notes", f"KCSE {s} Form 3 Notes", s, "Form 3", "844", downloads=260, rating=4.4)
-
-    # KCSE past papers + paired marking schemes
-    for s in kcse_core:
-        for y in (2024, 2023, 2022):
-            add("past_paper", f"{y} KCSE {s} Past Paper", s, "Form 4", "844", year=y, downloads=1100, rating=4.7)
-            add("marking_scheme", f"{y} KCSE {s} Marking Scheme", s, "Form 4", "844", year=y, downloads=980, rating=4.7)
-
-    # Mocks & joint exams, prediction, topical, revision
-    for s in ("Biology", "Chemistry", "Mathematics", "English"):
-        for y in (2025, 2024):
-            add("mock", f"{y} {s} County Mock (Joint Exam)", s, "Form 4", "844", year=y, downloads=540, rating=4.5)
-    for s in ("Biology", "Chemistry", "Mathematics", "Physics"):
-        add("prediction", f"2026 KCSE {s} Prediction Paper", s, "Form 4", "844", year=2026, downloads=300, rating=4.3)
-        add("topic_test", f"KCSE {s} Topical Questions", s, "Form 4", "844", downloads=410, rating=4.5)
-    for s in ("Biology", "Chemistry", "Mathematics"):
-        add("revision", f"KCSE {s} Revision Booklet", s, "Form 4", "844", downloads=360, rating=4.4)
-
-    # Termly exams + holiday assignments
-    for s in ("Mathematics", "English"):
-        for term in ("Opener", "Mid-Term", "End-Term"):
-            add("exam", f"Form 4 {s} {term} Exam", s, "Form 4", "844", downloads=180, rating=4.2)
-    for s in ("Mathematics", "Biology"):
-        add("assignment", f"Form 3 {s} Holiday Assignment", s, "Form 3", "844", downloads=140, rating=4.1)
-        add("assignment", f"Form 4 {s} Holiday Assignment", s, "Form 4", "844", downloads=150, rating=4.1)
-
-    # Set book guides (English + Kiswahili genres)
-    for g in ("Novel", "Play", "Short Stories", "Poetry"):
-        add("setbook_guide", f"English Set Book Guide - {g}", "English", "Form 4", "844", downloads=320, rating=4.6)
-    for g in ("Riwaya", "Tamthilia", "Hadithi Fupi", "Ushairi"):
-        add("setbook_guide", f"Kiswahili Fasihi - {g}", "Kiswahili", "Form 4", "844", downloads=300, rating=4.6)
-
-    # Senior School (Grade 10-12) - CBC pioneer
-    for s in ("Mathematics", "English", "Biology", "Chemistry", "Physics", "Agriculture"):
-        add("notes", f"Grade 10 {s} Notes", s, "Grade 10", "secondary", downloads=210, rating=4.3)
-    for s in ("Mathematics", "Biology"):
-        add("exam", f"Grade 10 {s} End-Term Exam", s, "Grade 10", "secondary", downloads=120, rating=4.2)
-    add("topic_test", "Grade 10 Mathematics Topical Questions", "Mathematics", "Grade 10", "secondary", downloads=140, rating=4.3)
-    add("assessment", "Grade 10 CBC Assessment Rubrics", "Integrated Science", "Grade 10", "secondary", downloads=90, rating=4.2)
-
-    # Junior School (Grade 7-9)
-    for s in ("Integrated Science", "Mathematics", "English"):
-        for g in ("Grade 7", "Grade 8", "Grade 9"):
-            add("notes", f"{g} {s} Notes", s, g, "junior_secondary", downloads=230, rating=4.4)
-    for s in ("Integrated Science", "Mathematics"):
-        for g in ("Grade 7", "Grade 8", "Grade 9"):
-            add("exam", f"{g} {s} End-Term Exam", s, g, "junior_secondary", downloads=150, rating=4.2)
-    for g in ("Grade 7", "Grade 8", "Grade 9"):
-        add("assessment", f"{g} Integrated Science CBC Rubric", "Integrated Science", g, "junior_secondary", downloads=80, rating=4.1)
-    add("worksheet", "Grade 7 Mathematics Worksheet", "Mathematics", "Grade 7", "junior_secondary", downloads=110, rating=4.2)
-    add("activity", "Grade 7 Creative Arts Activity Pack", "Creative Arts", "Grade 7", "junior_secondary", downloads=95, rating=4.2)
-    add("quiz", "Grade 8 Integrated Science Quick Quiz", "Integrated Science", "Grade 8", "junior_secondary", downloads=75, rating=4.1)
-    add("video", "Grade 9 Mathematics Revision Video", "Mathematics", "Grade 9", "junior_secondary", downloads=85, rating=4.2)
-
-    # Primary (Grade 1-6)
-    for s in ("Mathematics", "English", "Kiswahili"):
-        for g in ("Grade 4", "Grade 5", "Grade 6"):
-            add("notes", f"{g} {s} Notes", s, g, "primary", downloads=170, rating=4.3)
-    for g in ("Grade 4", "Grade 5", "Grade 6"):
-        add("exam", f"{g} Mathematics End-Term Exam", "Mathematics", g, "primary", downloads=130, rating=4.2)
-    add("worksheet", "Grade 3 English Reading Worksheet", "English", "Grade 3", "primary", downloads=120, rating=4.2)
-
-    # Pre-Primary (PP1 / PP2)
-    for g in ("PP1", "PP2"):
-        add("activity", f"{g} Learning Activity Pack", "Creative Arts", g, "pre_primary", downloads=140, rating=4.4)
-        add("worksheet", f"{g} Numeracy Worksheet", "Mathematics", g, "pre_primary", downloads=130, rating=4.3)
-        add("assessment", f"{g} Observation Assessment Tool", "Language Activities", g, "pre_primary", downloads=70, rating=4.1)
-
-    # Teacher professional documents (audience = teacher)
-    for s in ("Mathematics", "English", "Biology"):
-        add("scheme", f"KCSE {s} Scheme of Work", s, "Form 4", "844", audience="teacher", downloads=260, rating=4.6)
-    for s in ("Integrated Science", "Mathematics"):
-        add("scheme", f"Grade 7 {s} Scheme of Work", s, "Grade 7", "junior_secondary", audience="teacher", downloads=240, rating=4.6, featured=1)
-    add("scheme", "Grade 10 Mathematics Scheme of Work", "Mathematics", "Grade 10", "secondary", audience="teacher", downloads=160, rating=4.4)
-    for s in ("Mathematics", "Biology"):
-        add("lesson_plan", f"KCSE {s} Lesson Plans", s, "Form 4", "844", audience="teacher", downloads=210, rating=4.5)
-    add("lesson_plan", "Grade 7 Integrated Science Lesson Plans", "Integrated Science", "Grade 7", "junior_secondary", audience="teacher", downloads=200, rating=4.5)
-    add("record_of_work", "KCSE Mathematics Record of Work", "Mathematics", "Form 4", "844", audience="teacher", downloads=120, rating=4.3)
-    add("record_of_work", "Grade 7 Integrated Science Record of Work", "Integrated Science", "Grade 7", "junior_secondary", audience="teacher", downloads=110, rating=4.3)
-    add("curriculum_design", "Grade 7 Integrated Science Curriculum Design", "Integrated Science", "Grade 7", "junior_secondary", audience="teacher", downloads=180, rating=4.6)
-    add("curriculum_design", "Grade 7 Mathematics Curriculum Design", "Mathematics", "Grade 7", "junior_secondary", audience="teacher", downloads=170, rating=4.6)
-    add("curriculum_design", "Grade 10 Mathematics Curriculum Design", "Mathematics", "Grade 10", "secondary", audience="teacher", downloads=130, rating=4.4)
-    add("curriculum_design", "PP1 Curriculum Design", "Language Activities", "PP1", "pre_primary", audience="teacher", downloads=90, rating=4.3)
-    add("assessment", "Grade 7 Integrated Science CBA Tool", "Integrated Science", "Grade 7", "junior_secondary", audience="teacher", downloads=100, rating=4.3)
-    for s in ("Mathematics", "Biology"):
-        add("teacher_guide", f"{s} Teacher Guide", s, "Form 4", "844", audience="teacher", downloads=120, rating=4.4)
-    add("tpad", "TPAD Appraisal Tool (TSC)", "Professional", "General", "844", audience="teacher", downloads=150, rating=4.5)
-    add("tpad", "Lesson Observation Tool", "Professional", "General", "844", audience="teacher", downloads=130, rating=4.4)
-
-    return recs
-
-
-def seed_resource_library(conn: sqlite3.Connection):
-    """Insert the demo library once per process; idempotent by 'lib-' slug."""
-    global _RESOURCE_SEED_DONE
-    if _RESOURCE_SEED_DONE:
-        return
-    seed_records = build_seed_records()
-    try:
-        have = {r["slug"] for r in rows(conn.execute("SELECT slug FROM resources WHERE slug LIKE 'lib-%'"))}
-        new = [r for r in seed_records if r["slug"] not in have]
-        if not new:
-            _RESOURCE_SEED_DONE = True
-            return
-        conn.execute("SAVEPOINT seed_resource_library")
-        for r in new:
-            conn.execute(
-                """INSERT INTO resources
-                   (type,title,grade,subject,year,body_html,level,audience,published,status,
-                    visibility,slug,mime_type,downloads_count,rating,is_verified,is_featured,created_at,updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,1,'published','public',?,?,?,?,?,?,datetime('now'),datetime('now'))""",
-                (r["type"], r["title"], r["grade"], r["subject"], r["year"], r["body"], r["level"],
-                 r["audience"], r["slug"], r["mime"], r["downloads"], r["rating"], r["verified"], r["featured"]),
-            )
-        conn.execute("RELEASE seed_resource_library")
-        conn.commit()
-        _RESOURCE_SEED_DONE = True
-    except sqlite3.Error:
-        try:
-            conn.execute("ROLLBACK TO seed_resource_library")
-            conn.execute("RELEASE seed_resource_library")
-        except sqlite3.Error:
-            pass
-        # Never let seeding break the API; tables may be mid-migration on first boot.
-        _RESOURCE_SEED_DONE = False
-
-
-def seed_resource_activity(conn: sqlite3.Connection):
-    """Populate the download log with demo activity once, so the admin analytics
-    charts are meaningful on a fresh install. Runs only when the log is empty, so
-    real traffic is never mixed with or overwritten by demo data."""
-    global _RESOURCE_ACTIVITY_SEEDED
-    if _RESOURCE_ACTIVITY_SEEDED:
-        return
-    _RESOURCE_ACTIVITY_SEEDED = True
-    try:
-        if scalar(conn, "SELECT COUNT(*) FROM resource_downloads", (), 0) > 0:
-            return  # real or prior activity exists - leave it untouched
-        ids = [r["id"] for r in rows(conn.execute(
-            "SELECT id FROM resources WHERE COALESCE(published,0)=1 ORDER BY COALESCE(downloads_count,0) DESC LIMIT 40"))]
-        if not ids:
-            _RESOURCE_ACTIVITY_SEEDED = False
-            return
-        import random
-        rnd = random.Random(2026)
-        ips = [f"154.{a}.{b}.{rnd.randint(2, 250)}" for a in range(1, 6) for b in range(1, 8)]
-        weekday_weight = [1.0, 1.05, 1.1, 1.0, 0.95, 0.6, 0.5]  # Mon..Sun: lighter weekends
-        now = datetime.now(timezone.utc)
-        batch = []
-        for i in range(30):  # last 30 days, newer days busier
-            day = now - timedelta(days=i)
-            base = 6 + 22 * ((30 - i) / 30.0)
-            count = int(base * weekday_weight[day.weekday()])
-            for _ in range(count):
-                ts = day.replace(hour=rnd.randint(6, 21), minute=rnd.randint(0, 59), second=rnd.randint(0, 59))
-                rid = rnd.choice(ids[:8]) if rnd.random() < 0.6 else rnd.choice(ids)
-                batch.append((rid, "public", None, rnd.choice(ips), ts.strftime("%Y-%m-%d %H:%M:%S")))
-        if batch:
-            conn.executemany(
-                "INSERT INTO resource_downloads(resource_id,user_role,user_id,ip,created_at) VALUES(?,?,?,?,?)",
-                batch,
-            )
-            conn.commit()
-    except sqlite3.Error:
-        _RESOURCE_ACTIVITY_SEEDED = False
-
-
 def role_permissions(conn: sqlite3.Connection, role: str) -> list[str]:
     school_id = current_school_id_from_conn(conn)
     stored = [r["permission"] for r in rows(conn.execute("SELECT permission FROM school_role_permissions WHERE school_id=? AND role=? ORDER BY permission", (school_id, role)))]
@@ -1277,8 +547,6 @@ def admin_permission_for(path: str, method: str) -> str | None:
     if path.startswith("/api/admin/backups"):
         return "settings_write"
     if path.startswith("/api/admin/subjects") or path.startswith("/api/admin/assessment-components"):
-        return "settings_write"
-    if path.startswith("/api/portal/admin/resources"):
         return "settings_write"
     if path.startswith("/api/admin/skills"):
         return "marks_write"
@@ -1370,7 +638,7 @@ def school_settings(conn):
     defaults = {
         "school_name": "JOYLAND SCHOOLS",
         "school_motto": "Education Is Treasure",
-        "school_logo": "/uploads/school/logo.jpg",
+        "school_logo": "/uploads/joyland/school/logo.jpg",
         "school_address": "",
         "school_phone": "",
         "school_email": "",
@@ -1478,6 +746,74 @@ def detect_assessment(term):
         return "endterm"
     total = max(1, (end - start).days)
     return "midterm" if (today - start).days / total < 0.5 else "endterm"
+
+
+def calculate_term_clock(term, holidays=None):
+    """Calculate term clock data including progress, week number, and period label."""
+    if not term:
+        return {
+            "in_term": False,
+            "progress_percent": 0,
+            "week_no": 0,
+            "total_weeks": 0,
+            "stage_label": "Term",
+            "period_label": "Break",
+            "source": "No term defined"
+        }
+    
+    today = datetime.fromisoformat(now_kenya_date())
+    start = datetime.fromisoformat(term["start_date"])
+    end = datetime.fromisoformat(term["end_date"])
+    
+    # Determine if we're in term
+    in_term = start <= today <= end
+    
+    # Calculate total weeks
+    total_days = (end - start).days + 1
+    total_weeks = max(1, round(total_days / 7))
+    
+    # Calculate current week number if in term
+    if in_term:
+        days_elapsed = (today - start).days
+        week_no = max(1, round(days_elapsed / 7) + 1)
+        progress_percent = round((days_elapsed / max(1, total_days - 1)) * 100)
+    else:
+        week_no = 0
+        progress_percent = 0 if today < start else 100
+    
+    # Determine stage label
+    if in_term:
+        # Check if we're in midterm or endterm based on progress
+        if progress_percent < 50:
+            stage_label = "Midterm"
+        elif progress_percent < 100:
+            stage_label = "Endterm"
+        else:
+            stage_label = "Term end"
+    else:
+        stage_label = "Holiday" if today > end else "Upcoming"
+    
+    # Check for specific holiday periods if provided
+    period_label = "Week"
+    if holidays:
+        for holiday in holidays:
+            h_start = datetime.fromisoformat(holiday["start_date"])
+            h_end = datetime.fromisoformat(holiday["end_date"])
+            if h_start <= today <= h_end:
+                period_label = holiday.get("name", "Holiday")
+                stage_label = period_label
+                in_term = False
+                break
+    
+    return {
+        "in_term": in_term,
+        "progress_percent": max(0, min(100, progress_percent)),
+        "week_no": week_no,
+        "total_weeks": total_weeks,
+        "stage_label": stage_label,
+        "period_label": period_label,
+        "source": "Joyland Sessions & Terms"
+    }
 
 
 def class_for_learner(conn, learner):
@@ -1959,40 +1295,6 @@ class Handler(SimpleHTTPRequestHandler):
         if user.get("school_slug"):
             self.set_tenant_cookie(user["school_slug"])
 
-    def set_platform_session(self, owner):
-        sid = secrets.token_urlsafe(32)
-        SESSIONS[f"platform:{sid}"] = {"owner": owner, "expires": time.time() + SESSION_TTL}
-        secure = "; Secure" if IS_PRODUCTION else ""
-        self.send_header("Set-Cookie", f"{PLATFORM_COOKIE}={signed(sid)}; Path=/; HttpOnly; SameSite=Lax; Max-Age={SESSION_TTL}{secure}")
-
-    def set_resource_admin_session(self, admin):
-        sid = secrets.token_urlsafe(32)
-        SESSIONS[f"resource_admin:{sid}"] = {"admin": admin, "expires": time.time() + SESSION_TTL}
-        secure = "; Secure" if IS_PRODUCTION else ""
-        self.send_header("Set-Cookie", f"{RESOURCE_ADMIN_COOKIE}={signed(sid)}; Path=/; HttpOnly; SameSite=Lax; Max-Age={SESSION_TTL}{secure}")
-
-    def current_platform_owner(self):
-        sid = unsign(parse_cookie(self.headers.get("Cookie")).get(PLATFORM_COOKIE, ""))
-        if not sid:
-            return None
-        sess = SESSIONS.get(f"platform:{sid}")
-        if not sess or sess.get("expires", 0) < time.time():
-            SESSIONS.pop(f"platform:{sid}", None)
-            return None
-        sess["expires"] = time.time() + SESSION_TTL
-        return sess.get("owner")
-
-    def current_resource_admin(self):
-        sid = unsign(parse_cookie(self.headers.get("Cookie")).get(RESOURCE_ADMIN_COOKIE, ""))
-        if not sid:
-            return None
-        sess = SESSIONS.get(f"resource_admin:{sid}")
-        if not sess or sess.get("expires", 0) < time.time():
-            SESSIONS.pop(f"resource_admin:{sid}", None)
-            return None
-        sess["expires"] = time.time() + SESSION_TTL
-        return sess.get("admin")
-
     def clear_session(self):
         sid = unsign(parse_cookie(self.headers.get("Cookie")).get(SESSION_COOKIE, ""))
         if sid:
@@ -2000,13 +1302,6 @@ class Handler(SimpleHTTPRequestHandler):
         secure = "; Secure" if IS_PRODUCTION else ""
         self.send_header("Set-Cookie", f"{SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0{secure}")
         self.send_header("Set-Cookie", f"{TENANT_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0{secure}")
-
-    def clear_resource_admin_session(self):
-        sid = unsign(parse_cookie(self.headers.get("Cookie")).get(RESOURCE_ADMIN_COOKIE, ""))
-        if sid:
-            SESSIONS.pop(f"resource_admin:{sid}", None)
-        secure = "; Secure" if IS_PRODUCTION else ""
-        self.send_header("Set-Cookie", f"{RESOURCE_ADMIN_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0{secure}")
 
     def current_user(self, role=None):
         sess = self.get_session()
@@ -2066,112 +1361,6 @@ class Handler(SimpleHTTPRequestHandler):
     def clear_login_failures(self, identifier):
         LOGIN_ATTEMPTS.pop(self.login_key(identifier), None)
 
-    def public_schools(self, query):
-        q = clean(query_first(query, "q", "search")).lower()
-        code = clean(query_first(query, "code", "school_code"))
-        where = ["status='active'"]
-        args = []
-        if q:
-            where.append("(LOWER(name) LIKE ? OR LOWER(slug) LIKE ? OR LOWER(school_code) LIKE ?)")
-            args.extend([f"%{q}%", f"%{q}%", f"%{q}%"])
-        if code:
-            where.append("UPPER(school_code)=UPPER(?)")
-            args.append(code)
-        with db() as conn:
-            data = rows(conn.execute(
-                f"""SELECT id,name,slug,school_code,email,phone,address,county,country,logo_url,status,created_at
-                    FROM schools WHERE {' AND '.join(where)} ORDER BY name LIMIT 50""",
-                args,
-            ))
-        return self.send_json({"success": True, "data": data})
-
-    def register_school(self):
-        body = self.read_body()
-        reg_key = f"{self.client_ip()}:register"
-        now = time.time()
-        REGISTRATION_ATTEMPTS[reg_key] = [t for t in REGISTRATION_ATTEMPTS.get(reg_key, []) if now - t < LOGIN_WINDOW]
-        if len(REGISTRATION_ATTEMPTS[reg_key]) >= REGISTRATION_LIMIT:
-            return self.send_json({"success": False, "message": "Too many school registration attempts. Try again later."}, 429)
-        name = clean(body.get("name") or body.get("school_name"))
-        school_code = re.sub(r"[^A-Za-z0-9]+", "", clean(body.get("school_code") or body.get("schoolCode"))).upper()[:12]
-        slug = slugify_school(body.get("slug") or name)
-        owner_name = clean(body.get("owner_name") or body.get("ownerName"))
-        owner_email = clean(body.get("owner_email") or body.get("ownerEmail")).lower()
-        owner_phone = clean(body.get("owner_phone") or body.get("ownerPhone"))
-        password = clean(body.get("password"))
-        if not all([name, school_code, slug, owner_name, password]) or not (owner_email or owner_phone):
-            return self.send_json({"success": False, "message": "School name, code, slug, owner contact, and password are required."}, 400)
-        if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{1,58}[a-z0-9])?", slug):
-            return self.send_json({"success": False, "message": "Portal slug must use lowercase letters, numbers, and hyphens."}, 400)
-        if slug in {"api", "admin", "app", "school", "uploads", "vendor", "login", "platform", "template-editor"}:
-            return self.send_json({"success": False, "message": "That portal slug is reserved."}, 400)
-        if len(password) < 8:
-            return self.send_json({"success": False, "message": "Password must be at least 8 characters."}, 400)
-        REGISTRATION_ATTEMPTS.setdefault(reg_key, []).append(now)
-        auto_approve = clean(os.environ.get("AUTO_APPROVE_SCHOOLS")).lower() in ("1", "true", "yes")
-        status = "active" if auto_approve else "pending"
-        registration_status = "approved" if auto_approve else "pending"
-        with db() as conn:
-            if one(conn.execute("SELECT id FROM schools WHERE slug=? OR UPPER(school_code)=UPPER(?) OR LOWER(name)=LOWER(?)", (slug, school_code, name))):
-                return self.send_json({"success": False, "message": "School slug or code is already in use."}, 409)
-            cur = conn.execute(
-                """INSERT INTO schools(name,slug,school_code,email,phone,address,county,country,logo_url,status,registration_status,curriculum,center_code,website,created_at)
-                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))""",
-                (
-                    name,
-                    slug,
-                    school_code,
-                    clean(body.get("email")).lower() or owner_email,
-                    clean(body.get("phone")) or owner_phone,
-                    clean(body.get("address")),
-                    clean(body.get("county")),
-                    clean(body.get("country")) or "Kenya",
-                    clean(body.get("logo_url")),
-                    status,
-                    registration_status,
-                    clean(body.get("curriculum")),
-                    clean(body.get("center_code") or body.get("centerCode")),
-                    clean(body.get("website")),
-                ),
-            )
-            school_id = cur.lastrowid
-            for role, perms in DEFAULT_ROLE_PERMISSIONS.items():
-                for perm in perms:
-                    conn.execute("INSERT OR IGNORE INTO school_role_permissions(school_id,role,permission) VALUES(?,?,?)", (school_id, role, perm))
-            conn.execute(
-                """INSERT INTO tenant_school_settings(school_id,key,value,updated_at)
-                   VALUES(?,?,?,datetime('now'))""",
-                (school_id, "school_name", name),
-            )
-            conn.execute(
-                """INSERT INTO tenant_school_settings(school_id,key,value,updated_at)
-                   VALUES(?,?,?,datetime('now'))""",
-                (school_id, "school_email", clean(body.get("email")).lower() or owner_email),
-            )
-            conn.execute(
-                """INSERT INTO academic_sessions(school_id,year,name,is_active,created_at)
-                   VALUES(?,?,?,?,datetime('now'))""",
-                (school_id, str(datetime.now().year), f"{datetime.now().year} Academic Year", 1),
-            )
-            admin_code = f"{school_code}-ADM-0001"
-            conn.execute(
-                """INSERT INTO users(school_id,user_id,name,email,phone,password,role,is_admin,status,created_at,updated_at)
-                   VALUES(?,?,?,?,?,?, 'admin',1,'active',datetime('now'),datetime('now'))""",
-                (school_id, admin_code, owner_name, owner_email or None, owner_phone or None, hash_password(password)),
-            )
-            school = one(conn.execute("SELECT * FROM schools WHERE id=?", (school_id,)))
-            self.audit_log(conn, school_id, "public", None, "school_registered", "school", str(school_id), {"status": registration_status})
-        login_path = f"/{slug}/login"
-        email_sent = send_school_registration_email(
-            owner_email,
-            school_name=name,
-            school_code=school_code,
-            owner_code=admin_code,
-            login_path=login_path,
-            status=registration_status,
-        ) if owner_email else False
-        return self.send_json({"success": True, "data": {"school": school, "login": login_path, "owner_user_id": admin_code, "registration_status": registration_status, "email_sent": email_sent}}, 201)
-
     def audit_log(self, conn, school_id, actor_role, actor_id, action, target_type=None, target_id=None, details=None):
         if not self.table_exists(conn, "tenant_audit_log"):
             return
@@ -2181,139 +1370,6 @@ class Handler(SimpleHTTPRequestHandler):
             (school_id, actor_role, actor_id, action, target_type, target_id, self.client_ip(), json.dumps(details or {})),
         )
 
-    def platform_login(self):
-        body = self.read_body()
-        email = clean(body.get("email")).lower()
-        password = clean(body.get("password"))
-        if not email or not password:
-            return self.send_json({"success": False, "message": "Email and password are required."}, 400)
-        with db() as conn:
-            owner = one(conn.execute("SELECT * FROM platform_owners WHERE email=? AND status='active'", (email,)))
-            if not owner or not verify_password(password, owner.get("password", "")):
-                return self.send_json({"success": False, "message": "Invalid platform owner credentials."}, 401)
-            session_owner = {"id": owner["id"], "email": owner["email"], "name": owner.get("name") or "Platform Owner", "role": "platform_owner"}
-            raw = json.dumps({"success": True, "owner": session_owner}).encode()
-            self.send_response(200)
-            self.security_headers()
-            self.no_store()
-            self.set_platform_session(session_owner)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(raw)))
-            self.end_headers()
-            self.wfile.write(raw)
-
-    def resource_admin_login(self):
-        body = self.read_body()
-        username = clean(body.get("username") or body.get("user")).lower()
-        password = clean(body.get("password"))
-        identifier = f"resource-admin:{username or 'blank'}"
-        if not username or not password:
-            return self.send_json({"success": False, "message": "Username and password are required."}, 400)
-        if self.login_limited(identifier):
-            return self.send_json({"success": False, "message": "Too many login attempts. Try again later."}, 429)
-        valid_user = hmac.compare_digest(username, RESOURCE_ADMIN_USERNAME.lower())
-        valid_password = hmac.compare_digest(password, RESOURCE_ADMIN_PASSWORD)
-        if not (valid_user and valid_password):
-            self.mark_login_failure(identifier)
-            return self.send_json({"success": False, "message": "Invalid resource admin credentials."}, 401)
-        self.clear_login_failures(identifier)
-        admin = {"id": 1, "username": RESOURCE_ADMIN_USERNAME, "name": "Resource Admin", "role": "resource_admin", "school_id": 1}
-        raw = json.dumps({"success": True, "data": {"admin": admin}, "admin": admin}).encode("utf-8")
-        self.send_response(200)
-        self.security_headers()
-        self.no_store()
-        self.set_resource_admin_session(admin)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(raw)))
-        self.end_headers()
-        self.wfile.write(raw)
-
-    def resource_admin_logout(self):
-        raw = b'{"success":true}'
-        self.send_response(200)
-        self.security_headers()
-        self.no_store()
-        self.clear_resource_admin_session()
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(raw)))
-        self.end_headers()
-        self.wfile.write(raw)
-
-    def platform_api(self, method, path, query, owner):
-        with db() as conn:
-            if path == "/api/platform/metrics" and method == "GET":
-                data = {
-                    "total_schools": scalar(conn, "SELECT COUNT(*) FROM schools", (), 0),
-                    "active_schools": scalar(conn, "SELECT COUNT(*) FROM schools WHERE status IN ('active','approved')", (), 0),
-                    "pending_schools": scalar(conn, "SELECT COUNT(*) FROM schools WHERE registration_status='pending'", (), 0),
-                    "suspended_schools": scalar(conn, "SELECT COUNT(*) FROM schools WHERE status='suspended'", (), 0),
-                    "total_learners": scalar(conn, "SELECT COUNT(*) FROM users WHERE role='learner'", (), 0),
-                    "total_staff": scalar(conn, "SELECT COUNT(*) FROM users WHERE role IN ('teacher','admin') OR is_admin=1", (), 0),
-                    "monthly_registrations": rows(conn.execute("SELECT substr(created_at,1,7) AS month, COUNT(*) AS count FROM schools GROUP BY substr(created_at,1,7) ORDER BY month DESC LIMIT 12")),
-                }
-                return self.send_json({"success": True, "data": data})
-            if path == "/api/platform/schools" and method == "GET":
-                q = clean(query_first(query, "q", "search")).lower()
-                where, args = ["1=1"], []
-                if q:
-                    where.append("(LOWER(name) LIKE ? OR LOWER(slug) LIKE ? OR LOWER(school_code) LIKE ?)")
-                    args.extend([f"%{q}%", f"%{q}%", f"%{q}%"])
-                schools = rows(conn.execute(f"""SELECT s.*,
-                    (SELECT COUNT(*) FROM users u WHERE u.school_id=s.id AND u.role='learner') AS learners,
-                    (SELECT COUNT(*) FROM users u WHERE u.school_id=s.id AND (u.role='teacher' OR u.role='admin' OR u.is_admin=1)) AS staff
-                    FROM schools s WHERE {' AND '.join(where)} ORDER BY datetime(s.created_at) DESC, s.id DESC LIMIT 200""", args))
-                return self.send_json({"success": True, "data": schools})
-            if path.startswith("/api/platform/schools/"):
-                parts = path.split("/")
-                school_id = as_int(parts[4] if len(parts) > 4 else None)
-                school = one(conn.execute("SELECT * FROM schools WHERE id=?", (school_id,))) if school_id else None
-                if not school:
-                    return self.send_json({"success": False, "message": "School not found."}, 404)
-                if len(parts) == 5 and method == "GET":
-                    stats = {
-                        "learners": scalar(conn, "SELECT COUNT(*) FROM users WHERE school_id=? AND role='learner'", (school_id,), 0),
-                        "staff": scalar(conn, "SELECT COUNT(*) FROM users WHERE school_id=? AND (role='teacher' OR role='admin' OR is_admin=1)", (school_id,), 0),
-                        "classes": scalar(conn, "SELECT COUNT(*) FROM classes WHERE school_id=?", (school_id,), 0),
-                        "marks": scalar(conn, "SELECT COUNT(*) FROM marks WHERE school_id=?", (school_id,), 0),
-                    }
-                    return self.send_json({"success": True, "data": {"school": school, "stats": stats}})
-                action = parts[5] if len(parts) > 5 else ""
-                if action in ("approve", "activate") and method == "POST":
-                    conn.execute("UPDATE schools SET status='active', registration_status='approved', approved_by=?, approved_at=datetime('now'), updated_at=datetime('now') WHERE id=?", (owner["id"], school_id))
-                    self.audit_log(conn, school_id, "platform_owner", owner["id"], "school_approved", "school", str(school_id))
-                    return self.send_json({"success": True, "message": "School approved."})
-                if action == "suspend" and method == "POST":
-                    conn.execute("UPDATE schools SET status='suspended', registration_status='suspended', updated_at=datetime('now') WHERE id=?", (school_id,))
-                    self.audit_log(conn, school_id, "platform_owner", owner["id"], "school_suspended", "school", str(school_id))
-                    return self.send_json({"success": True, "message": "School suspended."})
-                if action == "reject" and method == "POST":
-                    conn.execute("UPDATE schools SET status='rejected', registration_status='rejected', updated_at=datetime('now') WHERE id=?", (school_id,))
-                    self.audit_log(conn, school_id, "platform_owner", owner["id"], "school_rejected", "school", str(school_id))
-                    return self.send_json({"success": True, "message": "School rejected."})
-                if action == "reset-owner-password" and method == "POST":
-                    body = self.read_body()
-                    new_password = clean(body.get("password")) or secrets.token_urlsafe(10)
-                    admin = one(conn.execute("SELECT id,user_id FROM users WHERE school_id=? AND role='admin' ORDER BY id LIMIT 1", (school_id,)))
-                    if not admin:
-                        return self.send_json({"success": False, "message": "No tenant owner/admin found."}, 404)
-                    conn.execute("UPDATE users SET password=?, temp_code=NULL, updated_at=datetime('now') WHERE id=? AND school_id=?", (hash_password(new_password), admin["id"], school_id))
-                    self.audit_log(conn, school_id, "platform_owner", owner["id"], "tenant_owner_password_reset", "user", str(admin["id"]))
-                    return self.send_json({"success": True, "data": {"user_id": admin["user_id"], "password": new_password}})
-                if len(parts) == 5 and method == "PUT":
-                    body = self.read_body()
-                    allowed = ["name", "email", "phone", "address", "county", "country", "center_code", "curriculum", "website", "logo_url", "logo"]
-                    data = {k: clean(body.get(k)) for k in allowed if k in body}
-                    if data:
-                        assignments = ", ".join(f"{k}=?" for k in data)
-                        conn.execute(f"UPDATE schools SET {assignments}, updated_at=datetime('now') WHERE id=?", (*data.values(), school_id))
-                    self.audit_log(conn, school_id, "platform_owner", owner["id"], "school_profile_updated", "school", str(school_id), data)
-                    return self.send_json({"success": True, "data": one(conn.execute("SELECT * FROM schools WHERE id=?", (school_id,)))})
-                if len(parts) == 5 and method == "DELETE":
-                    conn.execute("UPDATE schools SET status='deleted', registration_status='rejected', updated_at=datetime('now') WHERE id=?", (school_id,))
-                    self.audit_log(conn, school_id, "platform_owner", owner["id"], "school_deleted_soft", "school", str(school_id))
-                    return self.send_json({"success": True, "message": "School disabled."})
-        return self.send_json({"success": False, "message": "Platform route not implemented."}, 404)
-
     def route(self, method):
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
@@ -2322,23 +1378,16 @@ class Handler(SimpleHTTPRequestHandler):
             if path.startswith("/api/"):
                 return self.api(method, path, query)
             if path == "/":
-                return self.redirect("/portal/resources/")
+                return self.send_file_path(PUBLIC_DIR / "index.html")
             if path == "/index.html":
-                return self.redirect("/portal/resources/")
+                return self.send_file_path(PUBLIC_DIR / "index.html")
             if path == "/login":
                 return self.send_file_path(PUBLIC_DIR / "login.html")
             if path == "/schools" or path == "/schools/":
-                # Civicom Schools Portal landing: find your school / create school.
-                return self.send_file_path(PUBLIC_DIR / "index.html")
-            if path.startswith("/portal/resources"):
-                rel = path.removeprefix("/portal/resources").lstrip("/")
-                target = (PORTAL_RES_DIR / rel).resolve() if rel else PORTAL_RES_DIR / "index.html"
-                if not str(target).startswith(str(PORTAL_RES_DIR.resolve())):
-                    return self.send_error(403)
-                if rel and Path(rel).suffix:
-                    return self.send_file_path(target, no_store=target.suffix in (".html", ".js", ".css"))
-                return self.send_file_path(PORTAL_RES_DIR / "index.html")
-            tenant = self.tenant_from_request(path)
+                return self.redirect("/")
+            first_segment = path.strip("/").split("/", 1)[0] if path.strip("/") else ""
+            reserved_segments = {"api", "admin", "app", "school", "uploads", "vendor", "template-editor", "login", "schools"}
+            tenant = self.tenant_from_request(path) if first_segment and first_segment not in reserved_segments and "." not in first_segment else None
             if tenant:
                 slug = tenant["slug"]
                 rest = path.strip("/").split("/", 1)[1] if "/" in path.strip("/") else ""
@@ -2356,9 +1405,12 @@ class Handler(SimpleHTTPRequestHandler):
                     if str(target).startswith(str((PUBLIC_DIR / "admin").resolve())) and target.exists():
                         return self.send_file_path(target, no_store=target.suffix in (".html", ".js", ".css"), tenant_slug=slug)
                 if rest in ("portal", "learner", "parent", "teacher", "school"):
-                    if not self.current_user():
+                    user = self.current_user()
+                    if not user:
                         return self.redirect(f"/{slug}/login")
-                    return self.redirect(f"/{slug}/admin")
+                    if user.get("role") == "admin":
+                        return self.redirect(f"/{slug}/admin")
+                    return self.redirect("/app/")
             if path == "/admin":
                 if not self.current_user("admin"):
                     return self.redirect("/login")
@@ -2368,7 +1420,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.redirect("/login")
                 return self.send_file_path(PUBLIC_DIR / "template-editor.html")
             if path in ("/teacher", "/learner", "/parent"):
-                return self.redirect("/login")
+                return self.redirect("/app/" if self.current_user() else "/app/?signin=1")
             if path.startswith("/school"):
                 if not self.current_user():
                     return self.redirect("/login")
@@ -2389,13 +1441,6 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_file_path(APP_DIR / "index.html")
             if path.startswith("/uploads/"):
                 parts = path.strip("/").split("/")
-                if len(parts) >= 2 and parts[1] == "resources":
-                    rel = Path(*parts[2:]) if len(parts) > 2 else Path()
-                    base = (PUBLIC_DIR / "uploads" / "resources").resolve()
-                    target = (base / rel).resolve()
-                    if not str(target).startswith(str(base)) or not target.exists():
-                        return self.send_error(404)
-                    return self.send_file_path(target, no_store=False)
                 if len(parts) < 3:
                     return self.send_error(403)
                 slug = slugify_school(parts[1])
@@ -2429,24 +1474,8 @@ class Handler(SimpleHTTPRequestHandler):
     def api(self, method, path, query):
         if not DB_PATH.exists():
             return self.send_json({"success": False, "message": "Database not found. Run the existing setup once to create data/joyland.db."}, 500)
-        if path == "/api/public/schools" and method == "GET":
-            return self.public_schools(query)
-        if path == "/api/public/register-school" and method == "POST":
-            return self.register_school()
-        if path.startswith("/api/public/schools/") and method == "GET":
-            slug = path.rsplit("/", 1)[-1]
-            with db() as conn:
-                school = get_school_by_slug(conn, slug)
-            if not school:
-                return self.send_json({"success": False, "message": "School not found"}, 404)
-            return self.send_json({"success": True, "data": school})
-        if path == "/api/platform/login" and method == "POST":
-            return self.platform_login()
-        if path.startswith("/api/platform/"):
-            owner = self.current_platform_owner()
-            if not owner:
-                return self.send_json({"success": False, "message": "Platform owner authentication required."}, 401)
-            return self.platform_api(method, path, query, owner)
+        if path.startswith("/api/public/") or path == "/api/platform/login" or path.startswith("/api/platform/"):
+            return self.send_json({"success": False, "message": "This Joyland portal only exposes school login, admin, and role app APIs."}, 404)
         if path == "/api/auth/login" and method == "POST":
             return self.login()
         if path == "/api/auth/temp-login" and method == "POST":
@@ -2465,123 +1494,6 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/auth/me" and method == "GET":
             user = self.current_user()
             return self.send_json({"authenticated": bool(user), "user": user} if user else {"authenticated": False})
-        if path == "/api/resources" or path.startswith("/api/resources/") or path == "/api/admin/resources" or path.startswith("/api/admin/resources/"):
-            return self.send_json({"success": False, "message": "Resource APIs have moved to /api/portal/resources."}, 404)
-        if path == "/api/portal/resources" and method == "GET":
-            return self.resources(query)
-        if path == "/api/portal/resources/popular" and method == "GET":
-            return self.resource_collection(query, "popular")
-        if path == "/api/portal/resources/featured" and method == "GET":
-            return self.resource_collection(query, "featured")
-        if path.startswith("/api/portal/resources/") and path.endswith("/download") and method == "POST":
-            return self.resource_download(path.strip("/").split("/")[-2])
-        if path.startswith("/api/portal/resources/") and method == "GET":
-            return self.resource(path.rsplit("/", 1)[-1])
-        if path == "/api/portal/resource-submissions" and method == "POST":
-            return self.save_public_resource_submission()
-        if path == "/api/portal/resource-admin/login" and method == "POST":
-            return self.resource_admin_login()
-        if path == "/api/portal/resource-admin/logout" and method == "POST":
-            return self.resource_admin_logout()
-        if path == "/api/portal/resource-admin/me" and method == "GET":
-            admin = self.current_resource_admin()
-            return self.send_json({"success": True, "authenticated": bool(admin), "data": {"admin": admin}, "admin": admin})
-        if path.startswith("/api/portal/resource-admin/"):
-            admin = self.current_resource_admin()
-            if not admin:
-                return self.send_json({"success": False, "message": "Resource admin login required."}, 401)
-            with resource_db() as conn:
-                if path == "/api/portal/resource-admin/resources" and method == "GET":
-                    q = clean(query_first(query, "q", "search", default=""))
-                    where = []
-                    args = []
-                    if q:
-                        where.append("(title LIKE ? OR subject LIKE ? OR grade LIKE ? OR type LIKE ? OR CAST(COALESCE(year,'') AS TEXT) LIKE ?)")
-                        args.extend([f"%{q}%"] * 5)
-                    sql = "SELECT * FROM resources"
-                    if where:
-                        sql += " WHERE " + " AND ".join(where)
-                    sql += " ORDER BY datetime(COALESCE(updated_at,created_at)) DESC, id DESC LIMIT 500"
-                    data = rows(conn.execute(sql, args))
-                    return self.send_json({"success": True, "data": {"resources": data}, "resources": data})
-                if path == "/api/portal/resource-admin/resources" and method == "POST":
-                    return self.save_admin_resource(conn, admin)
-                if path == "/api/portal/resource-admin/resources/analytics" and method == "GET":
-                    return self.admin_resource_analytics(conn)
-                if path.startswith("/api/portal/resource-admin/resources/"):
-                    try:
-                        rid = int(path.rsplit("/", 1)[-1])
-                    except ValueError:
-                        return self.send_json({"success": False, "message": "Invalid resource"}, 400)
-                    if method == "GET":
-                        resource = one(conn.execute("SELECT * FROM resources WHERE id=?", (rid,)))
-                        if not resource:
-                            return self.send_json({"success": False, "message": "Resource not found"}, 404)
-                        tags = rows(conn.execute("""SELECT t.* FROM resource_tags t JOIN resource_tag_links rtl ON rtl.tag_id=t.id WHERE rtl.resource_id=? ORDER BY t.name""", (rid,)))
-                        return self.send_json({"success": True, "data": {**resource, "tags": tags}})
-                    if method == "PUT":
-                        return self.save_admin_resource(conn, admin, rid)
-                    if method == "DELETE":
-                        return self.delete_admin_resource(conn, admin, rid)
-                if path == "/api/portal/resource-admin/submissions" and method == "GET":
-                    data = rows(conn.execute("SELECT * FROM resource_submissions ORDER BY datetime(created_at) DESC, id DESC"))
-                    return self.send_json({"success": True, "data": {"submissions": data}, "submissions": data})
-                if path.startswith("/api/portal/resource-admin/submissions/") and method == "PUT":
-                    try:
-                        submission_id = int(path.rsplit("/", 1)[-1])
-                    except ValueError:
-                        return self.send_json({"success": False, "message": "Invalid submission"}, 400)
-                    return self.update_resource_submission_review(conn, admin, submission_id)
-            return self.send_json({"success": False, "message": "Resource admin route not implemented."}, 404)
-        if path.startswith("/api/portal/admin/resource-submissions"):
-            user = self.current_user("admin")
-            if not user:
-                return self.send_json({"success": False, "message": "Unauthorized"}, 401)
-            with self.tenant_db({"id": user.get("school_id") or 1}) as auth_conn:
-                if not has_role_permission(auth_conn, user, "settings_write"):
-                    return self.send_json({"success": False, "message": "Your role is not allowed to review portal submissions."}, 403)
-            with resource_db() as conn:
-                if path == "/api/portal/admin/resource-submissions" and method == "GET":
-                    data = rows(conn.execute("SELECT * FROM resource_submissions ORDER BY datetime(created_at) DESC, id DESC"))
-                    return self.send_json({"success": True, "data": {"submissions": data}})
-                if path.startswith("/api/portal/admin/resource-submissions/") and method == "PUT":
-                    try:
-                        submission_id = int(path.rsplit("/", 1)[-1])
-                    except ValueError:
-                        return self.send_json({"success": False, "message": "Invalid submission"}, 400)
-                    return self.update_resource_submission_review(conn, user, submission_id)
-            return self.send_json({"success": False, "message": "Submission review route not implemented"}, 404)
-        if path.startswith("/api/portal/admin/resources"):
-            user = self.current_user("admin")
-            if not user:
-                return self.send_json({"success": False, "message": "Unauthorized"}, 401)
-            with self.tenant_db({"id": user.get("school_id") or 1}) as auth_conn:
-                if not has_role_permission(auth_conn, user, "settings_write"):
-                    return self.send_json({"success": False, "message": "Your role is not allowed to manage portal resources."}, 403)
-            with resource_db() as conn:
-                if path == "/api/portal/admin/resources" and method == "POST":
-                    return self.save_admin_resource(conn, user)
-                if path == "/api/portal/admin/resources" and method == "GET":
-                    data = rows(conn.execute("SELECT * FROM resources ORDER BY datetime(updated_at) DESC, id DESC"))
-                    return self.send_json({"success": True, "data": {"resources": data}})
-                if path == "/api/portal/admin/resources/analytics" and method == "GET":
-                    return self.admin_resource_analytics(conn)
-                if path.startswith("/api/portal/admin/resources/"):
-                    try:
-                        rid = int(path.rsplit("/", 1)[-1])
-                    except ValueError:
-                        return self.send_json({"success": False, "message": "Invalid resource"}, 400)
-                    if method == "PUT":
-                        return self.save_admin_resource(conn, user, rid)
-                    if method == "DELETE":
-                        return self.delete_admin_resource(conn, user, rid)
-                    if method == "GET":
-                        resource = one(conn.execute("SELECT * FROM resources WHERE id=?", (rid,)))
-                        if not resource:
-                            return self.send_json({"success": False, "message": "Resource not found"}, 404)
-                        tags = rows(conn.execute("""SELECT t.* FROM resource_tags t JOIN resource_tag_links rtl ON rtl.tag_id=t.id WHERE rtl.resource_id=? ORDER BY t.name""", (rid,)))
-                        return self.send_json({"success": True, "data": {**resource, "tags": tags}})
-            return self.send_json({"success": False, "message": "Portal resource route not implemented"}, 404)
         if path == "/api/school-info" and method == "GET":
             return self.school_info()
         if path.startswith("/api/notifications"):
@@ -2627,6 +1539,7 @@ class Handler(SimpleHTTPRequestHandler):
         body = self.read_body()
         identifier = clean(body.get("identifier"))
         password = clean(body.get("password"))
+        admin_only = bool(body.get("admin_only"))
         if not identifier or not password:
             return self.send_json({"success": False, "message": "Please enter your ID and password"})
         if self.login_limited(identifier):
@@ -2637,6 +1550,17 @@ class Handler(SimpleHTTPRequestHandler):
             if prefix:
                 with db() as lookup_conn:
                     tenant = get_school_by_code(lookup_conn, prefix)
+        if not tenant:
+            # Try to auto-select if there's only one school
+            with db() as lookup_conn:
+                schools = list(lookup_conn.execute(
+                    """SELECT * FROM schools 
+                       WHERE status IN ('active', 'approved') 
+                       AND (registration_status IS NULL OR registration_status = '' OR registration_status = 'approved')
+                       LIMIT 2"""
+                ))
+                if len(schools) == 1:
+                    tenant = dict(schools[0])
         if not tenant:
             return self.send_json({"success": False, "message": "Select a school before signing in."}, 400)
         if tenant.get("status") not in ("active", "approved") or tenant.get("registration_status") not in ("approved", None, ""):
@@ -2660,10 +1584,12 @@ class Handler(SimpleHTTPRequestHandler):
             if not verify_password(password, user.get("password", "")):
                 self.mark_login_failure(identifier)
                 return self.send_json({"success": False, "message": "Incorrect password."})
-            self.clear_login_failures(identifier)
             role = user["role"]
+            if admin_only and role != "admin":
+                return self.send_json({"success": False, "message": "This login page is for administrators only. Teachers, learners, and parents should use the school app."}, 403)
+            self.clear_login_failures(identifier)
             session_user = {"id": user["id"], "user_id": user["user_id"], "name": user["name"], "role": role, "original_role": role, "is_admin": user.get("is_admin", 0), "school_id": tenant["id"], "school_slug": tenant["slug"], "school_code": tenant["school_code"]}
-            redirect = f"/{tenant['slug']}/admin/overview.html" if role == "admin" else f"/{tenant['slug']}/portal"
+            redirect = f"/{tenant['slug']}/admin/overview.html" if role == "admin" else "/app/"
             raw = json.dumps({"success": True, "role": role, "name": user["name"], "redirect": redirect}).encode()
             self.send_response(200)
             self.security_headers()
@@ -2688,6 +1614,17 @@ class Handler(SimpleHTTPRequestHandler):
             if prefix:
                 with db() as lookup_conn:
                     tenant = get_school_by_code(lookup_conn, prefix)
+        if not tenant:
+            # Try to auto-select if there's only one school
+            with db() as lookup_conn:
+                schools = list(lookup_conn.execute(
+                    """SELECT * FROM schools 
+                       WHERE status IN ('active', 'approved') 
+                       AND (registration_status IS NULL OR registration_status = '' OR registration_status = 'approved')
+                       LIMIT 2"""
+                ))
+                if len(schools) == 1:
+                    tenant = dict(schools[0])
         if not tenant:
             return self.send_json({"success": False, "message": "Select a school before signing in."}, 400)
         if tenant.get("status") not in ("active", "approved") or tenant.get("registration_status") not in ("approved", None, ""):
@@ -2720,7 +1657,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({"success": False, "message": "Your account has been deactivated. Contact admin."})
             role = user["role"]
             session_user = {"id": user["id"], "user_id": user["user_id"], "name": user["name"], "role": role, "original_role": role, "is_admin": user.get("is_admin", 0), "school_id": tenant["id"], "school_slug": tenant["slug"], "school_code": tenant["school_code"]}
-            redirect = f"/{tenant['slug']}/admin/overview.html" if role == "admin" else f"/{tenant['slug']}/portal"
+            redirect = f"/{tenant['slug']}/admin/overview.html" if role == "admin" else "/app/"
             raw = json.dumps({"success": True, "role": role, "name": user["name"], "redirect": redirect}).encode()
             self.send_response(200)
             self.security_headers()
@@ -2738,150 +1675,12 @@ class Handler(SimpleHTTPRequestHandler):
             "school_address": "P.O. Box 123",
             "school_phone": "0700 000 000",
             "school_email": "info@joylandschools.ac.ke",
-            "school_logo": "/uploads/school/logo.jpg",
+            "school_logo": "/uploads/joyland/school/logo.jpg",
         }
         with self.tenant_db() as conn:
             defaults.update(school_settings(conn))
         fields = ["school_name", "school_motto", "school_logo", "school_address", "school_phone", "school_email"]
         return self.send_json({"success": True, "data": {k: defaults.get(k, "") for k in fields}})
-
-    def resources(self, query):
-        where = ["COALESCE(published,0)=1", "COALESCE(status,'published')='published'"]
-        args = []
-        user = self.current_user()
-        typ = normalize_resource_type(query_first(query, "type", default=""))
-        if typ and typ != "all":
-            where.append("LOWER(REPLACE(type,'-','_'))=?")
-            args.append(typ)
-        subject = clean(query_first(query, "subject", default=""))
-        if subject and subject.lower() != "all":
-            # Forgiving match so "Science" finds "Integrated Science"/"Computer Science".
-            where.append("(LOWER(subject)=LOWER(?) OR LOWER(COALESCE(subject,'')) LIKE LOWER(?))")
-            args.extend([subject, f"%{subject}%"])
-        grade = clean(query_first(query, "grade", default=""))
-        if grade and grade.lower() != "all":
-            where.append("LOWER(grade)=LOWER(?)")
-            args.append(grade)
-        level = normalize_resource_level(query_first(query, "level", default=""))
-        if level and level != "all":
-            if level == "teacher":
-                where.append("(LOWER(COALESCE(audience,'')) IN ('teacher','everyone') OR LOWER(REPLACE(type,'-','_')) IN ('lesson_plan','scheme','teacher_guide','curriculum_design'))")
-            elif level == "cbc":
-                where.append("(LOWER(COALESCE(level,'')) IN ('primary','junior_secondary','secondary','cbc') OR LOWER(COALESCE(grade,'')) LIKE 'grade %')")
-            elif level == "844":
-                where.append("(LOWER(COALESCE(level,''))='844' OR LOWER(COALESCE(grade,'')) LIKE 'form %')")
-            elif level == "grade_1_9":
-                # Convenience group: CBC Primary (1-6) + Junior School (7-9).
-                where.append("LOWER(COALESCE(level,'')) IN ('primary','junior_secondary')")
-            else:
-                where.append("LOWER(COALESCE(level,''))=?")
-                args.append(level)
-        audience = clean(query_first(query, "audience", default="")).lower()
-        if audience and audience not in ("all", "everyone"):
-            where.append("LOWER(COALESCE(audience,'everyone')) IN (?, 'everyone')")
-            args.append(audience)
-        visibility = clean(query_first(query, "visibility", default="")).lower()
-        if visibility and visibility != "all" and (user or visibility == "public"):
-            where.append("LOWER(COALESCE(visibility,'public'))=?")
-            args.append(visibility)
-        elif not user:
-            where.append("LOWER(COALESCE(visibility,'public'))='public'")
-        if clean(query_first(query, "featured_only", "featured", default="")).lower() in ("1", "true", "yes"):
-            where.append("COALESCE(is_featured,0)=1")
-        published = clean(query_first(query, "published", default="")).lower()
-        if published in ("0", "false", "draft"):
-            where = ["COALESCE(published,0)=0 OR COALESCE(status,'published')<>'published'"]
-        q = clean(query.get("q", [""])[0])
-        if q:
-            like = f"%{q}%"
-            # Search grade and year too, so "Form 3", "Grade 7" and "2024" clicks resolve.
-            where.append("(title LIKE ? OR subject LIKE ? OR body_html LIKE ? OR grade LIKE ? OR CAST(COALESCE(year,'') AS TEXT) LIKE ? OR LOWER(REPLACE(type,'_','-')) LIKE LOWER(?) OR LOWER(REPLACE(type,'-','_')) LIKE LOWER(?))")
-            args.extend([like, like, like, like, like, like, like])
-        # CBC-only public library: hide TVET/college/diploma resources.
-        # Reversible — remove this block to restore TVET listings.
-        tvet_terms = ("tvet", "college", "diploma", "certificate", "university")
-        tvet_clauses = []
-        for term in tvet_terms:
-            like = f"%{term}%"
-            tvet_clauses.append(
-                "(LOWER(COALESCE(grade,'')) NOT LIKE ? AND LOWER(COALESCE(subject,'')) NOT LIKE ? AND LOWER(COALESCE(title,'')) NOT LIKE ?)"
-            )
-            args.extend([like, like, like])
-        where.append("(" + " AND ".join(tvet_clauses) + ")")
-        sort = clean(query_first(query, "sort", default="relevance")).lower()
-        order = "datetime(updated_at) DESC, id DESC"
-        if sort in ("popular", "downloads"):
-            order = "COALESCE(downloads_count,0) DESC, COALESCE(views,0) DESC, id DESC"
-        elif sort == "newest":
-            order = "datetime(COALESCE(updated_at,created_at)) DESC, id DESC"
-        with resource_db() as conn:
-            data = rows(conn.execute(
-                f"""SELECT id, type, title, grade, subject, year, body_html, file_path, views,
-                           level, audience, premium, is_featured, is_verified, downloads_count,
-                           rating, status, slug, thumbnail, mime_type, file_size, visibility,
-                           created_by_school_id, updated_at
-                    FROM resources WHERE {' AND '.join(where)}
-                    ORDER BY {order} LIMIT 200""",
-                args,
-            ))
-        return self.send_json({"success": True, "data": {"resources": data}, "resources": data})
-
-    def resource_collection(self, query, mode):
-        q = dict(query)
-        if mode == "featured":
-            q["featured_only"] = ["1"]
-        if mode == "popular":
-            q["sort"] = ["popular"]
-        return self.resources(q)
-
-    def resource(self, id_text):
-        try:
-            rid = int(id_text)
-        except ValueError:
-            return self.send_json({"success": False, "message": "Invalid resource"}, 400)
-        with resource_db() as conn:
-            r = one(conn.execute(
-                """SELECT * FROM resources
-                   WHERE id=? AND COALESCE(published,0)=1 AND COALESCE(status,'published')='published'""",
-                (rid,),
-            ))
-            if not r:
-                return self.send_json({"success": False, "message": "Resource not found"}, 404)
-            user = self.current_user()
-            visibility = clean(r.get("visibility") or "public").lower()
-            if visibility != "public" and not user:
-                return self.send_json({"success": False, "message": "Login is required for this resource."}, 403)
-            if visibility in ("school_only", "tenant", "private") and user and r.get("created_by_school_id") and int(user.get("school_id") or 0) != int(r.get("created_by_school_id") or 0):
-                return self.send_json({"success": False, "message": "Resource is not available for this school."}, 403)
-            conn.execute("UPDATE resources SET views=COALESCE(views,0)+1 WHERE id=?", (rid,))
-            r["views"] = int(r.get("views") or 0) + 1
-        return self.send_json({"success": True, "data": r})
-
-    def resource_download(self, id_text):
-        try:
-            rid = int(id_text)
-        except ValueError:
-            return self.send_json({"success": False, "message": "Invalid resource"}, 400)
-        user = self.current_user()
-        with resource_db() as conn:
-            r = one(conn.execute(
-                """SELECT id,file_path,visibility,created_by_school_id FROM resources
-                   WHERE id=? AND COALESCE(published,0)=1 AND COALESCE(status,'published')='published'""",
-                (rid,),
-            ))
-            if not r:
-                return self.send_json({"success": False, "message": "Resource not found"}, 404)
-            visibility = clean(r.get("visibility") or "public").lower()
-            if visibility != "public" and not user:
-                return self.send_json({"success": False, "message": "Login is required for this resource."}, 403)
-            if visibility in ("school_only", "tenant", "private") and user and r.get("created_by_school_id") and int(user.get("school_id") or 0) != int(r.get("created_by_school_id") or 0):
-                return self.send_json({"success": False, "message": "Resource is not available for this school."}, 403)
-            conn.execute("UPDATE resources SET downloads_count=COALESCE(downloads_count,0)+1 WHERE id=?", (rid,))
-            conn.execute(
-                "INSERT INTO resource_downloads(resource_id,user_role,user_id,ip,created_at) VALUES(?,?,?,?,datetime('now'))",
-                (rid, user.get("role") if user else None, user.get("id") if user else None, self.client_address[0] if self.client_address else None),
-            )
-        return self.send_json({"success": True, "data": {"id": rid, "file_path": r.get("file_path")}})
 
     def notifications(self, method, path, query, user):
         with self.tenant_db({"id": user.get("school_id") or 1}) as conn:
@@ -3266,6 +2065,14 @@ class Handler(SimpleHTTPRequestHandler):
                 if not learner:
                     return self.send_json({"success": False, "message": "Learner not found"}, 404)
                 return self.send_json({"success": True, "data": learner})
+            if path == "/api/admin/learners/status" and method == "PATCH":
+                return self.bulk_learner_status(conn)
+            if path == "/api/admin/learners/temp-codes" and method == "POST":
+                return self.bulk_learner_temp_codes(conn)
+            if path == "/api/admin/learners/class" and method == "PATCH":
+                return self.bulk_learner_class(conn)
+            if path == "/api/admin/learners/import" and method == "POST":
+                return self.import_learners(conn)
             if path == "/api/admin/learners" and method == "POST":
                 return self.save_admin_user(conn, "learner")
             if path.startswith("/api/admin/learners/") and method == "PUT":
@@ -3296,6 +2103,24 @@ class Handler(SimpleHTTPRequestHandler):
             if path.startswith("/api/admin/teachers/") and method == "DELETE":
                 conn.execute("DELETE FROM users WHERE id=? AND role='teacher' AND school_id=?", (int(path.rsplit("/", 1)[-1]), current_school_id_from_conn(conn)))
                 return self.send_json({"success": True, "message": "Teacher deleted"})
+            if path == "/api/admin/parents" and method == "POST":
+                return self.save_admin_parent(conn)
+            if path.startswith("/api/admin/parents/") and path.endswith("/status") and method == "PATCH":
+                return self.toggle_admin_parent(conn, int(path.split("/")[-2]))
+            if path.startswith("/api/admin/parents/") and method == "PUT":
+                return self.save_admin_parent(conn, int(path.rsplit("/", 1)[-1]))
+            if path.startswith("/api/admin/parents/") and method == "DELETE":
+                conn.execute("DELETE FROM parent_accounts WHERE id=? AND school_id=?", (int(path.rsplit("/", 1)[-1]), current_school_id_from_conn(conn)))
+                return self.send_json({"success": True, "message": "Parent deleted"})
+            if path == "/api/admin/admins" and method == "POST":
+                return self.save_admin_user(conn, "admin")
+            if path.startswith("/api/admin/admins/") and method == "PUT":
+                return self.save_admin_user(conn, "admin", int(path.rsplit("/", 1)[-1]))
+            if path.startswith("/api/admin/admins/") and path.endswith("/status") and method == "PATCH":
+                return self.toggle_admin_user(conn, "admin", int(path.split("/")[-2]))
+            if path.startswith("/api/admin/admins/") and method == "DELETE":
+                conn.execute("DELETE FROM users WHERE id=? AND role='admin' AND school_id=?", (int(path.rsplit("/", 1)[-1]), current_school_id_from_conn(conn)))
+                return self.send_json({"success": True, "message": "Admin deleted"})
             if path == "/api/admin/classes" and method == "POST":
                 return self.save_admin_class(conn)
             if path.startswith("/api/admin/classes/") and method == "PUT":
@@ -3327,6 +2152,10 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.save_timetable_periods(conn)
             if path == "/api/admin/timetable/lessons" and method == "PUT":
                 return self.save_timetable_lessons(conn)
+            if path == "/api/admin/timetable/class-hours" and method == "PUT":
+                return self.save_timetable_class_hours(conn)
+            if path.startswith("/api/admin/timetable/teachers/") and method == "PUT":
+                return self.save_timetable_teacher(conn, int(path.rsplit("/", 1)[-1]))
             if path == "/api/admin/timetable/rooms" and method == "POST":
                 return self.save_timetable_room(conn)
             if path.startswith("/api/admin/timetable/rooms/") and method in ("PUT", "DELETE"):
@@ -3336,6 +2165,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.save_timetable_room(conn, room_id)
             if path == "/api/admin/timetable/generate" and method == "POST":
                 return self.generate_timetable(conn, user)
+            if path.startswith("/api/admin/timetable/generations/") and path.endswith("/diff") and method == "GET":
+                return self.timetable_generation_diff(conn, int(path.split("/")[-2]))
             if path.startswith("/api/admin/timetable/generations/") and path.endswith("/publish") and method == "POST":
                 return self.publish_timetable_generation(conn, user, int(path.split("/")[-2]))
             if path.startswith("/api/admin/timetable/generations/") and method == "DELETE":
@@ -3390,6 +2221,10 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.save_admin_attendance(conn, user)
             if path == "/api/admin/attendance/bulk" and method == "POST":
                 return self.save_admin_attendance(conn, user)
+            if path == "/api/admin/comments" and method == "GET":
+                return self.admin_comments(conn, query)
+            if path == "/api/admin/comments" and method in ("POST", "PUT"):
+                return self.save_admin_comments(conn, user)
             if path == "/api/admin/skills/ratings" and method == "POST":
                 body = self.read_body()
                 learner_id = as_int(body_first(body, "learnerId", "learner_id"))
@@ -3508,7 +2343,9 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({"success": True, "data": data})
             if path == "/api/admin/current-period":
                 term = default_term(conn)
-                return self.send_json({"success": True, "data": {"term": term, "assessment": detect_assessment(term), "today": now_kenya_date()}})
+                holidays = rows(conn.execute("SELECT name, start_date, end_date FROM term_holidays WHERE term_id=? ORDER BY start_date", (term["id"],))) if term and self.table_exists(conn, "term_holidays") else []
+                clock_data = calculate_term_clock(term, holidays)
+                return self.send_json({"success": True, "data": {**clock_data, "term": term, "assessment": detect_assessment(term), "today": now_kenya_date()}})
             if path == "/api/admin/learners":
                 school_id = current_school_id_from_conn(conn)
                 data = rows(conn.execute("SELECT id,user_id,public_code,name,email,phone,admission_no,class_name,sex,date_of_birth,address,portrait_path,status,created_at,updated_at FROM users WHERE school_id=? AND role='learner' ORDER BY class_name,name", (school_id,)))
@@ -3553,8 +2390,10 @@ class Handler(SimpleHTTPRequestHandler):
             if path == "/api/admin/marks/broadsheet":
                 return self.admin_broadsheet(conn, query)
             if path == "/api/admin/report-card":
+                self.log_message("Print API called: %s", self.path)
                 return self.admin_report_card(conn, query, batch=False)
             if path == "/api/admin/report-cards":
+                self.log_message("Print batch API called: %s", self.path)
                 return self.admin_report_card(conn, query, batch=True)
             if path == "/api/admin/attendance":
                 return self.admin_attendance(conn, query)
@@ -3670,6 +2509,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json({"success": True, "data": self.timetable_absences(conn, query)})
             if path == "/api/admin/timetable/substitutions":
                 return self.send_json({"success": True, "data": self.timetable_substitutions(conn, query)})
+            if path == "/api/admin/timetable/teachers":
+                return self.send_json({"success": True, "data": self.timetable_teachers(conn)})
             if path == "/api/admin/skills":
                 data = rows(conn.execute("SELECT id AS skillId, id, name AS label, name, description, level, sort_order FROM skills ORDER BY sort_order, name")) if self.table_exists(conn, "skills") else []
                 return self.send_json({"success": True, "data": data})
@@ -3796,286 +2637,170 @@ class Handler(SimpleHTTPRequestHandler):
         cur = conn.execute("INSERT INTO subjects (school_id, name, code, level, description, status) VALUES (?,?,?,?,?,?)", (school_id, *values))
         return self.send_json({"success": True, "message": "Subject added", "id": cur.lastrowid})
 
-    def save_public_resource_submission(self):
-        body = self.read_body()
-        original_filename = safe_upload_filename(body.get("filename") or "", "submitted-resource")
-        title = clean(body.get("title")) or Path(original_filename).stem.replace("-", " ").strip() or "Submitted resource"
-        title = title[:180]
-        typ = normalize_resource_type(body.get("type") or "notes") or "notes"
-        grade = clean(body.get("grade"))[:80]
-        subject = clean(body.get("subject"))[:80]
-        contact = clean(body.get("contact"))[:180]
-        note = clean(body.get("note"))[:1200]
-        if not body.get("file_data") or not grade or not subject:
-            return self.send_json({"success": False, "message": "File, grade/form, and subject are required."}, 400)
-        try:
-            mime_type, raw = data_url_bytes(body.get("file_data"))
-            if mime_type not in ALLOWED_RESOURCE_MIME_TYPES:
-                return self.send_json({"success": False, "message": "Unsupported resource file type."}, 400)
-            if len(raw) > 25 * 1024 * 1024:
-                return self.send_json({"success": False, "message": "Resource file is too large."}, 400)
-            filename = original_filename
-            if "." not in filename:
-                filename += mimetypes.guess_extension(mime_type) or ".bin"
-            stem = Path(filename).stem[:80] or slugify_resource(title)
-            suffix = Path(filename).suffix or (mimetypes.guess_extension(mime_type) or ".bin")
-            stored_name = f"{stem}-{int(time.time())}-{secrets.token_hex(4)}{suffix}"
-            target_dir = global_upload_dir("submissions")
-            target = (target_dir / stored_name).resolve()
-            if not str(target).startswith(str(target_dir.resolve())):
-                return self.send_json({"success": False, "message": "Invalid file path."}, 400)
-            target.write_bytes(raw)
-        except Exception as err:
-            return self.send_json({"success": False, "message": str(err)}, 400)
+    def parent_login_id(self, conn, school_code):
+        prefix = f"{school_code}-PAR-"
+        for i in range(1, 100000):
+            code = f"{prefix}{i:04d}"
+            if not one(conn.execute("SELECT id FROM parent_accounts WHERE parent_id=?", (code,))):
+                return code
+        return f"{prefix}{secrets.token_hex(3).upper()}"
 
-        level = normalize_resource_level(body.get("level")) or infer_resource_level(grade, typ)
-        audience = clean(body.get("audience")) or infer_resource_audience(typ)
-        file_path = f"/uploads/resources/submissions/{stored_name}"
-        with resource_db() as conn:
-            cur = conn.execute(
-                """INSERT INTO resource_submissions
-                   (title,type,grade,subject,level,audience,filename,file_path,file_size,mime_type,contact,note,status,ip,created_at,updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'pending', ?, datetime('now'), datetime('now'))""",
-                (title, typ, grade, subject, level, audience, original_filename, file_path, len(raw), mime_type, contact or None, note or None, self.client_ip()),
-            )
-            submission = one(conn.execute("SELECT id,title,status,created_at FROM resource_submissions WHERE id=?", (cur.lastrowid,)))
-        return self.send_json({"success": True, "data": submission, "message": "Resource received for review."}, 201)
-
-    def update_resource_submission_review(self, conn, user, submission_id):
+    def save_admin_parent(self, conn, parent_id=None):
+        school_id = current_school_id_from_conn(conn)
+        school = one(conn.execute("SELECT school_code FROM schools WHERE id=?", (school_id,))) or {"school_code": "JS"}
         body = self.read_body()
-        status = clean(body.get("status") or "pending").lower()
-        if status not in ("pending", "approved", "rejected", "archived"):
-            return self.send_json({"success": False, "message": "Invalid submission status."}, 400)
-        submission = one(conn.execute("SELECT * FROM resource_submissions WHERE id=?", (submission_id,)))
-        if not submission:
-            return self.send_json({"success": False, "message": "Submission not found"}, 404)
-        resource_id = submission.get("resource_id")
-        if status == "approved" and (body.get("publish") or body.get("publish_resource")) and not resource_id:
-            slug = f"{slugify_resource(body.get('slug') or submission.get('title'))}-submission-{submission_id}"
-            body_html = _seed_body(
-                normalize_resource_type(submission.get("type") or "notes") or "notes",
-                clean(submission.get("title")) or "Submitted resource",
-            )
-            if clean(submission.get("note")):
-                body_html += f"<p>{escape_html_text(submission.get('note'))}</p>"
+        name = clean(body.get("name"))
+        if not name:
+            return self.send_json({"success": False, "message": "Name is required"}, 400)
+        fields = {
+            "school_id": school_id,
+            "name": name,
+            "email": clean(body.get("email")) or None,
+            "phone": clean(body.get("phone")) or clean(body.get("parent_phone")) or None,
+            "status": clean(body.get("status")) or "active",
+        }
+        password = clean(body.get("password"))
+        if parent_id:
+            assignments = ", ".join(f"{k}=?" for k in fields)
+            conn.execute(f"UPDATE parent_accounts SET {assignments}, updated_at=datetime('now') WHERE id=? AND school_id=?", (*fields.values(), parent_id, school_id))
+            if password:
+                conn.execute("UPDATE parent_accounts SET password=?, temp_code=NULL, updated_at=datetime('now') WHERE id=? AND school_id=?", (hash_password(password), parent_id, school_id))
+            return self.send_json({"success": True, "message": "Parent updated"})
+        login_id = clean(body.get("parent_id") or body.get("user_id")) or self.parent_login_id(conn, clean(school.get("school_code") or "JS").upper())
+        if not password:
+            password = "joyland123"
+        cur = conn.execute(
+            """INSERT INTO parent_accounts(school_id,parent_id,name,email,phone,password,status,created_at,updated_at)
+               VALUES(?,?,?,?,?,?,?,datetime('now'),datetime('now'))""",
+            (school_id, login_id, fields["name"], fields["email"], fields["phone"], hash_password(password), fields["status"]),
+        )
+        return self.send_json({"success": True, "message": "Parent added", "id": cur.lastrowid, "parent_id": login_id})
+
+    def toggle_admin_parent(self, conn, parent_id):
+        school_id = current_school_id_from_conn(conn)
+        row = one(conn.execute("SELECT status FROM parent_accounts WHERE id=? AND school_id=?", (parent_id, school_id)))
+        if not row:
+            return self.send_json({"success": False, "message": "Parent not found"}, 404)
+        status = "inactive" if row.get("status") == "active" else "active"
+        conn.execute("UPDATE parent_accounts SET status=?, updated_at=datetime('now') WHERE id=? AND school_id=?", (status, parent_id, school_id))
+        return self.send_json({"success": True, "status": status})
+
+    def bulk_learner_status(self, conn):
+        school_id = current_school_id_from_conn(conn)
+        body = self.read_body()
+        ids = [as_int(x) for x in (body.get("learner_ids") or body.get("ids") or [])]
+        ids = [x for x in ids if x]
+        status = clean(body.get("status") or "inactive").lower()
+        if status not in ("active", "inactive"):
+            return self.send_json({"success": False, "message": "status must be active or inactive"}, 400)
+        if not ids:
+            return self.send_json({"success": False, "message": "No learners selected"}, 400)
+        placeholders = ",".join("?" for _ in ids)
+        cur = conn.execute(
+            f"UPDATE users SET status=?, updated_at=datetime('now') WHERE school_id=? AND role='learner' AND id IN ({placeholders})",
+            (status, school_id, *ids),
+        )
+        return self.send_json({"success": True, "status": status, "updated": cur.rowcount})
+
+    def bulk_learner_temp_codes(self, conn):
+        school_id = current_school_id_from_conn(conn)
+        body = self.read_body()
+        ids = [as_int(x) for x in (body.get("learner_ids") or body.get("ids") or [])]
+        ids = [x for x in ids if x]
+        if not ids:
+            return self.send_json({"success": False, "message": "No learners selected"}, 400)
+        expiry = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+        codes = []
+        for learner_id in ids:
+            if not one(conn.execute("SELECT id FROM users WHERE id=? AND role='learner' AND school_id=?", (learner_id, school_id))):
+                continue
+            code = gen_temp_code()
+            conn.execute("UPDATE users SET temp_code=?, temp_code_expiry=?, updated_at=datetime('now') WHERE id=? AND role='learner' AND school_id=?", (code, expiry, learner_id, school_id))
+            codes.append({"learner_id": learner_id, "temp_code": code})
+        return self.send_json({"success": True, "data": {"codes": codes}, "codes": codes, "created": len(codes)})
+
+    def bulk_learner_class(self, conn):
+        school_id = current_school_id_from_conn(conn)
+        body = self.read_body()
+        ids = [as_int(x) for x in (body.get("learner_ids") or body.get("ids") or [])]
+        ids = [x for x in ids if x]
+        class_name = class_name_from_body(conn, body)
+        if not ids or not class_name:
+            return self.send_json({"success": False, "message": "learner_ids and class_name are required"}, 400)
+        cls = one(conn.execute("SELECT name FROM classes WHERE school_id=? AND UPPER(name)=UPPER(?)", (school_id, class_name)))
+        if not cls:
+            return self.send_json({"success": False, "message": "Class not found"}, 404)
+        placeholders = ",".join("?" for _ in ids)
+        cur = conn.execute(
+            f"UPDATE users SET class_name=?, updated_at=datetime('now') WHERE school_id=? AND role='learner' AND id IN ({placeholders})",
+            (cls["name"], school_id, *ids),
+        )
+        return self.send_json({"success": True, "class_name": cls["name"], "updated": cur.rowcount})
+
+    def import_learners(self, conn):
+        school_id = current_school_id_from_conn(conn)
+        school = one(conn.execute("SELECT school_code FROM schools WHERE id=?", (school_id,))) or {"school_code": "JS"}
+        school_code = clean(school.get("school_code") or "JS").upper()
+        body = self.read_body()
+        learners = body.get("learners") if isinstance(body.get("learners"), list) else []
+        if not learners:
+            return self.send_json({"success": False, "message": "No learners supplied"}, 400)
+        class_names = {str(r["name"]).upper(): r["name"] for r in rows(conn.execute("SELECT name FROM classes WHERE school_id=?", (school_id,)))}
+        created = 0
+        skipped = 0
+        errors = []
+        default_password = clean(body.get("password")) or "joyland123"
+        for idx, item in enumerate(learners, 1):
+            name = clean(item.get("name"))
+            admission = clean(item.get("admission_no") or item.get("admissionNo"))
+            requested_class = clean(item.get("class_name") or item.get("class") or item.get("grade"))
+            class_name = class_names.get(requested_class.upper())
+            if not name or not admission or not class_name:
+                skipped += 1
+                errors.append({"row": idx, "message": "Name, admission number and valid class are required"})
+                continue
+            if one(conn.execute("SELECT id FROM users WHERE school_id=? AND role='learner' AND UPPER(admission_no)=UPPER(?)", (school_id, admission))):
+                skipped += 1
+                errors.append({"row": idx, "message": f"Admission number already exists: {admission}"})
+                continue
+            login_id = gen_login_id(conn, f"{school_code}-")
+            public_code = admission if admission.upper().startswith(f"{school_code}-") else f"{school_code}-{admission}"
             cur = conn.execute(
-                """INSERT INTO resources
-                   (type,title,grade,subject,body_html,file_path,published,views,level,audience,
-                    status,slug,mime_type,file_size,visibility,is_verified,created_by_user_id,created_at,updated_at)
-                   VALUES (?,?,?,?,?,?,1,0,?,?, 'published',?,?,?, 'public',1,?,datetime('now'),datetime('now'))""",
+                """INSERT INTO users(school_id,user_id,public_code,name,phone,admission_no,class_name,sex,date_of_birth,password,role,status,created_at,updated_at)
+                   VALUES(?,?,?,?,?,?,?,?,?,?, 'learner','active',datetime('now'),datetime('now'))""",
                 (
-                    normalize_resource_type(submission.get("type") or "notes") or "notes",
-                    clean(submission.get("title")) or "Submitted resource",
-                    clean(submission.get("grade")),
-                    clean(submission.get("subject")) or "General",
-                    body_html,
-                    clean(submission.get("file_path")) or None,
-                    normalize_resource_level(submission.get("level")) or infer_resource_level(submission.get("grade"), submission.get("type")),
-                    clean(submission.get("audience")) or infer_resource_audience(submission.get("type")),
-                    slug,
-                    clean(submission.get("mime_type")) or None,
-                    as_int(submission.get("file_size")),
-                    user.get("id"),
+                    school_id,
+                    login_id,
+                    public_code,
+                    name,
+                    clean(item.get("phone") or item.get("parent_phone")) or None,
+                    admission,
+                    class_name,
+                    clean(item.get("sex")).upper()[:1] or None,
+                    clean(item.get("dob") or item.get("date_of_birth")) or None,
+                    hash_password(default_password),
                 ),
             )
-            resource_id = cur.lastrowid
-        conn.execute(
-            """UPDATE resource_submissions
-               SET status=?, reviewer_note=?, reviewed_by=?, reviewed_at=datetime('now'), resource_id=?, updated_at=datetime('now')
-               WHERE id=?""",
-            (status, clean(body.get("reviewer_note"))[:1200] or None, user.get("id"), resource_id, submission_id),
-        )
-        return self.send_json({"success": True, "data": one(conn.execute("SELECT * FROM resource_submissions WHERE id=?", (submission_id,))), "message": "Submission updated"})
-
-    def save_admin_resource(self, conn, user, resource_id=None):
-        ensure_resource_portal_tables(conn)
-        body = self.read_body()
-        title = clean(body.get("title"))
-        typ = normalize_resource_type(body.get("type"))
-        if not title or not typ:
-            return self.send_json({"success": False, "message": "title and type are required"}, 400)
-        visibility = clean(body.get("visibility") or "public").lower()
-        if visibility not in ("public", "registered", "premium", "school_only", "tenant", "private"):
-            return self.send_json({"success": False, "message": "Invalid resource visibility."}, 400)
-        status = clean(body.get("status") or ("published" if body.get("published", 1) else "draft")).lower()
-        if status not in ("draft", "published", "archived"):
-            return self.send_json({"success": False, "message": "Invalid resource status."}, 400)
-        file_path = clean(body.get("file_path"))
-        mime_type = clean(body.get("mime_type"))
-        file_size = as_int(body.get("file_size"))
-        if body.get("file_data"):
-            try:
-                mime_type, raw = data_url_bytes(body.get("file_data"))
-                if mime_type not in ALLOWED_RESOURCE_MIME_TYPES:
-                    return self.send_json({"success": False, "message": "Unsupported resource file type."}, 400)
-                if len(raw) > 25 * 1024 * 1024:
-                    return self.send_json({"success": False, "message": "Resource file is too large."}, 400)
-                filename = safe_upload_filename(body.get("filename") or f"{slugify_resource(title)}")
-                if "." not in filename:
-                    ext = mimetypes.guess_extension(mime_type) or ".bin"
-                    filename += ext
-                stem = Path(filename).stem[:80] or slugify_resource(title)
-                suffix = Path(filename).suffix or (mimetypes.guess_extension(mime_type) or ".bin")
-                filename = f"{stem}-{int(time.time())}-{secrets.token_hex(4)}{suffix}"
-                target_dir = global_upload_dir()
-                target = (target_dir / filename).resolve()
-                if not str(target).startswith(str(target_dir.resolve())):
-                    return self.send_json({"success": False, "message": "Invalid file path."}, 400)
-                target.write_bytes(raw)
-                file_path = f"/uploads/resources/{filename}"
-                file_size = len(raw)
-            except Exception as err:
-                return self.send_json({"success": False, "message": str(err)}, 400)
-        category_id = as_int(body.get("category_id"))
-        category_name = clean(body.get("category"))
-        if category_name and not category_id:
-            cat_slug = slugify_resource(category_name)
-            conn.execute("INSERT OR IGNORE INTO resource_categories(name,slug,created_at) VALUES(?,?,datetime('now'))", (category_name, cat_slug))
-            category_id = scalar(conn, "SELECT id FROM resource_categories WHERE slug=?", (cat_slug,), None)
-        slug = slugify_resource(body.get("slug") or title)
-        if resource_id:
-            existing = one(conn.execute("SELECT * FROM resources WHERE id=?", (resource_id,)))
-            if not existing:
-                return self.send_json({"success": False, "message": "Resource not found"}, 404)
-            slug = f"{slug}-{resource_id}" if not clean(body.get("slug")) else slug
-            if not file_path:
-                file_path = clean(existing.get("file_path"))
-            if not mime_type:
-                mime_type = clean(existing.get("mime_type"))
-            if file_size is None:
-                file_size = as_int(existing.get("file_size"))
-            created_by_school_id = as_int(body.get("created_by_school_id"), as_int(existing.get("created_by_school_id")) or user.get("school_id"))
-            created_by_user_id = as_int(existing.get("created_by_user_id")) or user.get("id")
-            fields = {
-                "title": title,
-                "type": typ,
-                "grade": clean(body.get("grade")),
-                "subject": clean(body.get("subject")),
-                "year": as_int(body.get("year")),
-                "body_html": body.get("body_html") or body.get("body") or "",
-                "file_path": file_path or None,
-                "published": 1 if status == "published" else 0,
-                "category_id": category_id,
-                "level": normalize_resource_level(body.get("level")) or infer_resource_level(body.get("grade"), typ),
-                "audience": clean(body.get("audience")) or infer_resource_audience(typ),
-                "premium": 1 if body.get("premium") else 0,
-                "is_featured": 1 if body.get("is_featured") or body.get("featured") else 0,
-                "is_verified": 1 if body.get("is_verified") or body.get("verified") else 0,
-                "status": status,
-                "slug": slug,
-                "thumbnail": clean(body.get("thumbnail")),
-                "mime_type": mime_type,
-                "file_size": file_size,
-                "visibility": visibility,
-                "created_by_school_id": created_by_school_id,
-                "created_by_user_id": created_by_user_id,
-            }
-            assignments = ", ".join(f"{k}=?" for k in fields)
-            conn.execute(f"UPDATE resources SET {assignments}, updated_at=datetime('now') WHERE id=?", (*fields.values(), resource_id))
-            rid = resource_id
-        else:
-            fields = {
-                "school_id": user.get("school_id") or current_school_id_from_conn(conn),
-                "title": title,
-                "type": typ,
-                "grade": clean(body.get("grade")),
-                "subject": clean(body.get("subject")),
-                "year": as_int(body.get("year")),
-                "body_html": body.get("body_html") or body.get("body") or "",
-                "file_path": file_path or None,
-                "published": 1 if status == "published" else 0,
-                "views": 0,
-                "category_id": category_id,
-                "level": normalize_resource_level(body.get("level")) or infer_resource_level(body.get("grade"), typ),
-                "audience": clean(body.get("audience")) or infer_resource_audience(typ),
-                "premium": 1 if body.get("premium") else 0,
-                "is_featured": 1 if body.get("is_featured") or body.get("featured") else 0,
-                "is_verified": 1 if body.get("is_verified") or body.get("verified") else 0,
-                "downloads_count": 0,
-                "rating": 0,
-                "status": status,
-                "slug": slug,
-                "thumbnail": clean(body.get("thumbnail")),
-                "mime_type": mime_type,
-                "file_size": file_size,
-                "visibility": visibility,
-                "created_by_school_id": as_int(body.get("created_by_school_id")) or user.get("school_id"),
-                "created_by_user_id": user.get("id"),
-            }
-            cols = ",".join(fields)
-            cur = conn.execute(f"INSERT INTO resources ({cols},created_at,updated_at) VALUES ({','.join('?' for _ in fields)},datetime('now'),datetime('now'))", list(fields.values()))
-            rid = cur.lastrowid
-            conn.execute("UPDATE resources SET slug=? WHERE id=? AND (slug IS NULL OR slug='')", (f"{slug}-{rid}", rid))
-        self.save_resource_tags(conn, rid, body.get("tags"))
-        self.audit_log(conn, user.get("school_id"), user.get("role"), user.get("id"), "resource_saved", "resource", str(rid), {"status": status, "visibility": visibility})
-        return self.send_json({"success": True, "data": one(conn.execute("SELECT * FROM resources WHERE id=?", (rid,))), "message": "Resource saved"})
-
-    def save_resource_tags(self, conn, resource_id, tags):
-        if not isinstance(tags, list):
-            tags = [x.strip() for x in clean(tags).split(",") if x.strip()]
-        conn.execute("DELETE FROM resource_tag_links WHERE resource_id=?", (resource_id,))
-        for tag in tags or []:
-            name = clean(tag)
-            if not name:
-                continue
-            slug = slugify_resource(name)
-            conn.execute("INSERT OR IGNORE INTO resource_tags(name,slug,created_at) VALUES(?,?,datetime('now'))", (name, slug))
-            tag_id = scalar(conn, "SELECT id FROM resource_tags WHERE slug=?", (slug,), None)
-            if tag_id:
-                conn.execute("INSERT OR IGNORE INTO resource_tag_links(resource_id,tag_id) VALUES(?,?)", (resource_id, tag_id))
-
-    def delete_admin_resource(self, conn, user, resource_id):
-        ensure_resource_portal_tables(conn)
-        if not one(conn.execute("SELECT id FROM resources WHERE id=?", (resource_id,))):
-            return self.send_json({"success": False, "message": "Resource not found"}, 404)
-        conn.execute("UPDATE resources SET status='archived', published=0, updated_at=datetime('now') WHERE id=?", (resource_id,))
-        self.audit_log(conn, user.get("school_id"), user.get("role"), user.get("id"), "resource_archived", "resource", str(resource_id))
-        return self.send_json({"success": True, "message": "Resource archived"})
-
-    def admin_resource_analytics(self, conn):
-        ensure_resource_portal_tables(conn)
-        subject_distribution = rows(conn.execute("SELECT COALESCE(subject,'General') AS subject, COUNT(*) AS count FROM resources GROUP BY COALESCE(subject,'General') ORDER BY count DESC"))
-        type_distribution = rows(conn.execute("SELECT COALESCE(type,'other') AS type, COUNT(*) AS count FROM resources GROUP BY COALESCE(type,'other') ORDER BY count DESC"))
-        top = rows(conn.execute("SELECT id,title,type,subject,views,downloads_count,rating FROM resources ORDER BY COALESCE(downloads_count,0) DESC, COALESCE(views,0) DESC LIMIT 10"))
-        trends = rows(conn.execute("SELECT substr(created_at,1,7) AS month, COUNT(*) AS resources FROM resources GROUP BY substr(created_at,1,7) ORDER BY month DESC LIMIT 12"))
-        # Engagement time-series from the (timestamped) download log.
-        downloads_by_day = rows(conn.execute(
-            """WITH RECURSIVE d(day) AS (
-                   SELECT date('now','-13 days')
-                   UNION ALL SELECT date(day,'+1 day') FROM d WHERE day < date('now')
-               )
-               SELECT d.day AS day, COUNT(rd.id) AS downloads, COUNT(DISTINCT rd.ip) AS visitors
-               FROM d LEFT JOIN resource_downloads rd ON substr(rd.created_at,1,10)=d.day
-               GROUP BY d.day ORDER BY d.day"""
-        ))
-        downloads_by_weekday = rows(conn.execute(
-            """SELECT CAST(strftime('%w', created_at) AS INTEGER) AS weekday,
-                      COUNT(*) AS downloads, COUNT(DISTINCT ip) AS visitors
-               FROM resource_downloads WHERE created_at >= datetime('now','-56 days')
-               GROUP BY weekday"""
-        ))
-        downloads_by_month = rows(conn.execute(
-            """SELECT substr(created_at,1,7) AS month, COUNT(*) AS downloads, COUNT(DISTINCT ip) AS visitors
-               FROM resource_downloads GROUP BY month ORDER BY month DESC LIMIT 12"""
-        ))
-        data = {
-            "views": scalar(conn, "SELECT COALESCE(SUM(views),0) FROM resources", (), 0),
-            "downloads": scalar(conn, "SELECT COALESCE(SUM(downloads_count),0) FROM resources", (), 0),
-            "published": scalar(conn, "SELECT COUNT(*) FROM resources WHERE COALESCE(status,'published')='published' AND COALESCE(published,0)=1", (), 0),
-            "draft": scalar(conn, "SELECT COUNT(*) FROM resources WHERE COALESCE(status,'published')='draft' OR COALESCE(published,0)=0", (), 0),
-            "logged_downloads": scalar(conn, "SELECT COUNT(*) FROM resource_downloads", (), 0),
-            "unique_visitors": scalar(conn, "SELECT COUNT(DISTINCT ip) FROM resource_downloads", (), 0),
-            "downloads_7d": scalar(conn, "SELECT COUNT(*) FROM resource_downloads WHERE created_at>=datetime('now','-7 days')", (), 0),
-            "visitors_7d": scalar(conn, "SELECT COUNT(DISTINCT ip) FROM resource_downloads WHERE created_at>=datetime('now','-7 days')", (), 0),
-            "subject_distribution": subject_distribution,
-            "type_distribution": type_distribution,
-            "top_resources": top,
-            "activity_trends": trends,
-            "downloads_by_day": downloads_by_day,
-            "downloads_by_weekday": downloads_by_weekday,
-            "downloads_by_month": downloads_by_month,
-        }
-        return self.send_json({"success": True, "data": data})
+            created += 1
+            phone = clean(item.get("phone") or item.get("parent_phone"))
+            if phone and self.table_exists(conn, "parent_accounts") and self.table_exists(conn, "parent_learner_links"):
+                parent = one(conn.execute("SELECT * FROM parent_accounts WHERE school_id=? AND phone=?", (school_id, phone)))
+                if not parent:
+                    parent_code = self.parent_login_id(conn, school_code)
+                    pcur = conn.execute(
+                        """INSERT INTO parent_accounts(school_id,parent_id,name,phone,password,status,created_at,updated_at)
+                           VALUES(?,?,?,?,?,'active',datetime('now'),datetime('now'))""",
+                        (school_id, parent_code, f"{name} Guardian", phone, hash_password(default_password)),
+                    )
+                    parent_id = pcur.lastrowid
+                else:
+                    parent_id = parent["id"]
+                if not one(conn.execute("SELECT id FROM parent_learner_links WHERE school_id=? AND parent_id=? AND learner_id=?", (school_id, parent_id, cur.lastrowid))):
+                    conn.execute(
+                        "INSERT INTO parent_learner_links(school_id,parent_id,learner_id,relationship,created_at) VALUES(?,?,?,?,datetime('now'))",
+                        (school_id, parent_id, cur.lastrowid, "Guardian"),
+                    )
+        return self.send_json({"success": True, "created": created, "skipped": skipped, "errors": errors})
 
     def save_assessment_components(self, conn):
         school_id = current_school_id_from_conn(conn)
@@ -4300,6 +3025,13 @@ class Handler(SimpleHTTPRequestHandler):
         term = resolve_term(conn, body_first(body, "term_id", "termId"))
         assessment = valid_assessment(body_first(body, "assessment_type", "assessmentType"), "")
         entries = body.get("entries") if isinstance(body.get("entries"), list) else []
+        if not entries and body_first(body, "learner_id", "learnerId") and body_first(body, "subject_id", "subjectId"):
+            entries = [{
+                "learner_id": body_first(body, "learner_id", "learnerId"),
+                "subject_id": body_first(body, "subject_id", "subjectId"),
+                "component_key": body_first(body, "component_key", "componentKey", default="exam"),
+                "score": body.get("score"),
+            }]
         if not class_id or not term or not assessment or not entries:
             return self.send_json({"success": False, "message": "Invalid marks payload"}, 400)
         if not one(conn.execute("SELECT id FROM classes WHERE id=? AND school_id=?", (class_id, school_id))):
@@ -4394,6 +3126,76 @@ class Handler(SimpleHTTPRequestHandler):
         if learner_id and not data.get("learner"):
             return self.send_json({"success": False, "message": "Learner not found"}, 404)
         return self.send_json({"success": True, "data": data})
+
+    def admin_comments(self, conn, query):
+        school_id = current_school_id_from_conn(conn)
+        class_id = as_int(query_first(query, "class_id", "classId"))
+        term = resolve_term(conn, query_first(query, "term_id", "termId"))
+        assessment = valid_assessment(query_first(query, "assessment_type", "assessmentType"), detect_assessment(term))
+        cls = one(conn.execute("SELECT * FROM classes WHERE id=? AND school_id=?", (class_id, school_id))) if class_id else None
+        if not cls or not term:
+            return self.send_json({"success": False, "message": "Class or term not found"}, 404)
+        learners = rows(conn.execute(
+            """SELECT id, name, admission_no, user_id
+               FROM users
+               WHERE school_id=? AND role='learner' AND status='active' AND class_name=?
+               ORDER BY name""",
+            (school_id, cls["name"]),
+        ))
+        comment_rows = rows(conn.execute(
+            """SELECT learner_id, role, comment_text
+               FROM learner_comments
+               WHERE (school_id=? OR school_id IS NULL) AND class_id=? AND term_id=? AND assessment_type=?""",
+            (school_id, class_id, term["id"], assessment),
+        ))
+        by_learner = {}
+        for row in comment_rows:
+            by_learner.setdefault(str(row["learner_id"]), {})[row["role"]] = row["comment_text"] or ""
+        for learner in learners:
+            learner["comments"] = {
+                "class_teacher": by_learner.get(str(learner["id"]), {}).get("class_teacher", ""),
+                "headteacher": by_learner.get(str(learner["id"]), {}).get("headteacher", ""),
+                "director": by_learner.get(str(learner["id"]), {}).get("director", ""),
+            }
+        return self.send_json({"success": True, "data": {"class": cls, "term": term, "assessment_type": assessment, "learners": learners}})
+
+    def save_admin_comments(self, conn, user):
+        school_id = current_school_id_from_conn(conn)
+        body = self.read_body()
+        class_id = as_int(body_first(body, "class_id", "classId"))
+        term = resolve_term(conn, body_first(body, "term_id", "termId"))
+        assessment = valid_assessment(body_first(body, "assessment_type", "assessmentType"), detect_assessment(term))
+        entries = body.get("entries") if isinstance(body.get("entries"), list) else []
+        cls = one(conn.execute("SELECT * FROM classes WHERE id=? AND school_id=?", (class_id, school_id))) if class_id else None
+        if not cls or not term:
+            return self.send_json({"success": False, "message": "Class or term not found"}, 404)
+        allowed_ids = active_learner_ids(conn, cls["name"])
+        allowed_roles = {"class_teacher", "headteacher", "director"}
+        saved = 0
+        for entry in entries:
+            learner_id = as_int(body_first(entry, "learner_id", "learnerId"))
+            if learner_id not in allowed_ids:
+                continue
+            comments = entry.get("comments") if isinstance(entry.get("comments"), dict) else entry
+            for role in allowed_roles:
+                if role not in comments:
+                    continue
+                text = clean(comments.get(role))[:1000]
+                if text:
+                    conn.execute(
+                        """INSERT INTO learner_comments(school_id,learner_id,class_id,term_id,assessment_type,role,comment_text,created_by,created_at,updated_at)
+                           VALUES(?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
+                           ON CONFLICT(learner_id,term_id,assessment_type,role)
+                           DO UPDATE SET comment_text=excluded.comment_text, class_id=excluded.class_id, school_id=excluded.school_id, updated_at=datetime('now')""",
+                        (school_id, learner_id, class_id, term["id"], assessment, role, text, user["id"]),
+                    )
+                else:
+                    conn.execute(
+                        "DELETE FROM learner_comments WHERE school_id=? AND learner_id=? AND term_id=? AND assessment_type=? AND role=?",
+                        (school_id, learner_id, term["id"], assessment, role),
+                    )
+                saved += 1
+        return self.send_json({"success": True, "saved": saved, "message": f"Saved {saved} comment field(s)."})
 
     def admin_attendance(self, conn, query):
         class_id = as_int(query_first(query, "class_id", "classId"))
@@ -4586,6 +3388,116 @@ class Handler(SimpleHTTPRequestHandler):
             )
             saved += conn.total_changes
         return self.send_json({"success": True, "message": f"Saved lesson load for {len(rows_in)} subject assignment(s)."})
+
+    def timetable_teachers(self, conn):
+        school_id = current_school_id_from_conn(conn)
+        teachers = rows(conn.execute(
+            """SELECT u.id, u.name, u.subject, u.status,
+                      (SELECT c.name FROM classes c WHERE c.school_id=? AND c.class_teacher_id=u.id ORDER BY c.name LIMIT 1) AS primary_class,
+                      tc.max_per_day, tc.max_per_week, tc.preferred_off_day, tc.unavailable_slots, tc.min_gap_minutes
+               FROM users u
+               LEFT JOIN teacher_constraints tc ON tc.teacher_id=u.id AND (tc.school_id IS NULL OR tc.school_id=?)
+               WHERE u.school_id=? AND u.role='teacher'
+               ORDER BY u.name""",
+            (school_id, school_id, school_id),
+        ))
+        for teacher in teachers:
+            teacher["max_per_day"] = as_int(teacher.get("max_per_day"), 6) or 6
+            teacher["max_per_week"] = as_int(teacher.get("max_per_week"), 30) or 30
+            raw = teacher.get("unavailable_slots")
+            try:
+                teacher["unavailable_slots"] = json.loads(raw) if raw else []
+            except Exception:
+                teacher["unavailable_slots"] = [x.strip() for x in str(raw).split(",") if x.strip()]
+        return teachers
+
+    def save_timetable_teacher(self, conn, teacher_id):
+        school_id = current_school_id_from_conn(conn)
+        if not one(conn.execute("SELECT id FROM users WHERE id=? AND school_id=? AND role='teacher'", (teacher_id, school_id))):
+            return self.send_json({"success": False, "message": "Teacher not found"}, 404)
+        body = self.read_body()
+        unavailable = body.get("unavailable_slots") if isinstance(body.get("unavailable_slots"), list) else []
+        payload = {
+            "teacher_id": teacher_id,
+            "school_id": school_id,
+            "max_per_day": max(1, as_int(body.get("max_per_day"), 6) or 6),
+            "max_per_week": max(1, as_int(body.get("max_per_week"), 30) or 30),
+            "preferred_off_day": clean(body.get("preferred_off_day")) or None,
+            "unavailable_slots": json.dumps([clean(x) for x in unavailable if clean(x)]),
+            "min_gap_minutes": max(0, as_int(body.get("min_gap_minutes"), 0) or 0),
+        }
+        conn.execute("DELETE FROM teacher_constraints WHERE teacher_id=? AND (school_id IS NULL OR school_id=?)", (teacher_id, school_id))
+        conn.execute(
+            """INSERT INTO teacher_constraints(teacher_id,school_id,max_per_day,max_per_week,preferred_off_day,unavailable_slots,min_gap_minutes)
+               VALUES(:teacher_id,:school_id,:max_per_day,:max_per_week,:preferred_off_day,:unavailable_slots,:min_gap_minutes)""",
+            payload,
+        )
+        row = next((t for t in self.timetable_teachers(conn) if int(t["id"]) == int(teacher_id)), None)
+        return self.send_json({"success": True, "data": row})
+
+    def save_timetable_class_hours(self, conn):
+        school_id = current_school_id_from_conn(conn)
+        body = self.read_body()
+        rows_in = body.get("rows") if isinstance(body.get("rows"), list) else []
+        saved = 0
+        for item in rows_in:
+            class_id = as_int(body_first(item, "class_id", "classId"))
+            periods = item.get("active_periods") if isinstance(item.get("active_periods"), list) else []
+            clean_periods = sorted({as_int(p) for p in periods if as_int(p)})
+            if not class_id or not clean_periods:
+                continue
+            cur = conn.execute(
+                "UPDATE classes SET active_periods=?, updated_at=datetime('now') WHERE id=? AND school_id=?",
+                (json.dumps(clean_periods), class_id, school_id),
+            )
+            saved += cur.rowcount
+        return self.send_json({"success": True, "saved": saved, "message": f"Saved active periods for {saved} class(es)."})
+
+    def timetable_generation_diff(self, conn, generation_id):
+        target = one(conn.execute("SELECT * FROM timetable_generations WHERE id=?", (generation_id,)))
+        if not target:
+            return self.send_json({"success": False, "message": "Timetable generation not found."}, 404)
+        active = one(conn.execute("SELECT * FROM timetable_generations WHERE status='active' ORDER BY id DESC LIMIT 1"))
+
+        def slot_rows(gen_id):
+            if not gen_id:
+                return []
+            return rows(conn.execute(
+                """SELECT ts.class_id, ts.day_of_week, ts.period_no, ts.subject_id, ts.teacher_id,
+                          c.name AS class_name, s.name AS subject_name, u.name AS teacher_name
+                   FROM timetable_slots ts
+                   JOIN classes c ON c.id=ts.class_id
+                   JOIN subjects s ON s.id=ts.subject_id
+                   LEFT JOIN users u ON u.id=ts.teacher_id
+                   WHERE ts.generation_id=?""",
+                (gen_id,),
+            ))
+
+        def key(slot):
+            return (
+                slot.get("class_id"),
+                slot.get("day_of_week"),
+                slot.get("period_no"),
+                slot.get("subject_id"),
+                slot.get("teacher_id"),
+            )
+
+        current = {key(slot): slot for slot in slot_rows(active["id"] if active else None)}
+        proposed = {key(slot): slot for slot in slot_rows(generation_id)}
+        added = [proposed[k] for k in proposed.keys() - current.keys()]
+        removed = [current[k] for k in current.keys() - proposed.keys()]
+        affected_classes = sorted({slot.get("class_name") for slot in added + removed if slot.get("class_name")})
+        affected_teachers = sorted({slot.get("teacher_name") for slot in added + removed if slot.get("teacher_name")})
+        return self.send_json({"success": True, "data": {
+            "active_generation_id": active["id"] if active else None,
+            "generation_id": generation_id,
+            "added_count": len(added),
+            "removed_count": len(removed),
+            "affected_classes": affected_classes,
+            "affected_teachers": affected_teachers,
+            "added": added[:100],
+            "removed": removed[:100],
+        }})
 
     def timetable_rooms(self, conn):
         data = rows(conn.execute(

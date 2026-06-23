@@ -19,7 +19,7 @@
   /*  Nav config (single source of truth)  */
   const nav = [
     { label: 'Overview', items: [
-      { key:'overview',      href:'/admin/overview.html',     icon:'fa-chart-pie',   name:'Overview' },
+      { key:'overview',      href:'/admin',                  icon:'fa-chart-pie',   name:'Overview' },
       { key:'people',        href:'/admin/people.html',       icon:'fa-users',       name:'People',     countKey:'people' },
       { key:'classes',       href:'/admin/classes.html',      icon:'fa-chalkboard',  name:'Classes',    countKey:'classes' },
       { key:'subjects',      href:'/admin/subjects.html',     icon:'fa-book',        name:'Learning areas' }
@@ -179,11 +179,19 @@
   Joy.toast = (msg, opts={}) => {
     const stack = ensureToastStack();
     const t = document.createElement('div');
-    t.className = `toast ${opts.type || ''}`;
-    const icon = opts.type === 'warn' ? 'fa-triangle-exclamation'
-              : opts.type === 'danger' ? 'fa-circle-xmark'
+    const rawType = opts.type || 'ok';
+    const type = rawType === 'error' ? 'danger'
+              : rawType === 'success' ? 'ok'
+              : ['ok','warn','danger','info'].includes(rawType) ? rawType
+              : 'ok';
+    t.className = `toast ${type}`;
+    t.setAttribute('role', type === 'danger' ? 'alert' : 'status');
+    t.setAttribute('aria-live', type === 'danger' ? 'assertive' : 'polite');
+    const icon = type === 'warn' ? 'fa-triangle-exclamation'
+              : type === 'danger' ? 'fa-circle-xmark'
+              : type === 'info' ? 'fa-circle-info'
               : 'fa-circle-check';
-    t.innerHTML = `<i class="fas ${icon} lead"></i><span>${msg}</span>`;
+    t.innerHTML = `<i class="fas ${icon} lead" aria-hidden="true"></i><span>${htmlEscape(msg)}</span>`;
     stack.appendChild(t);
     requestAnimationFrame(()=>t.classList.add('show'));
     setTimeout(()=>{

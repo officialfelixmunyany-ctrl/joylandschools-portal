@@ -3,433 +3,311 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Civicom Schools Portal</title>
+  <title>Joyland Schools Portal</title>
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
   <style>
     :root{
-      --ink:#132238;
-      --muted:#5c6d84;
-      --blue:#2357d6;
-      --blue-dark:#173f9b;
-      --green:#147c6a;
-      --gold:#f0b64d;
-      --rose:#dc6b68;
-      --line:#d9e2ee;
-      --field:#f8fbff;
-      --page:#f6f8fc;
-      --surface:#ffffff;
-      --soft:#edf6f2;
-      --shadow:0 22px 60px rgba(27,55,105,.12);
+      --green:#0f3d22;
+      --gold:#c99732;
+      --ink:#ffffff;
+      --muted:rgba(255,255,255,.72);
+      --line:rgba(255,255,255,.26);
+      --panel:rgba(10,24,17,.58);
+      --panel-strong:rgba(10,24,17,.78);
       --radius:8px;
     }
     *{box-sizing:border-box}
-    html,body{max-width:100%;overflow-x:clip}
-    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--page)}
-    body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(115deg,rgba(35,87,214,.1),rgba(35,87,214,0) 34%),linear-gradient(175deg,rgba(20,124,106,.11),rgba(20,124,106,0) 56%),linear-gradient(0deg,rgba(240,182,77,.1),rgba(240,182,77,0) 45%);pointer-events:none}
-    a{color:inherit}
-    .wrap{width:min(1160px,calc(100% - 48px));min-height:100vh;margin:0 auto;padding:22px 0 34px;display:grid;grid-template-rows:auto minmax(0,1fr) auto}
-    .site-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:8px 0 22px}
-    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0}
-    .brand-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:var(--radius);background:#fff;color:var(--blue);border:1px solid var(--line);font-weight:900;box-shadow:0 8px 22px rgba(20,32,51,.08)}
-    .brand-text{display:grid;gap:1px}.brand-text strong{font-size:1.02rem}.brand-text small{color:var(--muted);font-weight:700}
-    .nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-    .nav a{min-height:38px;display:inline-flex;align-items:center;border:1px solid transparent;border-radius:var(--radius);padding:0 11px;text-decoration:none;color:#3c506b;font-size:.88rem;font-weight:800}
-    .nav a:hover,.nav a.active{background:#fff;border-color:var(--line);color:var(--blue)}
-    .nav .nav-primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-    .nav .nav-primary:hover{background:#0d1828;color:#fff}
-    .view-shell{view-transition-name:view-content;min-height:min(690px,calc(100vh - 160px));outline:none}
-    .view-shell.is-leaving{animation:view-out .16s ease both}
-    .view-shell.is-entering{animation:view-in .24s cubic-bezier(.2,.8,.2,1) both}
-    ::view-transition-old(view-content){animation:view-out .16s ease both}
-    ::view-transition-new(view-content){animation:view-in .24s cubic-bezier(.2,.8,.2,1) both}
-    @keyframes view-out{to{opacity:0;transform:translateY(8px) scale(.985);filter:blur(4px)}}
-    @keyframes view-in{from{opacity:0;transform:translateY(12px) scale(.985);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
-    .page{display:grid;gap:24px}
-    .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(390px,.9fr);gap:34px;align-items:center;padding:24px 0 12px}
-    .hero > *, .view-grid > *, .proof-row > *{min-width:0}
-    .eyebrow{display:inline-flex;width:fit-content;border-radius:var(--radius);background:#fff;border:1px solid var(--line);padding:7px 10px;color:var(--green);font-size:.76rem;font-weight:900;text-transform:uppercase;box-shadow:0 8px 22px rgba(20,32,51,.06)}
-    h1{font-size:clamp(2.55rem,5.6vw,4.8rem);line-height:1;margin:16px 0 16px;letter-spacing:0;color:var(--ink)}
-    .lead{font-size:1.08rem;line-height:1.65;color:var(--muted);margin:0 0 22px;max-width:690px}
-    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
-    .btn{min-height:46px;border:0;border-radius:var(--radius);padding:0 16px;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:.94rem;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
-    .btn:hover{transform:translateY(-1px)}
-    .btn.primary{background:var(--blue);color:#fff;box-shadow:0 12px 28px rgba(35,87,214,.28)}
-    .btn.primary:hover{background:var(--blue-dark)}
-    .btn.secondary{background:#fff;color:var(--blue);border:1px solid var(--line);box-shadow:0 10px 24px rgba(20,32,51,.08)}
-    .btn.secondary:hover{background:#f8fbff}
-    .btn.wide{width:100%}.btn:disabled{opacity:.65;cursor:wait;transform:none}
-    .trust-line{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
-    .trust-line li{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:var(--radius);background:rgba(255,255,255,.86);padding:8px 10px;color:#40516a;font-size:.84rem;font-weight:800}
-    .trust-line li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold)}
-    .trust-line li:nth-child(2)::before{background:var(--green)}.trust-line li:nth-child(3)::before{background:var(--rose)}
-    .product-preview{background:#0f1f35;color:#fff;border-radius:14px;padding:14px;box-shadow:0 28px 70px rgba(19,34,56,.26)}
-    .preview-top{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(255,255,255,.13);padding-bottom:12px;margin-bottom:12px}
-    .preview-dots{display:flex;gap:5px}.preview-dots span{width:9px;height:9px;border-radius:50%;background:#f0746f}.preview-dots span:nth-child(2){background:#f2c86a}.preview-dots span:nth-child(3){background:#5bd5a5}
-    .preview-title{font-size:.82rem;color:#d6e3f7;font-weight:800}
-    .preview-body{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px}
-    .preview-side{display:grid;gap:7px;align-content:start}
-    .preview-side span{height:28px;border-radius:var(--radius);background:rgba(255,255,255,.09);color:#cbd7ea;display:flex;align-items:center;padding:0 9px;font-size:.72rem;font-weight:800}
-    .preview-side span:first-child{background:#fff;color:#163865}
-    .preview-main{display:grid;gap:10px}
-    .preview-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    .kpi{background:#fff;color:var(--ink);border-radius:var(--radius);padding:11px}
-    .kpi strong{display:block;font-size:1.15rem}.kpi span{display:block;margin-top:3px;color:var(--muted);font-size:.7rem;font-weight:800}
-    .preview-table{background:#fff;border-radius:var(--radius);overflow:hidden;color:var(--ink)}
-    .preview-row{display:grid;grid-template-columns:1.1fr .7fr .7fr;gap:8px;padding:9px 11px;border-top:1px solid #edf1f6;font-size:.75rem;color:#55677d}
-    .preview-row:first-child{border-top:0;color:#23364d;font-weight:900;background:#f7fbff}
-    .panel{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);backdrop-filter:blur(8px)}
-    .panel h2{margin:0 0 8px;font-size:1.25rem}.panel h3{margin:0 0 12px;font-size:.86rem;text-transform:uppercase;color:#38506d;letter-spacing:.04em}
-    .muted{color:var(--muted);font-size:.94rem;line-height:1.55}
-    .proof-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-    .proof-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:0 12px 32px rgba(20,32,51,.06)}
-    .proof-card b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:var(--radius);background:var(--soft);color:var(--green);margin-bottom:10px}
-    .proof-card strong{display:block;margin-bottom:5px}.proof-card span{color:var(--muted);font-size:.9rem;line-height:1.45}
-    .view-grid{display:grid;grid-template-columns:minmax(0,640px) minmax(280px,1fr);gap:22px;align-items:start;padding-top:18px}
-    .find-grid{grid-template-columns:minmax(0,760px) minmax(260px,1fr)}
-    .search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin-top:18px}
-    input{width:100%;border:1px solid #c9d5e6;border-radius:var(--radius);padding:13px;font-size:.95rem;background:var(--field);color:var(--ink);outline:none}
-    input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(35,87,214,.13)}
-    .school{display:flex;justify-content:space-between;gap:14px;align-items:center;border-top:1px solid #e4ebf5;padding:14px 0}.school:first-child{border-top:0}
-    .school-main{min-width:0}.code{font-weight:900;color:var(--blue)}.name{font-weight:900;text-transform:uppercase}.empty{padding:14px;color:var(--muted);background:#f7fbff;border:1px solid #e4ebf5;border-radius:var(--radius);margin-top:14px}
-    .support-card{display:grid;gap:14px}
-    .next-list{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:10px}
-    .next-list li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;color:var(--muted);font-size:.92rem;line-height:1.45}
-    .next-list b{display:grid;place-items:center;width:26px;height:26px;border-radius:var(--radius);background:#fff3d6;color:#8a5b00}
-    .module-list{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
-    .module-list li{border:1px solid var(--line);border-radius:var(--radius);padding:7px 9px;background:#fff;color:#42566f;font-size:.82rem;font-weight:800}
-    form{display:grid;gap:18px;margin-top:18px}
-    .form-section{display:grid;gap:0}
-    .form-stack{display:grid;gap:12px}
-    .field{display:grid;gap:6px;min-width:0}
-    .field span{font-size:.76rem;font-weight:900;color:#4b607b;text-transform:uppercase}
-    .notice{font-size:.88rem;color:var(--muted);line-height:1.5;margin:0}
-    .status{font-size:.9rem;margin-top:2px;color:var(--muted);font-weight:750}.status.success{color:#166534}.status.error{color:#b91c1c}
-    .site-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:28px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
-    .site-footer a{color:var(--blue);font-weight:900}
-    @media (prefers-reduced-motion: reduce){
-      *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-      ::view-transition-old(view-content),::view-transition-new(view-content){animation:none!important}
+    html,body{min-height:100%;margin:0}
+    body{
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+      color:var(--ink);
+      position:relative;
+      isolation:isolate;
+      overflow-x:clip;
+      overflow-y:hidden;
+      background:#0b140f;
     }
-    @media(max-width:960px){.wrap{width:min(100% - 28px,1160px);padding-top:18px}.site-header{align-items:flex-start}.nav{justify-content:flex-start}.hero,.view-grid,.proof-row{grid-template-columns:1fr}.product-preview{order:-1}.search{grid-template-columns:1fr}.site-footer{display:grid}.brand-text small{display:none}.view-shell{min-height:auto}}
-    @media(max-width:560px){h1{font-size:2.35rem}.site-header{display:grid}.nav a{padding:0 9px}.panel{padding:18px}.actions .btn{width:100%}.school{align-items:flex-start;flex-direction:column}.school .btn{width:100%}.preview-body{grid-template-columns:1fr}.preview-side{grid-template-columns:repeat(2,1fr)}.preview-kpis{grid-template-columns:1fr}.preview-row{grid-template-columns:1fr}}
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:0;
+      background:url("/assets/joyland-landing-classroom-local.jpg") center 42%/cover no-repeat;
+      filter:brightness(.72) saturate(.72) contrast(.9);
+      transform:scale(1.01);
+      pointer-events:none;
+    }
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:0;
+      background:
+        linear-gradient(90deg,rgba(3,13,8,.86) 0%,rgba(3,13,8,.66) 43%,rgba(3,13,8,.78) 100%),
+        linear-gradient(0deg,rgba(3,13,8,.7) 0%,rgba(3,13,8,.24) 48%,rgba(3,13,8,.48) 100%);
+      pointer-events:none;
+    }
+    .shell{
+      position:relative;
+      z-index:1;
+      width:min(1180px,calc(100% - 44px));
+      min-height:100svh;
+      margin:0 auto;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      gap:20px;
+      padding:28px 0 24px;
+    }
+    header,footer{display:flex;align-items:center;justify-content:space-between;gap:18px;position:relative}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .mark{
+      width:48px;height:48px;border-radius:var(--radius);
+      display:grid;place-items:center;overflow:hidden;
+      background:#fff;border:1px solid rgba(255,255,255,.7);
+      box-shadow:0 16px 36px rgba(0,0,0,.22);
+      flex-shrink:0;
+    }
+    .mark img{width:100%;height:100%;object-fit:contain;padding:5px}
+    .brand strong{display:block;font-size:1.02rem;line-height:1.1}
+    .brand span{display:block;color:var(--muted);font-size:.78rem;font-weight:750;margin-top:2px}
+    .lock{display:none}
+    .wave-free{position:absolute;right:18px;top:10px;width:72px;height:72px;pointer-events:none;z-index:6}
+    .wave-free svg{width:100%;height:100%;display:block}
+    .wave-free .swarm{transform-origin:50% 70%;animation:wave-sway 1.8s ease-in-out infinite}
+    .wave-free .swarm circle{fill:#fff;opacity:.98;filter:drop-shadow(0 8px 14px rgba(0,0,0,.36));animation:assemble 0.9s cubic-bezier(.2,.9,.2,1) forwards, dotFloat 1.8s ease-in-out infinite}
+    .wave-free .swarm circle:nth-child(1){animation-delay:0s}
+    .wave-free .swarm circle:nth-child(2){animation-delay:0.05s}
+    .wave-free .swarm circle:nth-child(3){animation-delay:0.08s}
+    .wave-free .swarm circle:nth-child(4){animation-delay:0.11s}
+    .wave-free .swarm circle:nth-child(5){animation-delay:0.14s}
+    .wave-free .swarm circle:nth-child(6){animation-delay:0.17s}
+    .wave-free .swarm circle:nth-child(7){animation-delay:0.20s}
+    .wave-free .swarm circle:nth-child(8){animation-delay:0.23s}
+    .wave-free .swarm circle:nth-child(9){animation-delay:0.26s}
+    .wave-free .swarm circle:nth-child(10){animation-delay:0.29s}
+    .wave-free .swarm circle:nth-child(11){animation-delay:0.32s}
+    .wave-free .swarm circle:nth-child(12){animation-delay:0.35s}
+    .wave-free .swarm circle:nth-child(13){animation-delay:0.38s}
+    .wave-free .swarm circle:nth-child(14){animation-delay:0.41s}
+    .wave-free .swarm circle:nth-child(15){animation-delay:0.44s}
+    .wave-free .swarm circle:nth-child(16){animation-delay:0.47s}
+    .wave-free .swarm circle:nth-child(17){animation-delay:0.50s}
+    .wave-free .swarm circle:nth-child(18){animation-delay:0.53s}
+    @keyframes wave-sway{
+      0%{transform:rotate(0deg)}
+      20%{transform:rotate(-12deg)}
+      40%{transform:rotate(12deg)}
+      60%{transform:rotate(-8deg)}
+      80%{transform:rotate(8deg)}
+      100%{transform:rotate(0deg)}
+    }
+    @keyframes dotFloat{
+      0%{transform:translateY(0) scale(1)}
+      50%{transform:translateY(-3px) scale(1.06)}
+      100%{transform:translateY(0) scale(1)}
+    }
+    @keyframes assemble{
+      0%{transform:translateY(18px) scale(.6);opacity:0}
+      60%{opacity:1}
+      100%{transform:none;opacity:1}
+    }
+    main{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(292px,370px);
+      align-items:end;
+      gap:32px;
+      padding:8vh 0 7vh;
+    }
+    .hero{max-width:720px;min-width:0}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      min-height:34px;padding:0 11px;margin-bottom:20px;
+      border:1px solid rgba(201,151,50,.46);border-radius:var(--radius);
+      background:rgba(8,17,12,.46);color:#ffe8a9;
+      font-size:.76rem;font-weight:900;text-transform:uppercase;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(3.5rem,9vw,8rem);
+      line-height:.86;
+      letter-spacing:0;
+      text-wrap:balance;
+    }
+    .lead{
+      max-width:560px;margin:24px 0 0;
+      color:var(--muted);
+      font-size:clamp(1rem,1.55vw,1.22rem);
+      line-height:1.55;
+    }
+    .actions{
+      align-self:end;
+      display:grid;
+      gap:10px;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:var(--panel);
+      backdrop-filter:blur(16px);
+      box-shadow:0 28px 80px rgba(0,0,0,.24);
+      min-width:0;
+    }
+    .door{
+      display:grid;grid-template-columns:42px minmax(0,1fr) 22px;align-items:center;gap:12px;
+      min-height:78px;padding:12px;border:1px solid rgba(255,255,255,.2);
+      border-radius:var(--radius);color:#fff;text-decoration:none;background:rgba(255,255,255,.08);
+      transition:transform .16s ease,border-color .16s ease,background .16s ease;
+    }
+    .door:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.44);background:rgba(255,255,255,.14)}
+    .door:focus-visible{outline:3px solid rgba(201,151,50,.8);outline-offset:3px}
+    .ic{
+      width:42px;height:42px;border-radius:var(--radius);
+      display:grid;place-items:center;background:#fff;color:var(--green);font-size:18px;
+    }
+    .door.admin .ic{background:var(--gold);color:#1b1405}
+    .door b{display:block;font-size:.98rem}
+    .door span span{display:block;margin-top:3px;color:var(--muted);font-size:.82rem;line-height:1.35}
+    .go{color:rgba(255,255,255,.62)}
+    .small-login{
+      justify-self:end;color:rgba(255,255,255,.74);font-size:.78rem;font-weight:800;text-decoration:none;
+      padding:8px 4px 0;
+    }
+    footer{
+      color:rgba(255,255,255,.7);
+      font-size:.82rem;
+    }
+    .credit{color:rgba(255,255,255,.56);text-decoration:none}
+
+    /* Custom loader overlay */
+    #loader-overlay{
+      position:fixed;inset:0;z-index:60;display:none;place-items:center;background:rgba(3,13,8,.72);
+      pointer-events:auto;
+    }
+    .loader-box{
+      width:160px;height:80px;
+      display:grid;place-items:center;
+      border-radius:20px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow:0 16px 46px rgba(0,0,0,.25);
+      backdrop-filter:blur(14px);
+    }
+    .spinner{
+      display:flex;align-items:center;justify-content:space-between;
+      width:72px;height:20px;
+    }
+    .spinner span{
+      width:14px;height:14px;border-radius:50%;background:linear-gradient(180deg,rgba(201,151,50,1),rgba(255,255,255,.92));
+      box-shadow:0 0 14px rgba(201,151,50,.45);
+      animation:dotBounce 1s ease-in-out infinite;
+    }
+    .spinner span:nth-child(1){animation-delay:0s}
+    .spinner span:nth-child(2){animation-delay:0.12s}
+    .spinner span:nth-child(3){animation-delay:0.24s}
+    @keyframes dotBounce{
+      0%,100%{transform:translateY(0);opacity:0.7}
+      50%{transform:translateY(-16px);opacity:1}
+    }
+    @media(max-width:840px){
+      .shell{width:calc(100% - 28px);max-width:1180px;padding:18px 0}
+      header,footer{display:grid;align-items:start}
+      main{grid-template-columns:1fr;align-items:end;padding:10vh 0 4vh}
+      .actions{max-width:430px;width:100%}
+      h1{font-size:clamp(3rem,17vw,5.8rem)}
+      body::before{background-position:center 42%;transform:scale(1.04)}
+      body::after{
+        background:
+          linear-gradient(90deg,rgba(3,13,8,.84) 0%,rgba(3,13,8,.7) 100%),
+          linear-gradient(0deg,rgba(3,13,8,.74) 0%,rgba(3,13,8,.28) 52%,rgba(3,13,8,.48) 100%);
+      }
+    }
+    @media(max-width:460px){
+      .brand strong{font-size:.95rem}
+      .lock{width:100%;justify-content:center}
+      .door{grid-template-columns:38px minmax(0,1fr);min-height:76px}
+      .go{display:none}
+      .ic{width:38px;height:38px}
+      .small-login{justify-self:start}
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="site-header">
-      <a class="brand" href="#home" data-view="home" aria-label="Civicom Schools Portal">
-        <span class="brand-mark">CS</span>
-        <span class="brand-text"><strong>Civicom Schools</strong><small>Portal onboarding</small></span>
-      </a>
-      <nav class="nav" aria-label="Schools portal navigation">
-        <a href="#home" data-view="home">Home</a>
-        <a href="#find-school" data-view="find-school">Find school</a>
-        <a href="#create-school" data-view="create-school">Create portal</a>
-        <a href="/portal/resources/">Learning resources</a>
-        <a class="nav-primary" href="mailto:schools@civicom.org">Support</a>
-      </nav>
+  <!-- Background photo: Joyland classroom photo supplied locally. -->
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="mark"><img src="/uploads/joyland/school/logo.jpg" alt=""></div>
+        <div><strong>Joyland Schools</strong><span>Education Is Treasure</span></div>
+      </div>
+      <div class="wave-free" aria-hidden="true">
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <g class="swarm">
+            <circle cx="18" cy="34" r="1.9"/>
+            <circle cx="24" cy="28" r="1.9"/>
+            <circle cx="30" cy="24" r="1.9"/>
+            <circle cx="36" cy="20" r="1.9"/>
+            <circle cx="42" cy="22" r="1.9"/>
+            <circle cx="48" cy="26" r="1.9"/>
+            <circle cx="54" cy="34" r="1.9"/>
+            <circle cx="52" cy="40" r="1.9"/>
+            <circle cx="46" cy="46" r="1.9"/>
+            <circle cx="40" cy="48" r="1.9"/>
+            <circle cx="34" cy="46" r="1.9"/>
+            <circle cx="28" cy="42" r="1.9"/>
+            <circle cx="22" cy="38" r="1.9"/>
+            <circle cx="20" cy="30" r="1.9"/>
+            <circle cx="14" cy="32" r="1.9"/>
+            <circle cx="10" cy="36" r="1.9"/>
+            <circle cx="16" cy="44" r="1.9"/>
+            <circle cx="26" cy="50" r="1.9"/>
+          </g>
+        </svg>
+      </div>
     </header>
 
-    <main id="viewRoot" class="view-shell" tabindex="-1" aria-live="polite"></main>
+    <main>
+      <section class="hero" aria-labelledby="portal-title">
+        <span class="eyebrow"><i class="fas fa-location-dot"></i> Joyland Prime Academy</span>
+        <h1 id="portal-title">Joyland Schools Portal</h1>
+        <p class="lead">Choose your correct login area. Administrators manage the school dashboard. Teachers, learners, and parents use the school app.</p>
+      </section>
 
-    <footer class="site-footer">
-      <span>&copy; 2026 Civicom &middot; schools.civicom.org</span>
-      <a href="mailto:schools@civicom.org">Contact support: schools@civicom.org</a>
-    </footer>
+      <nav class="actions" aria-label="Portal access">
+        <a class="door admin" href="/login">
+          <span class="ic"><i class="fas fa-gauge-high"></i></span>
+          <span><b>Admin dashboard login</b><span>For school administrators managing setup, reports, and operations.</span></span>
+          <i class="fas fa-arrow-right go"></i>
+        </a>
+        <a class="door" href="/app/index.html?signin=1">
+          <span class="ic"><i class="fas fa-mobile-screen-button"></i></span>
+          <span><b>Teacher, Learner, Parent Portal</b><span>Sign in first, then open your correct role dashboard.</span></span>
+          <i class="fas fa-arrow-right go"></i>
+        </a>
+        <a class="small-login" href="/login">Admin password login</a>
+      </nav>
+    </main>
+
+    <footer></footer>
   </div>
-
+  <div id="loader-overlay" aria-hidden="true">
+    <div class="loader-box">
+      <div class="spinner">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
   <script>
-    const viewRoot = document.getElementById('viewRoot');
-    const navItems = Array.from(document.querySelectorAll('[data-view]'));
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let currentView = '';
-    let lastSearch = '';
-    let lastResults = '<div class="empty">Search results will appear here after you enter a school name or code.</div>';
-
-    const views = {
-      home: homeView,
-      'find-school': findSchoolView,
-      'create-school': createSchoolView
-    };
-
-    function normalizeView(hash = location.hash) {
-      const raw = String(hash || '').replace(/^#/, '') || 'home';
-      if (raw === 'school-login') return 'find-school';
-      return views[raw] ? raw : 'home';
-    }
-
-    function render(view = normalizeView(), push = false) {
-      if (view === currentView && viewRoot.innerHTML) return;
-      const hasExistingView = Boolean(viewRoot.innerHTML);
-      const update = () => {
-        currentView = view;
-        viewRoot.innerHTML = views[view]();
-        bindView(view);
-        updateNav(view);
-        viewRoot.focus({ preventScroll: true });
-      };
-      if (push && location.hash !== '#' + view) history.pushState(null, '', '#' + view);
-      if (!hasExistingView) {
-        update();
-      } else if (document.startViewTransition && !reduceMotion.matches) {
-        document.startViewTransition(update);
-      } else if (!reduceMotion.matches) {
-        viewRoot.classList.add('is-leaving');
-        window.setTimeout(() => {
-          update();
-          viewRoot.classList.remove('is-leaving');
-          viewRoot.classList.add('is-entering');
-          window.setTimeout(() => viewRoot.classList.remove('is-entering'), 260);
-        }, 140);
-      } else {
-        update();
-      }
-    }
-
-    function updateNav(view) {
-      navItems.forEach(item => {
-        const active = item.dataset.view === view;
-        item.classList.toggle('active', active);
-        if (active) item.setAttribute('aria-current', 'page');
-        else item.removeAttribute('aria-current');
-      });
-    }
-
-    function productPreview() {
-      return `
-        <section class="product-preview" aria-label="School portal dashboard preview">
-          <div class="preview-top">
-            <div class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-            <div class="preview-title">School operations dashboard</div>
-          </div>
-          <div class="preview-body">
-            <div class="preview-side" aria-hidden="true">
-              <span>Overview</span><span>Learners</span><span>Marks</span><span>Attendance</span><span>Reports</span><span>Timetable</span>
-            </div>
-            <div class="preview-main">
-              <div class="preview-kpis">
-                <div class="kpi"><strong>842</strong><span>active learners</span></div>
-                <div class="kpi"><strong>96%</strong><span>attendance today</span></div>
-                <div class="kpi"><strong>18</strong><span>reports pending</span></div>
-              </div>
-              <div class="preview-table" aria-hidden="true">
-                <div class="preview-row"><span>Class</span><span>Marked</span><span>Status</span></div>
-                <div class="preview-row"><span>Grade 8</span><span>7 subjects</span><span>Ready</span></div>
-                <div class="preview-row"><span>Form 2</span><span>5 subjects</span><span>Review</span></div>
-                <div class="preview-row"><span>Grade 4</span><span>8 subjects</span><span>Ready</span></div>
-              </div>
-            </div>
-          </div>
-        </section>
-      `;
-    }
-
-    function homeView() {
-      return `
-        <section class="page">
-          <div class="hero">
-            <section>
-              <span class="eyebrow">For school teams ready to operate cleanly</span>
-              <h1>Run school operations in one portal.</h1>
-              <p class="lead">Replace scattered files, separate mark sheets and manual follow-ups with one school workspace for records, reports, attendance, marks, communication and timetable operations.</p>
-              <div class="actions">
-                <a class="btn primary" href="#create-school" data-view="create-school">Start a school portal</a>
-                <a class="btn secondary" href="#find-school" data-view="find-school">Find your school</a>
-              </div>
-              <ul class="trust-line" aria-label="Portal trust notes">
-                <li>Reviewed before activation</li>
-                <li>Separate school workspaces</li>
-                <li>Support: schools@civicom.org</li>
-              </ul>
-            </section>
-            ${productPreview()}
-          </div>
-          <section class="proof-row" aria-label="How school setup works">
-            <div class="proof-card"><b>1</b><strong>Start with a school owner</strong><span>Create the first admin account for the principal, director or school owner.</span></div>
-            <div class="proof-card"><b>2</b><strong>Review before listing</strong><span>New school portals can be checked before appearing publicly.</span></div>
-            <div class="proof-card"><b>3</b><strong>Operate with roles</strong><span>Admins, teachers, learners and parents work through school-scoped access.</span></div>
-          </section>
-        </section>
-      `;
-    }
-
-    function findSchoolView() {
-      return `
-        <section class="view-grid find-grid">
-          <div class="panel">
-            <span class="eyebrow">School login</span>
-            <h1>Find your school.</h1>
-            <p class="lead">Enter the school name or code. We do not show the school directory until you search.</p>
-            <div class="search">
-              <input id="schoolSearch" value="${esc(lastSearch)}" placeholder="Example: Joyland or JS" autocomplete="off">
-              <button class="btn primary" id="searchBtn">Search</button>
-            </div>
-            <div id="schoolResults">${lastResults}</div>
-          </div>
-          <aside class="support-card" aria-label="School login help">
-            <div class="panel">
-              <h2>How login works</h2>
-              <ul class="next-list">
-                <li><b>1</b><span>Search for the school by code or name.</span></li>
-                <li><b>2</b><span>Open the school login page from the result.</span></li>
-                <li><b>3</b><span>Use the account code, email or phone provided by the school.</span></li>
-              </ul>
-            </div>
-            <div class="panel">
-              <h2>Need help?</h2>
-              <p class="muted">Contact support with the school name or code.</p>
-              <a class="btn secondary wide" href="mailto:schools@civicom.org">schools@civicom.org</a>
-            </div>
-          </aside>
-        </section>
-      `;
-    }
-
-    function createSchoolView() {
-      return `
-        <section class="view-grid">
-          <div class="panel">
-            <span class="eyebrow">New school workspace</span>
-            <h1>Start a school portal.</h1>
-            <p class="lead">Create a separate school portal and first owner/admin account.</p>
-            <form id="registerForm">
-              <div class="form-section">
-                <h3>School details</h3>
-                <div class="form-stack">
-                  <label class="field"><span>School name</span><input name="name" required placeholder="Green Valley School"></label>
-                  <label class="field"><span>School code</span><input name="school_code" required placeholder="GVS"></label>
-                  <label class="field"><span>Portal slug</span><input name="slug" required placeholder="greenvalley"></label>
-                  <label class="field"><span>School email</span><input name="email" type="email" placeholder="office@school.ac.ke"></label>
-                  <label class="field"><span>Phone</span><input name="phone" placeholder="+254..."></label>
-                  <label class="field"><span>County</span><input name="county" placeholder="Nairobi"></label>
-                </div>
-              </div>
-              <div class="form-section">
-                <h3>Owner account</h3>
-                <div class="form-stack">
-                  <label class="field"><span>Owner name</span><input name="owner_name" required placeholder="Principal / Director"></label>
-                  <label class="field"><span>Owner email</span><input name="owner_email" type="email" placeholder="owner@school.ac.ke"></label>
-                  <label class="field"><span>Owner phone</span><input name="owner_phone" placeholder="+254..."></label>
-                  <label class="field"><span>Owner password</span><input name="password" type="password" required minlength="8"></label>
-                </div>
-              </div>
-              <p class="notice">Learners use school-scoped codes such as JS-0245. Staff use staff codes such as JS-STF-0001. Admin owners use JS-ADM-0001 or email/phone.</p>
-              <button class="btn primary wide" type="submit">Create Portal</button>
-              <div id="registerStatus" class="status"></div>
-            </form>
-          </div>
-          <aside class="support-card" aria-label="What happens next">
-            <div class="panel">
-              <h2>What happens next</h2>
-              <ul class="next-list">
-                <li><b>1</b><span>The school workspace is created with its first owner account.</span></li>
-                <li><b>2</b><span>If review is enabled, the portal waits for approval before public listing.</span></li>
-                <li><b>3</b><span>The owner can continue to the school login and begin setup.</span></li>
-              </ul>
-            </div>
-            <div class="panel">
-              <h2>Included areas</h2>
-              <ul class="module-list" aria-label="Portal modules">
-                <li>People</li><li>Marks</li><li>Reports</li><li>Attendance</li><li>Timetable</li><li>Notifications</li>
-              </ul>
-            </div>
-          </aside>
-        </section>
-      `;
-    }
-
-    function bindView(view) {
-      viewRoot.querySelectorAll('[data-view]').forEach(item => {
-        item.addEventListener('click', event => {
-          event.preventDefault();
-          render(item.dataset.view, true);
-        });
-      });
-      if (view === 'find-school') bindFindSchool();
-      if (view === 'create-school') bindCreateSchool();
-    }
-
-    function bindFindSchool() {
-      const input = document.getElementById('schoolSearch');
-      document.getElementById('searchBtn')?.addEventListener('click', searchSchools);
-      input?.addEventListener('keydown', event => { if(event.key === 'Enter') searchSchools(); });
-      input?.focus();
-    }
-
-    async function searchSchools(){
-      const input = document.getElementById('schoolSearch');
-      const results = document.getElementById('schoolResults');
-      const q = input?.value.trim() || '';
-      lastSearch = q;
-      if (!q) {
-        lastResults = '<div class="empty">Type a school name or code to search.</div>';
-        results.innerHTML = lastResults;
-        return;
-      }
-      results.className = '';
-      results.innerHTML = '<div class="empty">Searching schools...</div>';
-      try {
-        const r = await fetch('/api/public/schools?q=' + encodeURIComponent(q));
-        const j = await r.json();
-        const schools = j.data || [];
-        if(!schools.length){
-          lastResults = '<div class="empty">No matching school found.</div>';
-          results.innerHTML = lastResults;
-          return;
-        }
-        lastResults = schools.map(s => `
-          <div class="school">
-            <div class="school-main"><div class="name">${esc(s.name)}</div><div class="muted"><span class="code">${esc(s.school_code)}</span> &middot; /${esc(s.slug)}</div></div>
-            <a class="btn secondary" href="/${encodeURIComponent(s.slug)}/login">Login</a>
-          </div>
-        `).join('');
-        results.innerHTML = lastResults;
-      } catch (err) {
-        lastResults = '<div class="empty">School search is unavailable. Try again shortly.</div>';
-        results.innerHTML = lastResults;
-      }
-    }
-
-    function bindCreateSchool() {
-      document.getElementById('registerForm')?.addEventListener('submit', async event => {
+    (function(){
+      const adminLink = document.querySelector('.door.admin');
+      if (!adminLink) return;
+      const loader = document.getElementById('loader-overlay');
+      adminLink.addEventListener('click', event => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         event.preventDefault();
-        const form = event.currentTarget;
-        const status = document.getElementById('registerStatus');
-        const button = form.querySelector('button[type="submit"]');
-        status.className = 'status';
-        status.textContent = 'Creating portal...';
-        button.disabled = true;
-        const body = Object.fromEntries(new FormData(form).entries());
-        try {
-          const r = await fetch('/api/public/register-school', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-          const j = await r.json().catch(()=>({}));
-          if(!r.ok || j.success === false){ status.className = 'status error'; status.textContent = j.message || 'Registration failed.'; return; }
-          const approved = j.data.registration_status === 'approved';
-          status.className = 'status success';
-          status.innerHTML = approved
-            ? 'Portal created. Owner ID: <b>' + esc(j.data.owner_user_id) + '</b>. <a href="' + esc(j.data.login) + '">Continue to login</a>.'
-            : 'Portal request received. Owner ID: <b>' + esc(j.data.owner_user_id) + '</b>. We will review the school before public listing.';
-        } catch (err) {
-          status.className = 'status error';
-          status.textContent = 'Could not submit the portal request. Try again shortly.';
-        } finally {
-          button.disabled = false;
-        }
+        const target = adminLink.getAttribute('href') || '/login';
+        if (loader) loader.style.display = 'grid';
+        setTimeout(() => { window.location.href = target; }, 1200);
       });
-    }
-
-    function esc(value){
-      return String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
-    navItems.forEach(item => {
-      item.addEventListener('click', event => {
-        event.preventDefault();
-        render(item.dataset.view, true);
-      });
-    });
-
-    window.addEventListener('hashchange', () => render(normalizeView(), false));
-    render(normalizeView(), false);
+    })();
   </script>
 </body>
 </html>

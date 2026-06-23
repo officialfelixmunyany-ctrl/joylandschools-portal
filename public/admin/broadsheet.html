@@ -125,9 +125,12 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,
   .wrap{max-width:none!important;margin:0!important;padding:0!important;}
   .bs-sheet{
     width:297mm!important;
+    height:210mm!important;
     margin:0!important;padding:6mm 7mm 5mm!important;
     box-shadow:none!important;border:none!important;border-radius:0!important;
     font-size:10px!important;
+    page-break-after:always!important;
+    break-after:page!important;
   }
   /* Tighten every block so up to ~30 learners fit on one A4 landscape page */
   .bs-head{padding-bottom:5px!important;margin-bottom:6px!important;}
@@ -149,9 +152,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,
   .bs-tbl thead{display:table-header-group;}
   .bs-tbl tfoot{display:table-footer-group;}
   .bs-tbl tbody tr{break-inside:avoid;page-break-inside:avoid;}
-  /* Prevent the sheet itself from forcing a blank trailing page */
-  .bs-sheet{break-after:auto;page-break-after:auto;}
-  .bs-sheet+.bs-sheet{break-before:page;page-break-before:always;}
+  /* Ensure multiple sheets print as separate A4 pages */
+  .bs-sheet+.bs-sheet{page-break-before:always!important;break-before:page!important;}
+  .bs-sheet:last-child{page-break-after:auto!important;break-after:auto!important;}
 }
 </style>
 </head>
@@ -232,39 +235,44 @@ function buildSheet({ school, cls, term, assessment, subjects, rows }){
     '<div><span class="lbl">Learners</span><span class="val">' + rows.length + '</span></div>' +
   '</div>';
 
-  /* Header row */
+  /* Header row (common for each table page) */
   let head2 = '<tr><th style="width:34px;">#</th><th style="text-align:left;min-width:140px;">Learner</th><th style="width:60px;">ADM</th>';
   subjects.forEach(s => {
     head2 += '<th class="bs-subj-cell"><span class="code">' + esc(s.code || s.name.slice(0,3).toUpperCase()) + '</span><span class="name">' + esc(s.name) + '</span></th>';
   });
   head2 += '<th style="width:48px;">Total</th><th style="width:48px;">Avg</th><th style="width:40px;">Band</th><th style="width:36px;">Pos</th></tr>';
 
-  /* Body rows */
-  let body = '';
-  rows.forEach((r,i) => {
-    body += '<tr>';
-    body += '<td>' + (i+1) + '</td>';
-    body += '<td class="nm">' + esc(r.name) + '</td>';
-    body += '<td class="adm">' + esc(r.admission_no || '') + '</td>';
-    subjects.forEach((s, si) => {
-      const v = r.subjects?.[si]?.average;
-      body += '<td class="num">' + (v == null ? '—' : Math.round(Number(v))) + '</td>';
+  /* Decide rows per page heuristically based on subject count */
+  const SUBJECTS = Math.max(1, subjects.length);
+  const base = 30; // approximate rows that fit on a landscape A4 with few subjects
+  const rowsPerPage = Math.max(8, Math.floor(base * (12 / Math.max(6, SUBJECTS))));
+
+  function tableForRows(pageRows, offset){
+    let body = '';
+    pageRows.forEach((r, idx) => {
+      const i = offset + idx;
+      body += '<tr>';
+      body += '<td>' + (i+1) + '</td>';
+      body += '<td class="nm">' + esc(r.name) + '</td>';
+      body += '<td class="adm">' + esc(r.admission_no || '') + '</td>';
+      subjects.forEach((s, si) => {
+        const v = r.subjects?.[si]?.average;
+        body += '<td class="num">' + (v == null ? '—' : Math.round(Number(v))) + '</td>';
+      });
+      body += '<td class="num">' + (r.total == null ? '—' : Math.round(Number(r.total))) + '</td>';
+      body += '<td class="num">' + (r.average == null ? '—' : Number(r.average).toFixed(1)) + '</td>';
+      body += '<td>' + (r.average == null ? '—' : '<span class="bs-band ' + bandCls(r.average) + '">' + bandLbl(r.average) + '</span>') + '</td>';
+      body += '<td class="pos">' + (r.position == null ? '—' : r.position) + '</td>';
+      body += '</tr>';
     });
-    body += '<td class="num">' + (r.total == null ? '—' : Math.round(Number(r.total))) + '</td>';
-    body += '<td class="num">' + (r.average == null ? '—' : Number(r.average).toFixed(1)) + '</td>';
-    body += '<td>' + (r.average == null ? '—' : '<span class="bs-band ' + bandCls(r.average) + '">' + bandLbl(r.average) + '</span>') + '</td>';
-    body += '<td class="pos">' + (r.position == null ? '—' : r.position) + '</td>';
-    body += '</tr>';
-  });
+    return '<table class="bs-tbl"><thead>' + head2 + '</thead><tbody>' + body + '</tbody></table>';
+  }
 
-  const table = '<table class="bs-tbl"><thead>' + head2 + '</thead><tbody>' + body + '</tbody></table>';
-
-  /* Footer: simple stats + signature lines */
+  /* Footer: simple stats + signature lines (same for each page) */
   const avgList = rows.map(r => r.average).filter(v => v != null);
   const meanAvg = avgList.length ? (avgList.reduce((a,b) => a+Number(b), 0) / avgList.length) : null;
   const top = avgList.length ? Math.max(...avgList) : null;
   const low = avgList.length ? Math.min(...avgList) : null;
-
   const foot = '<div class="bs-foot">' +
     '<div class="box"><b>Class mean</b>' + (meanAvg == null ? '—' : Number(meanAvg).toFixed(1)) + '</div>' +
     '<div class="box"><b>Highest</b>' + (top == null ? '—' : Number(top).toFixed(1)) + '</div>' +
@@ -276,7 +284,14 @@ function buildSheet({ school, cls, term, assessment, subjects, rows }){
     '<div>Date</div>' +
   '</div>';
 
-  return '<div class="bs-sheet">' + head + sub + table + foot + '</div>';
+  /* Build one or more sheets by chunking rows */
+  let out = '';
+  for(let i = 0; i < rows.length; i += rowsPerPage){
+    const chunk = rows.slice(i, i + rowsPerPage);
+    out += '<div class="bs-sheet">' + head + sub + tableForRows(chunk, i) + foot + '</div>';
+  }
+
+  return out;
 }
 
 function buildCsv({ school, cls, term, assessment, subjects, rows }){

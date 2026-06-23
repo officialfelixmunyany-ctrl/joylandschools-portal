@@ -42,3 +42,4 @@ public/app-qa-*.png
 
 # Internal Codex prompts — not part of the deployed app
 docs/codex-prompts/
+joyland.db

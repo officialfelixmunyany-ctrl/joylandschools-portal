@@ -42,7 +42,7 @@ def status_for(method: str, route: str) -> str:
     base = route.split("?")[0]
     if base.startswith("/api/"):
         dynamic_prefixes = [
-            "/api/resources/", "/api/parent/children/", "/api/teacher/classes/",
+            "/api/parent/children/", "/api/teacher/classes/",
             "/api/admin/templates/", "/api/admin/learners/", "/api/admin/teachers/",
         ]
         if any(base.startswith(p) for p in dynamic_prefixes):

@@ -80,7 +80,7 @@
     <div class="actions">
       <span class="status" id="statusText"></span>
       <button class="btn" type="button" onclick="location.reload()"><i class="fas fa-rotate"></i>Refresh</button>
-      <button class="btn primary" type="button" onclick="window.print()"><i class="fas fa-print"></i>Print / Save as PDF</button>
+      <button id="printReportBtn" class="btn primary" type="button"><i class="fas fa-print"></i>Print / Save as PDF</button>
     </div>
   </header>
 
@@ -114,6 +114,8 @@
       });
       return grouped;
     }
+    // Make groupMarks globally available for use in print function
+    window.groupMarks = groupMarks;
     function componentDefs(report){
       const defs = (report.component_defs || []).map(c => ({
         key:c.key || c.component_key || c.component_name,
@@ -208,9 +210,34 @@
       root.innerHTML = html;
       requestAnimationFrame(() => renderer.fitSheets?.(root));
     }
-    render().catch(err => {
-      root.innerHTML = '<div class="error"><i class="fas fa-triangle-exclamation"></i><br><br>' + esc(err.message || 'Could not load report card') + '</div>';
-      document.getElementById('pageSub').textContent = 'Could not load report card';
+    async function initReportCard(){
+      try{
+        await render();
+        if(new URLSearchParams(location.search).get('print') === 'true'){
+          setTimeout(()=>{
+            if(typeof printReportCanvas === 'function'){
+              printReportCanvas(Promise.resolve(true));
+            } else {
+              window.print();
+            }
+          }, 250);
+        }
+      }catch(err){
+        root.innerHTML = '<div class="error"><i class="fas fa-triangle-exclamation"></i><br><br>' + esc(err.message || 'Could not load report card') + '</div>';
+        document.getElementById('pageSub').textContent = 'Could not load report card';
+      }
+    }
+
+    initReportCard();
+
+    document.getElementById('printReportBtn')?.addEventListener('click', () => {
+      console.log('Print button clicked');
+      if(typeof printReportCanvas === 'function'){
+        printReportCanvas(Promise.resolve(true));
+      } else {
+        console.error('printReportCanvas is not available');
+        alert('Print function not loaded. Check console for details.');
+      }
     });
   </script>
 </body>

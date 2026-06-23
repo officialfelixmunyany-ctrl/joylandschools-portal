@@ -42,7 +42,7 @@
       <div>
         <div class="eyebrow">Score entry · automatically grades into CBC bands</div>
         <h1 class="h1">Marks <em>· entry</em></h1>
-        <div class="h-sub">Pick a class, subject and assessment — then enter scores. Bands compute live.</div>
+        <div class="h-sub">Pick a class, subject, and assessment. Automatically defaults to Term 2 (SECOND) but you can switch to Term 1 (FIRST) or Term 3 (THIRD). Bands compute live.</div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn"><i class="fas fa-file-import"></i>Import</button>
@@ -63,6 +63,13 @@
         <span class="cb-lbl">Subject</span>
         <select class="input" style="font-family:var(--display);font-weight:600;font-size:15px;height:auto;padding:4px 28px 4px 0;border:none;background-position:right 0 center;">
           <option>—</option>
+        </select>
+      </div>
+      <div style="width:1px;height:36px;background:var(--line);"></div>
+      <div class="cb-grp">
+        <span class="cb-lbl">Term</span>
+        <select class="input" style="font-family:var(--display);font-weight:600;font-size:15px;height:auto;padding:4px 28px 4px 0;border:none;background-position:right 0 center;">
+          <option>SECOND TERM</option>
         </select>
       </div>
       <div style="width:1px;height:36px;background:var(--line);"></div>
@@ -120,14 +127,53 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 async function api(path, opts={}){ const r=await fetch(path,{credentials:'include',...opts}); const j=await r.json().catch(()=>({})); if(!r.ok||j.success===false) throw new Error(j.message||'Request failed'); return j.data!==undefined?j.data:j; }
 const initialParams = new URLSearchParams(location.search);
 const initialSubjectId = initialParams.get('subjectId') || initialParams.get('subject_id') || '';
+const initialTermId = initialParams.get('termId') || initialParams.get('term_id') || '';
 const initialAssessmentType = (initialParams.get('assessmentType') || initialParams.get('assessment_type') || '').toLowerCase();
 const initialComponentKey = initialParams.get('componentKey') || initialParams.get('component_key') || '';
 let initialContextApplied = false;
-const state = { classes:[], subjects:[], components:[], classId:null, subjectId:null, termId:null, assessmentType:'midterm', componentKey:'exam', max:100, learners:[], marks:new Map(), timers:new Map() };
+const state = { classes:[], subjects:[], terms:[], components:[], classId:null, subjectId:null, termId:null, assessmentType:'midterm', componentKey:'exam', max:100, learners:[], marks:new Map(), timers:new Map() };
 const selects = document.querySelectorAll('.context-bar select.input');
-const classSel = selects[0], subjectSel = selects[1], assessSel = selects[2];
+const classSel = selects[0], subjectSel = selects[1], termSel = selects[2], assessSel = selects[3];
 const outOf = document.querySelector('.cb-val');
 const counter = document.querySelector('.context-bar span[style*="JetBrains"], .context-bar span[style*="mono"]') || document.querySelector('.context-bar div[style*="gap:8px"] span:last-child');
+const TERM_LABELS = { 1:'FIRST TERM', 2:'SECOND TERM', 3:'THIRD TERM' };
+function termNumber(t){ return Number(t?.term_number || String(t?.term_name || t?.name || '').match(/\d+/)?.[0] || 0); }
+function termLabel(t){ const n = termNumber(t); return TERM_LABELS[n] || String(t?.term_name || t?.name || 'TERM').toUpperCase(); }
+function flattenSessionTerms(sessions){
+  return (sessions || []).flatMap(s => (s.terms || []).map(t => ({
+    ...t,
+    session_id:t.session_id || s.id,
+    session_name:s.name,
+    session_year:s.year,
+    is_active_session:Number(s.is_active || 0) === 1
+  })));
+}
+function loadTerms(sessions, period){
+  const allTerms = flattenSessionTerms(sessions);
+  const periodTerm = period?.term ? { ...period.term, session_id:period.term.session_id, is_period:true } : null;
+  const requested = initialTermId ? allTerms.find(t => String(t.id) === String(initialTermId)) : null;
+  // Prefer term 2 (SECOND) as default, but respect explicit requests
+  const activeTerm2 = allTerms.find(t => t.is_active_session && termNumber(t) === 2);
+  const anyTerm2 = allTerms.find(t => termNumber(t) === 2);
+  const periodMatch = periodTerm ? allTerms.find(t => String(t.id) === String(periodTerm.id)) : null;
+  // Selection priority: explicitly requested > term 2 (active session) > term 2 (any) > period > first term > period term
+  const selected = requested || activeTerm2 || anyTerm2 || periodMatch || allTerms[0] || periodTerm;
+  const selectedSession = selected?.session_id || periodMatch?.session_id || allTerms.find(t => t.is_active_session)?.session_id || allTerms[0]?.session_id;
+  state.terms = allTerms.length
+    ? allTerms.filter(t => !selectedSession || String(t.session_id) === String(selectedSession))
+    : (periodTerm ? [periodTerm] : []);
+  if(selected && !state.terms.some(t => String(t.id) === String(selected.id))){
+    state.terms.unshift(selected);
+  }
+  state.terms.sort((a,b) => termNumber(a) - termNumber(b) || String(a.start_date || '').localeCompare(String(b.start_date || '')));
+  // Generate term options and ensure term 2 is always available as a choice
+  const termOptions = state.terms.map(t => '<option value="' + t.id + '">' + termLabel(t) + '</option>').join('');
+  termSel.innerHTML = termOptions || '<option value="">SECOND TERM</option>';
+  state.termId = selected?.id || state.terms[0]?.id || '';
+  termSel.value = state.termId || '';
+  // Ensure the term selector displays the selected term
+  if(state.termId && !termSel.value) termSel.value = state.termId;
+}
 function bandFor(v){ if(v == null || v === '') return ['sb-no','-']; v=Number(v); if(v>=75) return ['sb-ee','EE']; if(v>=60) return ['sb-me','ME']; if(v>=50) return ['sb-ae','AE']; return ['sb-be','BE']; }
 function deltaFor(c,p){ if(c == null || c === '' || p == null) return ['','']; const d=Number(c)-Number(p); if(d>0)return['up','+'+d]; if(d<0)return['dn',String(d)]; return['flat','0']; }
 function updateCounter(){ const done=[...state.marks.values()].filter(v=>v!==null&&v!==''&&v!==undefined).length; if(counter) counter.textContent = done + ' / ' + state.learners.length + ' done'; const pub=document.getElementById('publishMarksBtn'); if(pub) pub.innerHTML='<i class="fas fa-paper-plane"></i>Publish marks - '+done+'/'+state.learners.length; }
@@ -173,6 +219,12 @@ async function loadComponents(){
 function applyAssessment(){ const parts=(assessSel.value || 'midterm|exam').split('|'); state.assessmentType=parts[0]; state.componentKey=parts[1] || 'exam'; const comp=state.components.find(c=>c.assessment_type===state.assessmentType && c.component_key===state.componentKey); state.max=Number(comp?.max_score || 100); outOf.textContent=state.max; document.querySelectorAll('thead th')[3].textContent='/ '+state.max; }
 async function loadMarks(){
   document.getElementById('marksBody').innerHTML = '<tr><td colspan="7" style="padding:18px;color:var(--ink-3);">Loading marks...</td></tr>';
+  if(!state.classId || !state.termId || !state.subjectId){
+    state.learners = [];
+    state.marks = new Map();
+    renderRows();
+    return;
+  }
   try{
     const [roster, marks] = await Promise.all([api(API + '/classes/' + state.classId + '/learners'), api(API + '/marks?classId=' + state.classId + '&termId=' + state.termId + '&subjectId=' + state.subjectId + '&assessmentType=' + state.assessmentType)]);
     state.learners = roster.learners || [];
@@ -185,14 +237,15 @@ async function loadMarks(){
 async function reloadAll(){ await loadSubjects(); await loadComponents(); await loadMarks(); }
 async function init(){
   try{
-    const [classes, period] = await Promise.all([api(API + '/classes'), api(API + '/current-period')]);
-    state.classes=classes; state.termId=period.term?.id; state.classId=initialParams.get('classId') || initialParams.get('class_id') || classes[0]?.id;
+    const [classes, period, sessions] = await Promise.all([api(API + '/classes'), api(API + '/current-period'), api(API + '/sessions')]);
+    state.classes=classes; loadTerms(sessions, period); state.classId=initialParams.get('classId') || initialParams.get('class_id') || classes[0]?.id;
     classSel.innerHTML = classes.map(c => '<option value="'+c.id+'">'+esc(c.name)+'</option>').join(''); classSel.value=state.classId;
     await reloadAll();
   }catch(err){ Joy.toast("Couldn't initialize marks", {type:'danger'}); console.error(err); }
 }
 classSel.addEventListener('change', async()=>{ state.classId=classSel.value; await reloadAll(); });
 subjectSel.addEventListener('change', async()=>{ state.subjectId=subjectSel.value; await loadComponents(); await loadMarks(); });
+termSel.addEventListener('change', async()=>{ state.termId=termSel.value; await loadMarks(); });
 assessSel.addEventListener('change', async()=>{ applyAssessment(); await loadMarks(); });
 document.getElementById('marksBody').addEventListener('input', e => {
   const input=e.target.closest('input[type="number"]'); if(!input) return;

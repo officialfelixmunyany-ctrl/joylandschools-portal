@@ -18,8 +18,15 @@
 .tab-chip.on .ct{background:var(--ink);color:#fff;}
 .tab-strip{display:flex;align-items:center;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:3px;margin-bottom:14px;}
 
+.people-table .tbl th{position:static;top:auto;z-index:auto;}
+.people-table .tbl tbody tr:first-child td{padding-top:18px;}
+.people-table .tbl td{vertical-align:middle;}
+.people-table .person > div:last-child{min-width:0;}
+.people-table .person .nm{line-height:1.25;white-space:normal;overflow-wrap:anywhere;}
+
 /* Density · compact mode tightens row padding, shrinks avatars, hides the secondary role label */
 .table-wrap.compact .tbl td{padding:6px 14px;font-size:12px;}
+.people-table.compact .tbl tbody tr:first-child td{padding-top:10px;}
 .table-wrap.compact .tbl td .person .ava{width:26px;height:26px;font-size:10px;}
 .table-wrap.compact .tbl td .person .nm{font-size:12.5px;}
 .table-wrap.compact .tbl td .person .sub{font-size:10px;margin-top:0;}
@@ -147,7 +154,7 @@
     </div>
 
     <!-- ═══ Table ═══ -->
-    <div class="table-wrap">
+    <div class="table-wrap people-table">
       <table class="tbl">
         <thead>
           <tr>

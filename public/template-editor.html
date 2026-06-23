@@ -340,10 +340,11 @@ body{font-family:'Poppins',sans-serif;background:#1a1a2e;color:var(--text);}
 .te-modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
 
 /* Toast */
-.te-toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--white);padding:12px 18px;border-radius:10px;font-size:12px;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:.3s;display:flex;align-items:center;gap:8px;max-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.2);}
+.te-toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--white);padding:12px 18px;border:1px solid rgba(255,255,255,.14);border-radius:10px;font-size:12px;font-weight:600;line-height:1.35;z-index:9999;transform:translateY(100px);opacity:0;transition:.3s;display:flex;align-items:flex-start;gap:8px;max-width:340px;box-shadow:0 18px 44px -22px rgba(0,0,0,0.55);}
 .te-toast.show{transform:translateY(0);opacity:1;}
-.te-toast.success{background:#276749;}
-.te-toast.error{background:#c53030;}
+.te-toast i{margin-top:1px;flex-shrink:0;}
+.te-toast.success{background:linear-gradient(135deg,#276749,#14532d);}
+.te-toast.error{background:linear-gradient(135deg,#c53030,#7f1d1d);}
 
 /* ═══ PRINT / PDF STYLES ═══ */
 @media print{
@@ -510,7 +511,7 @@ body{font-family:'Poppins',sans-serif;background:#1a1a2e;color:var(--text);}
         <div class="te-field">
           <label>School Logo</label>
           <div class="te-image-upload" id="logo-upload" onclick="document.getElementById('logo-file').click()">
-            <img id="logo-preview" src="/uploads/school/logo.jpg" style="max-height:60px;"/>
+            <img id="logo-preview" src="/uploads/joyland/school/logo.jpg" style="max-height:60px;"/>
             <input type="file" id="logo-file" accept="image/*" onchange="handleLogoUpload(event)"/>
           </div>
         </div>
@@ -833,7 +834,7 @@ function schoolDefaults() {
     address:ss.school_address || 'P.O. Box 123',
     phone:ss.school_phone || '0700 000 000',
     email:ss.school_email || 'info@joylandschools.ac.ke',
-    logo:ss.school_logo || '/uploads/school/logo.jpg'
+    logo:ss.school_logo || '/uploads/joyland/school/logo.jpg'
   };
 }
 
@@ -2749,8 +2750,11 @@ function gradeColor(g){if(!g)return'#333';if(g.startsWith('EE'))return'#276749';
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function teToast(msg,type='success'){
   const t=document.getElementById('te-toast');
-  t.className=`te-toast show ${type}`;
-  t.querySelector('i').className=`fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'}`;
+  const tone=type==='error'?'error':'success';
+  t.className=`te-toast show ${tone}`;
+  t.setAttribute('role',tone==='error'?'alert':'status');
+  t.setAttribute('aria-live',tone==='error'?'assertive':'polite');
+  t.querySelector('i').className=`fas ${tone==='success'?'fa-check-circle':'fa-exclamation-circle'}`;
   document.getElementById('te-toast-msg').textContent=msg;
   setTimeout(()=>t.classList.remove('show'),3500);
 }

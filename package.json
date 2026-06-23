@@ -10,7 +10,7 @@
     "test": "python scripts/check_python.py",
     "android:sync": "cap sync android",
     "android:open": "cap open android",
-    "android:build": "cd android && gradlew.bat assembleDebug"
+    "android:build": "node scripts/android-build.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.3.4",

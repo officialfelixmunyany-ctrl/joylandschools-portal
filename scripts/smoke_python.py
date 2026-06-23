@@ -194,7 +194,7 @@ def assert_static_refs():
 
 
 def login_as(client: Client, identifier: str):
-    _, payload = client.request("POST", "/api/auth/temp-login", {"identifier": identifier, "temp_code": SMOKE_CODE})
+    _, payload = client.request("POST", "/api/auth/temp-login", {"identifier": identifier, "temp_code": SMOKE_CODE, "school_slug": "joyland"})
     assert payload.get("success") is True
 
 
@@ -349,7 +349,7 @@ def main() -> int:
 
         status, _ = client.request("GET", "/admin/overview.html", ok=(302,))
         print(f"logged-out admin redirects: {status}")
-        _, login = client.request("POST", "/api/auth/login", {"identifier": "ADM001", "password": "admin123"})
+        _, login = client.request("POST", "/api/auth/login", {"identifier": "JS-ADM-0001", "password": "admin123", "school_slug": "joyland"})
         assert login.get("success") is True
         print("admin login: ok")
         _, me = client.request("GET", "/api/auth/me")
@@ -382,9 +382,9 @@ def main() -> int:
             target_class_id=fixture["class_id"],
         )
         print("notification create/inbox/unread/read: ok")
-        _, publish = client.request("POST", "/api/admin/marks/publish", {"classId": fixture["class_id"]}, ok=(501,))
+        _, publish = client.request("POST", "/api/admin/marks/publish", {"classId": fixture["class_id"]}, ok=(400,))
         assert publish.get("success") is False
-        print("marks publish fake-success guard: ok")
+        print("marks publish validation guard: ok")
         session_calendar_smoke(client)
         class_id, learner_id, term_id = pick_report_context()
         _, report = client.request("GET", f"/api/admin/report-card?class_id={class_id}&learner_id={learner_id}&term_id={term_id}&assessment_type=midterm")

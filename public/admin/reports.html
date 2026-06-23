@@ -618,21 +618,62 @@ async function runReportCard(out){
     document.getElementById('rsDownloadBtn').style.display = 'none';
     return;
   }
-  const batchUrl = '/admin/report-card.html?class_id=' + classId + '&term_id=' + termId + '&assessment_type=' + encodeURIComponent(assessment);
-  let html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">' +
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;"' +
     '<div style="font-size:12.5px;color:var(--ink-3);">' + rows.length + ' learners ready · ' + esc(assessment === 'endterm' ? 'Endterm' : 'Midterm') + '</div>' +
-    '<a class="btn btn-sm" href="' + batchUrl + '" target="_blank"><i class="fas fa-layer-group"></i> Open all report cards</a>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="btn btn-sm" type="button" onclick="window.location.reload()"><i class="fas fa-arrow-rotate-left"></i> Refresh</button>' +
+      '<button id="rsSelectAllBtn" class="btn btn-sm" type="button"><i class="fas fa-check-double"></i> Select All</button>' +
+      '<button id="rsDoneBtn" class="btn btn-sm" type="button" style="background:#0b5d32;color:#fff;border-color:#0b5d32;"><i class="fas fa-print"></i> Done</button>' +
+    '</div>' +
   '</div>';
-  html += '<div class="rs-table-wrap"><table class="rs-tbl"><thead><tr><th>#</th><th>Learner</th><th>ADM</th><th>Avg</th><th>Band</th><th></th></tr></thead><tbody>';
+  html += '<div class="rs-table-wrap"><table class="rs-tbl"><thead><tr><th>#</th><th>Learner</th><th>ADM</th><th>Avg</th><th>Band</th><th>Select</th></tr></thead><tbody>';
   rows.forEach((r,i) => {
     html += '<tr><td>' + (i+1) + '</td><td class="nm">' + esc(r.name) + '</td><td>' + esc(r.admission_no || '') + '</td>';
     html += '<td>' + (r.average == null ? '—' : Number(r.average).toFixed(1)) + '</td>';
     html += '<td>' + (r.average == null ? '—' : '<span class="rs-band ' + bandCls(r.average) + '">' + bandLbl(r.average) + '</span>') + '</td>';
-    html += '<td><a class="btn btn-sm" href="/admin/report-card.html?learner_id=' + r.id + '&term_id=' + termId + '&assessment_type=' + encodeURIComponent(assessment) + '" target="_blank"><i class="fas fa-arrow-up-right-from-square"></i> Open</a></td>';
+    html += '<td><input type="checkbox" class="rs-learner-checkbox" data-learner-id="' + r.id + '" data-learner-name="' + esc(r.name) + '" style="cursor:pointer;width:18px;height:18px;"></td>';
     html += '</tr>';
   });
   html += '</tbody></table></div>';
   out.innerHTML = html;
+  
+  // Store context for print action
+  window.rsReportContext = {
+    classId, termId, assessment, rows
+  };
+  
+  // Select All handler
+  document.getElementById('rsSelectAllBtn').addEventListener('click', () => {
+    const checkboxes = out.querySelectorAll('.rs-learner-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => cb.checked = !allChecked);
+  });
+  
+  // Done/Print handler
+  document.getElementById('rsDoneBtn').addEventListener('click', async () => {
+    const selected = Array.from(out.querySelectorAll('.rs-learner-checkbox:checked')).map(cb => ({
+      id: cb.getAttribute('data-learner-id'),
+      name: cb.getAttribute('data-learner-name')
+    }));
+    
+    if(!selected.length){
+      alert('Please select at least one learner to print.');
+      return;
+    }
+    
+    document.getElementById('rsDoneBtn').disabled = true;
+    document.getElementById('rsDoneBtn').textContent = 'Printing ' + selected.length + ' report(s)...';
+    
+    for(const learner of selected){
+      const url = '/admin/report-card.html?learner_id=' + learner.id + '&term_id=' + termId + '&assessment_type=' + encodeURIComponent(assessment) + '&print=true';
+      window.open(url, '_blank');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    document.getElementById('rsDoneBtn').disabled = false;
+    document.getElementById('rsDoneBtn').textContent = 'Done';
+  });
+  
   document.getElementById('rsDownloadBtn').style.display = 'none';
   document.getElementById('rsStatus').textContent = rows.length + ' learners ready';
 }
@@ -640,10 +681,45 @@ async function runReportCard(out){
 async function runTeacherComments(out){
   const classId = document.getElementById('rsClass').value;
   const termId  = document.getElementById('rsTerm').value;
+  const assessment = document.getElementById('rsAssessment')?.value || 'midterm';
   if(!classId || !termId){ out.innerHTML = '<div class="rs-empty">Pick a class and term first.</div>'; return; }
-  out.innerHTML = '<div class="coming-soon"><i class="fas fa-circle-info"></i><div><b>Teacher comments audit</b> — Codex is wiring <code>GET /api/admin/comments?class_id=X&amp;term_id=Y</code> (read-and-edit) so admin can audit every comment before report cards go out. Until it ships, comments are entered per learner inside the report card editor.</div></div>';
+  const data = await api(API + '/comments?class_id=' + classId + '&term_id=' + termId + '&assessment_type=' + encodeURIComponent(assessment));
+  const learners = data.learners || [];
+  if(!learners.length){
+    out.innerHTML = '<div class="rs-empty"><i class="fas fa-circle-info"></i>No learners found for this class.</div>';
+    document.getElementById('rsDownloadBtn').style.display = 'none';
+    document.getElementById('rsStatus').textContent = 'No learners';
+    return;
+  }
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">' +
+    '<div style="font-size:12.5px;color:var(--ink-3);">' + learners.length + ' learners · ' + esc(assessment === 'endterm' ? 'Endterm' : 'Midterm') + '</div>' +
+    '<button class="btn btn-primary btn-sm" id="saveCommentsAudit"><i class="fas fa-check"></i>Save comments</button>' +
+  '</div>';
+  html += '<div class="rs-table-wrap"><table class="rs-tbl"><thead><tr><th>Learner</th><th>Class teacher</th><th>Headteacher</th><th>Director</th></tr></thead><tbody>';
+  learners.forEach(l => {
+    const c = l.comments || {};
+    html += '<tr data-learner-id="' + l.id + '"><td class="nm">' + esc(l.name) + '<div class="sub">' + esc(l.admission_no || l.user_id || '') + '</div></td>' +
+      ['class_teacher','headteacher','director'].map(role => '<td><textarea class="input comment-audit" data-role="' + role + '" rows="3" maxlength="1000">' + esc(c[role] || '') + '</textarea></td>').join('') +
+      '</tr>';
+  });
+  html += '</tbody></table></div>';
+  out.innerHTML = html;
   document.getElementById('rsDownloadBtn').style.display = 'none';
-  document.getElementById('rsStatus').textContent = 'Backend endpoint pending';
+  document.getElementById('rsStatus').textContent = learners.length + ' learners loaded';
+  document.getElementById('saveCommentsAudit')?.addEventListener('click', async () => {
+    const entries = [...out.querySelectorAll('tr[data-learner-id]')].map(row => {
+      const comments = {};
+      row.querySelectorAll('.comment-audit').forEach(input => { comments[input.dataset.role] = input.value.trim(); });
+      return { learner_id:Number(row.dataset.learnerId), comments };
+    });
+    await api(API + '/comments', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ class_id:classId, term_id:termId, assessment_type:assessment, entries })
+    });
+    Joy.toast('Comments saved');
+    document.getElementById('rsStatus').textContent = 'Comments saved';
+  });
 }
 
 async function runAttendance(){

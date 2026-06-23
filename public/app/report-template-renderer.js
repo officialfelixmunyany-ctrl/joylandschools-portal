@@ -108,6 +108,25 @@ function resetReportTemplatePrintScale(root=document){
     page.style.width = '100%';
     page.style.height = '100%';
   });
+
+  // Also clear transforms on the outer preview shells and force A4 page measurements
+  (root || document).querySelectorAll('.report-template-sheet-frame').forEach(frame => {
+    try{
+      frame.style.width = '210mm';
+      frame.style.height = '297mm';
+      const shell = frame.querySelector('.te-preview-shell');
+      if(shell){
+        shell.style.transform = 'none';
+        shell.style.left = '0';
+        shell.style.top = '0';
+        shell.style.width = '100%';
+        shell.style.minWidth = '0';
+        shell.style.height = '100%';
+        shell.style.minHeight = '0';
+        shell.style.boxShadow = 'none';
+      }
+    }catch(e){ /* ignore */ }
+  });
 }
 function setReportCanvas(id, html, hasOutput=true){
   const el = document.getElementById(id);
@@ -432,7 +451,7 @@ function reportPrintMarkup(source){
 }
 
 function printReportCanvas(previewPromise){
-  return Promise.resolve(previewPromise).then(ok=>{
+  return Promise.resolve(previewPromise).then(async ok=>{
     if(!ok) return;
 
     const source = currentReportPrintSource();
@@ -444,9 +463,106 @@ function printReportCanvas(previewPromise){
 
     document.getElementById('report-print-root')?.remove();
 
+    // Check if this is a multi-learner report (class report)
+    const params = new URLSearchParams(location.search);
+    const classId = params.get('class_id') || params.get('classId');
+    const termId = params.get('term_id') || params.get('termId');
+    
+    let printHtml = reportPrintMarkup(source);
+
+    // If printing a class report (multi-learner), fetch each learner individually
+    // This gets the same enriched data structure as single-learner reports, ensuring A4 sizing
+    if(classId && termId){
+      try{
+        // Get learner IDs from the current preview
+        const learnerElements = source.querySelectorAll('[data-learner-id]');
+        const learnerIds = Array.from(learnerElements)
+          .map(el => el.getAttribute('data-learner-id'))
+          .filter((id, idx, arr) => id && arr.indexOf(id) === idx);
+
+        if(learnerIds.length > 1){
+          // Fetch each learner individually to get enriched data (same as single-learner API)
+          const allFrames = [];
+          const renderer = window.DarajaReportPreview;
+          
+          for(const learnerId of learnerIds){
+            try{
+              const qs = new URLSearchParams({
+                term_id:termId,
+                learner_id:learnerId,
+                assessment_type:params.get('assessment_type') || params.get('assessmentType') || 'midterm'
+              });
+              ['stage','template'].forEach(key => {
+                if(params.get(key)) qs.set(key, params.get(key));
+              });
+              
+              const response = await fetch('/api/admin/report-card?' + qs.toString());
+              if(!response.ok) continue;
+              const reportData = await response.json();
+              if(!reportData.success || !reportData.data) continue;
+              const data = reportData.data;
+              
+              // Render this learner with the same enriched data structure as on the page
+              if(renderer?.renderPages && data.learner){
+                const defs = (data.component_defs || []).map(c => ({
+                  key:c.key || c.component_key,
+                  name:c.name || c.component_name || c.key,
+                  max_score:c.max_score ?? c.max ?? null
+                })).filter(c => c.key);
+                
+                const html = renderer.renderPages({
+                  state:renderer.normalizeState(data.template?.state || null,
+                    { school_name:data.school?.school_name,
+                      school_motto:data.school?.school_motto,
+                      school_address:data.school?.school_address,
+                      school_phone:data.school?.school_phone,
+                      school_email:data.school?.school_email,
+                      school_logo:data.school?.school_logo },
+                    data.template?.name || 'Default Template'),
+                  classId:String(data.class?.id || ''),
+                  termId:String(data.term?.id || ''),
+                  assessment:data.assessment_type || 'midterm',
+                  learners:[data.learner].filter(Boolean),
+                  subjects:data.subjects || [],
+                  grouped:window.groupMarks ? window.groupMarks(data.all_marks || []) : {},
+                  componentKeys:defs.map(c => c.key),
+                  componentDefs:defs,
+                  componentNames:defs.map(c => c.name),
+                  strict:true,
+                  classLearners:data.class_learners || [data.learner],
+                  attendanceSummary:data.attendance_summary || { opened:null, learners:{} },
+                  skillRatings:data.skill_ratings || {}
+                });
+                
+                // Extract sheet frames from the rendered HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const frames = tempDiv.querySelectorAll('.report-template-sheet-frame');
+                if(frames.length > 0){
+                  frames.forEach(frame => allFrames.push(frame.outerHTML));
+                } else {
+                  allFrames.push(html);
+                }
+              }
+            }catch(e){
+              console.error('Failed to render learner', learnerId, ':', e);
+            }
+          }
+          
+          // Wrap all frames in a single page-stack for consistent print styling
+          if(allFrames.length > 0){
+            printHtml = `<div class="report-template-page-stack">${allFrames.join('')}</div>`;
+          }
+        }
+      }catch(e){
+        console.error('Multi-learner print failed:', e);
+        // Fall back to current preview
+      }
+    }
+
     const printRoot = document.createElement('div');
     printRoot.id = 'report-print-root';
-    printRoot.innerHTML = reportPrintMarkup(source);
+    printRoot.innerHTML = printHtml;
     document.body.appendChild(printRoot);
     document.body.classList.add('report-print-open');
     resetReportTemplatePrintScale(document);
@@ -541,7 +657,7 @@ function reportTemplateSchoolDefaults(settings={}, previous={}){
     address: settings.school_address || previous.address || 'P.O. Box 123',
     phone: settings.school_phone || previous.phone || '0700 000 000',
     email: settings.school_email || previous.email || 'info@joylandschools.ac.ke',
-    logo: settings.school_logo || previous.logo || '/uploads/school/logo.jpg',
+    logo: settings.school_logo || previous.logo || '/uploads/joyland/school/logo.jpg',
     type: previous.type || 'PRIMARY'
   };
 }
@@ -1446,7 +1562,8 @@ function renderReportTemplatePage(context){
   if(m.section_5 !== 'none') html += reportTemplateSectionWrap('section_5', m.section_5, renderReportTemplateS5(m.section_5, state, data));
   if(m.section_6 !== 'none') html += reportTemplateSectionWrap('section_6', m.section_6, renderReportTemplateS6(m.section_6, state, data, context.classId));
   if(s.footer_text) html += `<div class="template-preview-footer-note" data-preview-footer-text>${escapeHtml(s.footer_text)}</div>`;
-  return `<div class="report-template-sheet-frame"><div class="te-preview-shell report-template-sheet" style="${reportTemplateStyleAttr(state)}"><div class="tp-page template-preview-report report-layout-compact" data-layout-mode="compact" data-lock-print-measurements="true" data-measurement-scale="1.000">${html}</div></div></div>`;
+  const learnerId = context.learner?.id || context.learner?.learner_id || '';
+  return `<div class="report-template-sheet-frame" data-learner-id="${escapeHtml(learnerId)}"><div class="te-preview-shell report-template-sheet" style="${reportTemplateStyleAttr(state)}"><div class="tp-page template-preview-report report-layout-compact" data-layout-mode="compact" data-lock-print-measurements="true" data-measurement-scale="1.000">${html}</div></div></div>`;
 }
 
 function renderLearnerReportTemplatePages(context){
@@ -1478,4 +1595,5 @@ window.DarajaReportPreview = {
     ];
   }
 };
+window.printReportCanvas = printReportCanvas;
 })();
