@@ -360,10 +360,11 @@ function term(p){
   const val = Number(p.progress_percent || 0);
   const ring = document.querySelector('.ring-svg circle[stroke-linecap]');
   if(ring) ring.setAttribute('stroke-dashoffset', String(Math.round(264 - (264 * val / 100))));
+  const breakMode = !p.in_term || /break/i.test(String(p.period_label || '')) || /break/i.test(String(p.stage_label || ''));
   const center = document.querySelector('.ring-center');
   if(center){
     const label = (p.stage_label || p.period_label || 'Term').toUpperCase();
-    center.textContent = label;
+    center.textContent = breakMode ? (/<holiday/i.test(label) ? 'HOLIDAY' : 'BREAK') : label;
     /* Auto-fit inside the ring (interior ~84 viewBox units wide).
        Fraunces glyphs run ~12 viewBox units per char at 22px  anything
        7+ chars (MIDTERM, ENDTERM, HOLIDAY) needs to step down. */
@@ -371,14 +372,14 @@ function term(p){
     center.style.fontSize = size + 'px';
   }
   const wk = document.querySelector('.ring-svg text:nth-of-type(2)');
-  if(wk) wk.textContent = p.total_weeks ? ('WEEK ' + p.week_no + '/' + p.total_weeks) : (p.period_label || 'BREAK');
+  if(wk) wk.textContent = breakMode ? (p.period_label || 'BREAK') : (p.total_weeks ? ('WEEK ' + p.week_no + '/' + p.total_weeks) : (p.period_label || 'BREAK'));
   const meta = document.querySelector('.ring-meta');
   if(meta){
     const end = p.term?.end_date ? new Date(p.term.end_date + 'T00:00:00') : null;
     const days = end ? Math.max(0, Math.ceil((end - new Date()) / 86400000)) : 0;
-    meta.innerHTML = p.in_term
-      ? '<b>' + days + ' school days</b> left this term<br>' + esc(p.stage_label || p.period_label || '') + '  Source: ' + esc(p.source || 'Joyland Sessions & Terms')
-      : '<b>' + esc(p.period_label || 'Break') + '</b>';
+    meta.innerHTML = breakMode
+      ? '<b>' + esc(p.period_label || 'Break') + '</b>'
+      : '<b>' + days + ' school days</b> left this term<br>' + esc(p.stage_label || p.period_label || '') + '  Source: ' + esc(p.source || 'Joyland Sessions & Terms');
   }
   /* Term clock sub-label + page eyebrow */
   const termName = p.term?.term_name || p.term?.name || p.period_label || 'Current term';
