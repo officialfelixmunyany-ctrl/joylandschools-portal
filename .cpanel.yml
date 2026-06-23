@@ -1,0 +1,10 @@
+---
+deployment:
+  targets:
+    - deployment_target: default
+      domain: school.civicom.org
+      branch: codex/full-codebase-cleanup
+  build_commands:
+    - /bin/bash -c 'pip install -q -r requirements.txt 2>/dev/null || true'
+  post_deployment_commands:
+    - /bin/bash -c 'echo "Deployment complete at $(date)" >> /tmp/cpanel_deploy.log'
