@@ -252,15 +252,26 @@ def slugify_school(value: str) -> str:
     return text[:60] or "school"
 
 
-def table_columns(conn: sqlite3.Connection, name: str) -> set[str]:
+def table_columns(conn, name: str) -> set[str]:
     try:
-        return {r["name"] for r in rows(conn.execute(f"PRAGMA table_info({name})"))}
-    except sqlite3.Error:
+        if USE_MYSQL:
+            query = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=%s AND TABLE_SCHEMA=DATABASE()"
+            return {r["COLUMN_NAME"] for r in rows(conn.execute(query, (name,)))}
+        else:
+            return {r["name"] for r in rows(conn.execute(f"PRAGMA table_info({name})"))}
+    except Exception:
         return set()
 
 
-def table_exists(conn: sqlite3.Connection, name: str) -> bool:
-    return bool(one(conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,))))
+def table_exists(conn, name: str) -> bool:
+    try:
+        if USE_MYSQL:
+            query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=%s AND TABLE_SCHEMA=DATABASE()"
+            return bool(one(conn.execute(query, (name,))))
+        else:
+            return bool(one(conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,))))
+    except Exception:
+        return False
 
 
 def current_school_id_from_conn(conn: sqlite3.Connection) -> int:
@@ -302,23 +313,41 @@ def joyland_school(conn: sqlite3.Connection) -> dict:
     return one(conn.execute("SELECT * FROM schools WHERE slug='joyland'"))
 
 
-def ensure_phase2_tables(conn: sqlite3.Connection):
-    conn.execute(
-        """CREATE TABLE IF NOT EXISTS schools (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           name TEXT NOT NULL,
-           slug TEXT NOT NULL UNIQUE,
-           school_code TEXT NOT NULL UNIQUE,
-           email TEXT,
-           phone TEXT,
-           address TEXT,
-           county TEXT,
-           country TEXT DEFAULT 'Kenya',
-           logo_url TEXT,
-           status TEXT NOT NULL DEFAULT 'active',
-           created_at TEXT DEFAULT (datetime('now'))
-        )"""
-    )
+def ensure_phase2_tables(conn):
+    if USE_MYSQL:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS schools (
+               id INTEGER PRIMARY KEY AUTO_INCREMENT,
+               name TEXT NOT NULL,
+               slug VARCHAR(255) NOT NULL UNIQUE,
+               school_code VARCHAR(255) NOT NULL UNIQUE,
+               email VARCHAR(255),
+               phone VARCHAR(255),
+               address TEXT,
+               county VARCHAR(255),
+               country VARCHAR(255) DEFAULT 'Kenya',
+               logo_url VARCHAR(255),
+               status VARCHAR(255) NOT NULL DEFAULT 'active',
+               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )"""
+        )
+    else:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS schools (
+               id INTEGER PRIMARY KEY AUTOINCREMENT,
+               name TEXT NOT NULL,
+               slug TEXT NOT NULL UNIQUE,
+               school_code TEXT NOT NULL UNIQUE,
+               email TEXT,
+               phone TEXT,
+               address TEXT,
+               county TEXT,
+               country TEXT DEFAULT 'Kenya',
+               logo_url TEXT,
+               status TEXT NOT NULL DEFAULT 'active',
+               created_at TEXT DEFAULT (datetime('now'))
+            )"""
+        )
     for col, spec in {
         "center_code": "TEXT",
         "curriculum": "TEXT",
@@ -331,11 +360,14 @@ def ensure_phase2_tables(conn: sqlite3.Connection):
         "updated_at": "TEXT",
     }.items():
         if col not in table_columns(conn, "schools"):
-            conn.execute(f"ALTER TABLE schools ADD COLUMN {col} {spec}")
+            try:
+                conn.execute(f"ALTER TABLE schools ADD COLUMN {col} {spec}")
+            except Exception:
+                pass
     conn.execute("UPDATE schools SET registration_status=COALESCE(registration_status, CASE WHEN status IN ('active','approved') THEN 'approved' ELSE status END), status=COALESCE(status,'active')")
     conn.execute(
         """CREATE TABLE IF NOT EXISTS tenant_audit_log (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
+           id INTEGER PRIMARY KEY """ + ("AUTO_INCREMENT" if USE_MYSQL else "AUTOINCREMENT") + """,
            school_id INTEGER,
            actor_role TEXT,
            actor_id INTEGER,
@@ -344,18 +376,18 @@ def ensure_phase2_tables(conn: sqlite3.Connection):
            target_id TEXT,
            ip TEXT,
            details_json TEXT,
-           created_at TEXT DEFAULT (datetime('now'))
+           created_at TIMESTAMP DEFAULT """ + ("CURRENT_TIMESTAMP" if USE_MYSQL else "(datetime('now'))") + """
         )"""
     )
     conn.execute(
         """CREATE TABLE IF NOT EXISTS report_templates (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
+           id INTEGER PRIMARY KEY """ + ("AUTO_INCREMENT" if USE_MYSQL else "AUTOINCREMENT") + """,
            school_id INTEGER NOT NULL,
            name TEXT NOT NULL,
            state_json TEXT NOT NULL,
            created_by INTEGER,
-           created_at TEXT DEFAULT (datetime('now')),
-           updated_at TEXT,
+           created_at TIMESTAMP DEFAULT """ + ("CURRENT_TIMESTAMP" if USE_MYSQL else "(datetime('now'))") + """,
+           updated_at TIMESTAMP,
            UNIQUE(school_id, name)
         )"""
     )
@@ -364,19 +396,24 @@ def ensure_phase2_tables(conn: sqlite3.Connection):
            school_id INTEGER NOT NULL,
            key TEXT NOT NULL,
            value TEXT,
-           updated_at TEXT DEFAULT (datetime('now')),
+           updated_at TIMESTAMP DEFAULT """ + ("CURRENT_TIMESTAMP" if USE_MYSQL else "(datetime('now'))") + """,
            PRIMARY KEY(school_id, key)
         )"""
     )
     school = joyland_school(conn)
     joyland_id = int(school["id"])
-    conn.execute("UPDATE schools SET registration_status='approved', status='active', approved_at=COALESCE(approved_at, created_at, datetime('now')) WHERE id=?", (joyland_id,))
+    conn.execute("UPDATE schools SET registration_status='approved', status='active', approved_at=COALESCE(approved_at, created_at, " + ("NOW()" if USE_MYSQL else "datetime('now')") + ") WHERE id=?", (joyland_id,))
     if table_exists(conn, "school_settings") and not scalar(conn, "SELECT COUNT(*) FROM tenant_school_settings WHERE school_id=?", (joyland_id,), 0):
         for r in rows(conn.execute("SELECT key, value, updated_at FROM school_settings")):
-            conn.execute(
-                "INSERT OR IGNORE INTO tenant_school_settings(school_id,key,value,updated_at) VALUES(?,?,?,COALESCE(?,datetime('now')))",
-                (joyland_id, r["key"], r["value"], r.get("updated_at")),
-            )
+            insert_sql = ("INSERT IGNORE INTO" if USE_MYSQL else "INSERT OR IGNORE INTO") + " tenant_school_settings(school_id,key,value,updated_at) VALUES(%s,%s,%s,COALESCE(%s," + ("NOW()" if USE_MYSQL else "datetime('now')") + "))" if USE_MYSQL else " VALUES(?,?,?,COALESCE(?," + "datetime('now'))" + ")"
+            params = (joyland_id, r["key"], r["value"], r.get("updated_at"))
+            try:
+                if USE_MYSQL:
+                    conn.execute("INSERT IGNORE INTO tenant_school_settings(school_id,key,value,updated_at) VALUES(%s,%s,%s,COALESCE(%s,NOW()))", params)
+                else:
+                    conn.execute("INSERT OR IGNORE INTO tenant_school_settings(school_id,key,value,updated_at) VALUES(?,?,?,COALESCE(?,datetime('now')))", params)
+            except Exception:
+                pass
     template_dir = ROOT / "data" / "templates"
     if template_dir.exists() and not scalar(conn, "SELECT COUNT(*) FROM report_templates WHERE school_id=?", (joyland_id,), 0):
         for path in sorted(template_dir.glob("*.json")):
@@ -385,10 +422,13 @@ def ensure_phase2_tables(conn: sqlite3.Connection):
                 json.loads(state)
             except Exception:
                 continue
-            conn.execute(
-                "INSERT OR IGNORE INTO report_templates(school_id,name,state_json,created_at,updated_at) VALUES(?,?,?,datetime('now'),datetime('now'))",
-                (joyland_id, path.stem, state),
-            )
+            try:
+                if USE_MYSQL:
+                    conn.execute("INSERT IGNORE INTO report_templates(school_id,name,state_json,created_at,updated_at) VALUES(%s,%s,%s,NOW(),NOW())", (joyland_id, path.stem, state))
+                else:
+                    conn.execute("INSERT OR IGNORE INTO report_templates(school_id,name,state_json,created_at,updated_at) VALUES(?,?,?,datetime('now'),datetime('now'))", (joyland_id, path.stem, state))
+            except Exception:
+                pass
     for table in sorted(TENANT_TABLES):
         if not table_exists(conn, table):
             continue
@@ -396,7 +436,7 @@ def ensure_phase2_tables(conn: sqlite3.Connection):
         if "school_id" not in cols:
             try:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN school_id INTEGER")
-            except sqlite3.OperationalError:
+            except Exception:
                 pass
         if "school_id" in table_columns(conn, table):
             conn.execute(f"UPDATE {table} SET school_id=? WHERE school_id IS NULL", (joyland_id,))
