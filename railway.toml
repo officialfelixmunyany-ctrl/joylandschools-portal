@@ -1,0 +1,16 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+startCommand = "python py_backend.py"
+port = 3000
+
+[[services]]
+name = "joyland-schools-portal"
+
+[services.build]
+dockerfile = "Dockerfile"
+
+[services.deploy]
+startCommand = "python py_backend.py"
+port = 3000
