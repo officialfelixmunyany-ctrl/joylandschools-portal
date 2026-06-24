@@ -49,17 +49,53 @@ try:
 except ImportError:  # pragma: no cover - environment setup issue
     bcrypt = None
 
+try:
+    import pymysql  # type: ignore
+except ImportError:
+    pymysql = None
+
+DB_HOST = os.environ.get("DB_HOST")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_NAME = os.environ.get("DB_NAME", "joyland")
+DB_PORT = int(os.environ.get("DB_PORT", "3306"))
+USE_MYSQL = all([DB_HOST, DB_USER, DB_PASSWORD])
+
 
 def now_kenya_date() -> str:
     return datetime.now(timezone(timedelta(hours=3))).date().isoformat()
 
 
-def db(school_id: int | None = None) -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA busy_timeout=5000")
-    conn.execute("PRAGMA foreign_keys=ON")
-    ensure_phase2_tables(conn)
+class MySQLRow(dict):
+    """Provides dict-like access to MySQL cursor results, mimicking sqlite3.Row."""
+    pass
+
+
+def _mysql_row_factory(cursor, row):
+    return MySQLRow(zip([col[0] for col in cursor.description], row))
+
+
+def db(school_id: int | None = None):
+    if USE_MYSQL:
+        if not pymysql:
+            raise RuntimeError("PyMySQL required for MySQL backend. Install: pip install PyMySQL")
+        conn = pymysql.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            port=DB_PORT,
+            charset='utf8mb4',
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=True
+        )
+        ensure_phase2_tables(conn)
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA foreign_keys=ON")
+        ensure_phase2_tables(conn)
     CONN_SCHOOL[id(conn)] = int(school_id or 1)
     return conn
 
