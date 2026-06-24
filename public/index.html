@@ -277,7 +277,7 @@
           <span><b>Admin dashboard login</b><span>For school administrators managing setup, reports, and operations.</span></span>
           <i class="fas fa-arrow-right go"></i>
         </a>
-        <a class="door" href="/app/index.html?signin=1">
+        <a class="door" href="#" aria-disabled="true" tabindex="-1">
           <span class="ic"><i class="fas fa-mobile-screen-button"></i></span>
           <span><b>Teacher, Learner, Parent Portal</b><span>Sign in first, then open your correct role dashboard.</span></span>
           <i class="fas fa-arrow-right go"></i>
@@ -298,6 +298,7 @@
   <script>
     (function(){
       const adminLink = document.querySelector('.door.admin');
+      const nonAdminLinks = document.querySelectorAll('.door:not(.admin)');
       if (!adminLink) return;
       const loader = document.getElementById('loader-overlay');
       adminLink.addEventListener('click', event => {
@@ -306,6 +307,13 @@
         const target = adminLink.getAttribute('href') || '/login';
         if (loader) loader.style.display = 'grid';
         setTimeout(() => { window.location.href = target; }, 1200);
+      });
+      nonAdminLinks.forEach(link => {
+        link.setAttribute('aria-disabled', 'true');
+        link.addEventListener('click', event => {
+          if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+        });
       });
     })();
   </script>

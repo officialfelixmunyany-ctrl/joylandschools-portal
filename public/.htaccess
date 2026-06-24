@@ -1,0 +1,41 @@
+Options +FollowSymLinks
+RewriteEngine On
+
+# API requests bypass rewriting
+RewriteRule ^api/ - [L]
+
+# Protect Python files
+<Files "*.py">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Protect sensitive directories
+RewriteRule ^(data|__pycache__|\.git)/ - [F]
+
+# SPA routing: Rewrite non-existent files/dirs to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule ^(.*)$ /index.html [QSA,L]
+
+# Security and caching headers
+AddType application/json .json
+AddType text/javascript .js
+AddType text/css .css
+
+# Gzip compression
+AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+
+# Cache control
+<FilesMatch "\.(jpg|jpeg|png|gif|ico|css|js)$">
+    Header set Cache-Control "max-age=2592000, public"
+</FilesMatch>
+
+<FilesMatch "\.html$">
+    Header set Cache-Control "max-age=3600, must-revalidate"
+</FilesMatch>
+
+<FilesMatch "\.(json|xml)$">
+    Header set Cache-Control "max-age=3600, must-revalidate"
+</FilesMatch>

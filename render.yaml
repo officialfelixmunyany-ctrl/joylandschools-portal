@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: joyland-schools-portal
+    runtime: python311
+    buildCommand: pip install -r requirements.txt
+    startCommand: python py_backend.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: PORT
+        value: "3000"
+      - key: APP_ENV
+        value: production
+      - key: SESSION_SECRET
+        fromService:
+          type: web
+          property: envVars.SESSION_SECRET
+      # MySQL database configuration (from cPanel)
+      - key: DB_HOST
+        value: "your-cpanel-db-host"
+      - key: DB_USER
+        value: "your-cpanel-db-user"
+      - key: DB_PASSWORD
+        value: "your-cpanel-db-password"
+      - key: DB_NAME
+        value: "your-cpanel-db-name"
+      - key: DB_PORT
+        value: "3306"
+    disk:
+      name: data
+      mountPath: /data
+      sizeGb: 1
+    routes:
+      - type: http
+        path: /

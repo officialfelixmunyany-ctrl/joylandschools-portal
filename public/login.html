@@ -261,6 +261,13 @@
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({ identifier, password, school_slug:tenantSlug(), admin_only:true })
         });
+
+        // Check if response is ok
+        if (!response.ok) {
+          showError(`Server error: ${response.status} ${response.statusText}`);
+          return;
+        }
+
         const data = await response.json();
         if (data.success) {
           window.location.href = data.redirect;
@@ -268,7 +275,8 @@
         }
         showError(data.message || 'Login failed.');
       } catch (error) {
-        showError('Could not connect. Try again.');
+        console.error('Login error:', error);
+        showError('Connection error: ' + error.message + '. Check that the server is running.');
       } finally {
         setLoading(false);
       }
